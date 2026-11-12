@@ -322,7 +322,7 @@ async def test_room_charge_posts_to_the_folio(admin: Api, resto):
     order = await add(admin, resto, order, ("amok", 2), ("beer", 2))
     await admin.post(admin.h(f"/restaurant/orders/{order['id']}/send"))
     rr_id = guest["rooms"][0]["id"]
-    found = (await admin.get(admin.h("/restaurant/in-house"), params={"q": guest["room_number"]})).json()
+    found = (await admin.get(admin.h("/in-house-guests"), params={"q": guest["room_number"]})).json()
     assert [g["reservation_room_id"] for g in found] == [rr_id]
     r = await pay(admin, order, method="room_charge", reservation_room_id=rr_id)
     assert r.status_code == 201, r.text

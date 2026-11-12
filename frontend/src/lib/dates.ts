@@ -58,3 +58,48 @@ export function dayLabel(iso: string, locale: string): { weekday: string; day: s
     month: new Intl.DateTimeFormat(locale, { month: 'short', timeZone: 'UTC' }).format(date),
   };
 }
+
+// --- date-times in the hotel's time zone (rentals are booked by the hour) ---------------
+
+/** Offset of a time zone at an instant, in minutes (local = UTC + offset). */
+export function tzOffsetMinutes(instant: Date, timeZone: string): number {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    hourCycle: 'h23',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  }).formatToParts(instant);
+  const get = (t: string) => Number(parts.find((p) => p.type === t)?.value);
+  const asUtc = Date.UTC(get('year'), get('month') - 1, get('day'), get('hour'), get('minute'), get('second'));
+  return Math.round((asUtc - instant.getTime()) / 60000);
+}
+
+/** "YYYY-MM-DD HH:mm[:ss]" read in the hotel's zone → ISO instant (UTC). */
+export function hotelLocalToIso(local: string, timeZone: string): string {
+  const [d, t = '00:00'] = local.trim().split(/[ T]/);
+  const guess = new Date(`${d}T${t.length === 5 ? `${t}:00` : t}Z`);
+  const offset = tzOffsetMinutes(guess, timeZone);
+  let result = new Date(guess.getTime() - offset * 60000);
+  const corrected = tzOffsetMinutes(result, timeZone); // around a DST change
+  if (corrected !== offset) result = new Date(guess.getTime() - corrected * 60000);
+  return result.toISOString();
+}
+
+/** ISO instant → "YYYY-MM-DD HH:mm:ss" in the hotel's zone (date-time pickers). */
+export function isoToHotelLocal(iso: string, timeZone: string): string {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    hourCycle: 'h23',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).formatToParts(new Date(iso));
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? '00';
+  return `${get('year')}-${get('month')}-${get('day')} ${get('hour')}:${get('minute')}:00`;
+}

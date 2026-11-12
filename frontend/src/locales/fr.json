@@ -46,7 +46,8 @@
     "billing": "Paiements et factures",
     "housekeeping": "Ménage",
     "maintenance": "Maintenance",
-    "restaurant": "Restaurant et bar"
+    "restaurant": "Restaurant et bar",
+    "vehicles": "Location de véhicules"
   },
   "auth": {
     "title": "Système de gestion hôtelière",
@@ -506,7 +507,8 @@
       "channels": "Channel manager",
       "administration": "Administration",
       "folio": "Comptes clients",
-      "restaurant": "Restaurant et bar"
+      "restaurant": "Restaurant et bar",
+      "vehicles": "Location de véhicules"
     },
     "codes": {
       "hotel_view": "Consulter les informations de l’hôtel",
@@ -562,7 +564,10 @@
       "restaurant_kitchen": "Écran cuisine (préparation, prêt, épuisé)",
       "restaurant_settle": "Encaisser les additions et les imputer sur les chambres",
       "restaurant_void": "Annuler des articles et des paiements, accorder des remises",
-      "restaurant_manage": "Configurer les points de vente, les cartes et les tables ; consulter les ventes"
+      "restaurant_manage": "Configurer les points de vente, les cartes et les tables ; consulter les ventes",
+      "vehicles_view": "Consulter la flotte et les locations",
+      "vehicles_rent": "Louer des véhicules : réserver, remettre et reprendre les véhicules, encaisser les paiements",
+      "vehicles_manage": "Gérer la flotte et les tarifs ; annuler des paiements, accorder des remises, renoncer aux frais de retard"
     }
   },
   "sessions": {
@@ -894,7 +899,27 @@
     "BREAKFAST_NOT_INCLUDED": "Le petit-déjeuner n’est pas inclus pour ce client aujourd’hui.",
     "TOO_MANY_COVERS": "Nombre maximal de petits-déjeuners pour cette chambre : {{max}}.",
     "BREAKFAST_MARK_NOT_FOUND": "Aucun petit-déjeuner enregistré pour cette chambre aujourd’hui.",
-    "VOID_FROM_OUTLET": "Il s’agit d’une addition du restaurant ou du bar : annulez-la depuis l’addition, pas depuis le compte client."
+    "VOID_FROM_OUTLET": "Il s’agit d’une addition du restaurant ou du bar : annulez-la depuis l’addition, pas depuis le compte client.",
+    "VEHICLE_UNAVAILABLE": "Ce véhicule est déjà loué sur une partie de cette période.",
+    "VEHICLE_CODE_EXISTS": "Un véhicule portant ce numéro de parc existe déjà.",
+    "VEHICLE_IN_USE": "Ce véhicule a déjà des locations et ne peut pas être supprimé. Retirez-le plutôt du service.",
+    "VEHICLE_NOT_FOUND": "Véhicule introuvable.",
+    "VEHICLE_NOT_AVAILABLE": "Le véhicule {{vehicle}} ne peut pas être loué pour le moment ({{status}}).",
+    "INSURANCE_EXPIRED": "L’assurance du véhicule {{vehicle}} prend fin le {{date}} : renouvelez-la avant de le louer.",
+    "REGISTRATION_EXPIRED": "L’immatriculation du véhicule {{vehicle}} prend fin le {{date}} : renouvelez-la avant de le louer.",
+    "NO_DRIVER_SERVICE": "Ce véhicule n’est pas proposé avec chauffeur.",
+    "RENTAL_NOT_FOUND": "Location introuvable.",
+    "RENTAL_CLOSED": "Cette location est clôturée.",
+    "PICKUP_TOO_EARLY": "Il est trop tôt pour remettre ce véhicule.",
+    "VEHICLE_NOT_RETURNED": "Le véhicule {{vehicle}} n’a pas encore été rendu (location {{rental}}).",
+    "LICENCE_REQUIRED": "Un permis de conduire est obligatoire pour ce véhicule.",
+    "LICENCE_EXPIRED": "Le permis de conduire expire avant la fin de la location.",
+    "ODOMETER_BELOW_RECORDED": "Le kilométrage ne peut pas être inférieur à {{odometer}} km.",
+    "INVALID_RETURN_TIME": "Cette heure de retour n’est pas possible.",
+    "NO_DEPOSIT_HELD": "Aucune caution n’est détenue pour cette location.",
+    "NO_SHOW_BEFORE_START": "Une non-présentation ne peut être enregistrée qu’après l’heure de début de la location.",
+    "RENTAL_HAS_PAYMENTS": "Des paiements ont été enregistrés sur cette location. Annulez-les d’abord.",
+    "ROOM_CHARGE_AFTER_RETURN": "Une location ne peut être imputée sur la chambre qu’une fois le véhicule rendu (le montant final est alors connu)."
   },
   "reservations": {
     "description": "Toutes les réservations, quelle que soit leur origine. Cliquez sur une réservation pour la gérer.",
@@ -1551,8 +1576,7 @@
     "bill_to": "Facturé à",
     "invoice_search": "Numéro, réservation, nom ou société",
     "no_invoices": "Aucune facture",
-    "no_invoices_hint": "Les factures sont émises depuis le compte client d’une réservation.",
-    "check": "addition {{number}}"
+    "no_invoices_hint": "Les factures sont émises depuis le compte client d’une réservation."
   },
   "housekeeping": {
     "description": "Les tâches de ménage du jour : planifiez-les et attribuez-les, suivez l’avancement chambre par chambre, contrôlez les chambres terminées.",
@@ -1889,6 +1913,139 @@
       "area": "Zone",
       "area_placeholder": "Terrasse, salle…",
       "seats": "Places"
+    }
+  },
+  "vehicles": {
+    "description": "Scooters, voitures, vélos et plus encore : réservations, remise et restitution avec kilométrage et niveau de carburant, cautions, contrats et paiement (ou imputation sur la chambre du client).",
+    "tabs": {
+      "today": "Aujourd’hui",
+      "schedule": "Planning",
+      "fleet": "Flotte"
+    },
+    "new_rental": "Nouvelle location",
+    "rental": "Location",
+    "create": "Réserver",
+    "created_done": "Location {{number}} réservée",
+    "start": "Début",
+    "end": "Fin",
+    "end_after_start": "Doit être postérieure au début",
+    "vehicle": "Véhicule",
+    "no_vehicle": "Aucun véhicule",
+    "day": "jour",
+    "with_driver": "Avec chauffeur (+{{rate}} par jour)",
+    "driver": "Chauffeur",
+    "driver_included": "avec chauffeur",
+    "hotel_guest": "Client en séjour",
+    "other_customer": "Client extérieur",
+    "notes": "Notes",
+    "duration": "{{hours}} h · {{days}} jour(s) facturé(s)",
+    "deposit_hint": "Caution demandée à la remise du véhicule : {{amount}}",
+    "unavailable": {
+      "booked": "déjà loué",
+      "maintenance": "en maintenance",
+      "retired": "retiré du service",
+      "documents": "assurance ou immatriculation expirée"
+    },
+    "statuses": {
+      "reserved": "Réservée",
+      "out": "En cours",
+      "returned": "Terminée",
+      "cancelled": "Annulée",
+      "no_show": "Non-présentation"
+    },
+    "overdue": "En retard",
+    "to_hand_over": "À remettre",
+    "out_now": "En location",
+    "due_back": "Retour prévu aujourd’hui",
+    "upcoming": "À venir",
+    "nothing_active": "Aucune location en cours",
+    "nothing_active_hint": "Réservez un véhicule avec « Nouvelle location ».",
+    "picked_up_line": "Remis le {{time}} · {{km}} km · carburant {{fuel}}",
+    "returned_line": "Rendu le {{time}} · {{km}} km · carburant {{fuel}}",
+    "licence_line": "permis ••••{{last4}}",
+    "deposit": "Caution",
+    "deposit_kinds": {
+      "none": "Aucune",
+      "cash": "Espèces",
+      "card_hold": "Empreinte de carte",
+      "passport": "Passeport conservé",
+      "id_card": "Pièce d’identité conservée",
+      "other": "Autre"
+    },
+    "deposit_returned": "restituée",
+    "give_back_deposit": "Caution restituée",
+    "deposit_returned_done": "Caution marquée comme restituée",
+    "vehicle_price": "Véhicule",
+    "late_fee": "Retour tardif",
+    "fuel_charge": "Carburant",
+    "damage": "Dommages",
+    "damage_note": "Détail des dommages",
+    "hand_over": "Remettre le véhicule",
+    "handed_over_done": "Véhicule remis",
+    "take_back": "Reprendre le véhicule",
+    "returned_done": "Véhicule rendu",
+    "returned_late_done": "Véhicule rendu (retour tardif : {{fee}})",
+    "late_hint": "Ce véhicule est rendu en retard : le temps supplémentaire est facturé aux tarifs du véhicule (les 59 premières minutes sont gratuites).",
+    "change_end": "Modifier l’heure de retour",
+    "change_end_hint": "Le prix du véhicule est recalculé ; la modification est refusée si le véhicule est réservé pour une autre location.",
+    "cancel_rental": "Annuler la location",
+    "cancel_body": "Pourquoi cette location est-elle annulée ? Le véhicule redevient disponible.",
+    "no_show": "Non-présentation",
+    "no_show_done": "Non-présentation enregistrée",
+    "contract": "Contrat",
+    "room_charge_hint": "La totalité de la location est ajoutée au compte client et réglée au départ.",
+    "void_payment_body": "Le paiement est annulé. Un montant imputé sur la chambre est également retiré du compte client.",
+    "licence_number": "Numéro du permis de conduire",
+    "licence_hint": "Enregistré sous forme chiffrée ; seuls les 4 derniers caractères sont affichés",
+    "licence_country": "Pays de délivrance",
+    "licence_expiry": "Valable jusqu’au",
+    "odometer": "Kilométrage",
+    "fuel": "Niveau de carburant",
+    "condition": "État du véhicule",
+    "condition_placeholder": "Rayures, bosses, éléments manquants… (casques et clés compris)",
+    "deposit_given_back": "Caution restituée au locataire",
+    "needs_maintenance": "Envoyer le véhicule en maintenance",
+    "waive_late_fee": "Ne pas facturer le retour tardif",
+    "fleet_hint": "Tous les véhicules que l’hôtel propose à la location, avec leurs tarifs et leurs documents. Un véhicule dont l’assurance ou l’immatriculation a expiré ne peut pas être loué.",
+    "add_vehicle": "Ajouter un véhicule",
+    "edit_vehicle": "Modifier le véhicule",
+    "delete_vehicle": "Supprimer le véhicule {{code}} ?",
+    "no_fleet": "Aucun véhicule pour le moment",
+    "no_fleet_hint": "Ajoutez les scooters, voitures ou vélos que l’hôtel propose à la location.",
+    "rates": "Tarifs",
+    "code": "Numéro de parc",
+    "kind": "Type",
+    "plate": "N° d’immatriculation",
+    "make": "Marque",
+    "model": "Modèle",
+    "color": "Couleur",
+    "seats": "Places",
+    "daily_rate": "Par jour",
+    "hourly_rate": "Par heure",
+    "driver_rate": "Chauffeur par jour",
+    "insurance_expiry": "Assurance valable jusqu’au",
+    "registration_expiry": "Immatriculation valable jusqu’au",
+    "kinds": {
+      "scooter": "Scooter",
+      "motorbike": "Moto",
+      "car": "Voiture",
+      "van": "Minibus",
+      "bicycle": "Vélo",
+      "e_bike": "Vélo électrique",
+      "tuk_tuk": "Tuk-tuk",
+      "boat": "Bateau",
+      "other": "Autre"
+    },
+    "vehicle_status": {
+      "available": "Disponible",
+      "maintenance": "En maintenance",
+      "retired": "Retiré du service"
+    },
+    "document_warnings": {
+      "insurance_expiry_expired": "Assurance expirée depuis le {{date}}",
+      "insurance_expiry_soon": "L’assurance expire le {{date}}",
+      "registration_expiry_expired": "Immatriculation expirée depuis le {{date}}",
+      "registration_expiry_soon": "L’immatriculation expire le {{date}}"
     }
   }
 }

@@ -280,8 +280,8 @@ async def build(
             description = tr("fee." + (c.fee_type or "other"))
             detail = c.description or ""
         elif c.kind == "outlet":
-            description = tr.text(c.name)
-            detail = tr("check_number", number=c.description) if c.description else ""
+            description = tr.text(c.name)  # restaurant/bar, or vehicle rental
+            detail = c.description or ""  # its number (check, rental)
         else:
             description = tr("adjustment")
             detail = c.description or ""

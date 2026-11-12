@@ -9,7 +9,7 @@ from fastapi import APIRouter, Header, Query, Response, status
 from app.core.permissions import P
 from app.core.schemas import LanguageCode, Page
 from app.modules.auth.deps import DB, hotel_ctx
-from app.modules.billing import service
+from app.modules.billing import pos, service
 from app.modules.billing.schemas import (
     ChargeIn,
     CurrencyIn,
@@ -24,6 +24,7 @@ from app.modules.billing.schemas import (
     PaymentReport,
     VoidIn,
 )
+from app.modules.restaurant.schemas import GuestRef
 
 router = APIRouter(prefix="/hotels/{hotel_id}", tags=["billing"])
 
@@ -50,6 +51,14 @@ def _pdf(content: bytes, name: str) -> Response:
             "Cache-Control": "no-store",
         },
     )
+
+
+# --- guests in house (charging sales to rooms) -----------------------------------------
+
+
+@router.get("/in-house-guests", response_model=list[GuestRef])
+async def in_house_guests(ctx: HotelView, db: DB, q: Annotated[str | None, Query(max_length=100)] = None):
+    return await pos.in_house_guests(db, ctx, q)
 
 
 # --- currencies --------------------------------------------------------------------

@@ -4,7 +4,8 @@
     "statement": "客人账单",
     "receipt": "付款收据",
     "bill": "账单",
-    "restaurant_receipt": "收据"
+    "restaurant_receipt": "收据",
+    "rental_contract": "车辆租赁合同"
   },
   "number": "编号",
   "issue_date": "日期",
@@ -74,7 +75,6 @@
   },
   "statement_note": "本账单仅供参考，不作为发票。",
   "thanks": "感谢您的光临。",
-  "check_number": "账单 {number}",
   "outlet": "营业点",
   "table": "桌号",
   "covers": "人数",
@@ -89,5 +89,41 @@
   "service_charge": "服务费 {rate}%",
   "change": "找零",
   "room_charge": "挂房账（{room} 号房）",
-  "unpaid_bill_note": "本账单不作为收据。"
+  "unpaid_bill_note": "本账单不作为收据。",
+  "vehicle_rental": "车辆租赁",
+  "vehicle": "车辆",
+  "rental_period": "租期",
+  "picked_up": "取车",
+  "returned": "还车",
+  "fuel_eighths": "油量 {n}/8",
+  "licence": "驾驶证",
+  "deposit": "押金",
+  "deposit_returned": "已退还",
+  "rental_duration": "{hours} 小时",
+  "driver": "司机",
+  "late_return": "逾时还车",
+  "fuel_charge": "燃油",
+  "renter": "承租人",
+  "rental_terms": "承租人已按上述状况接收车辆，并应在约定时间以相同状况和相同油量归还。租赁期间的罚款、损坏及丢失由承租人负责；承租人须持有该车辆的有效驾驶证，驾驶两轮车须佩戴头盔。逾时还车按车辆价格收费。",
+  "signature_renter": "承租人签名",
+  "signature_hotel": "酒店代表",
+  "vehicle_kinds": {
+    "scooter": "踏板摩托车",
+    "motorbike": "摩托车",
+    "car": "汽车",
+    "van": "面包车",
+    "bicycle": "自行车",
+    "e_bike": "电动自行车",
+    "tuk_tuk": "嘟嘟车",
+    "boat": "船",
+    "other": "车辆"
+  },
+  "deposit_kinds": {
+    "none": "无",
+    "cash": "现金",
+    "card_hold": "信用卡预授权",
+    "passport": "押护照",
+    "id_card": "押身份证",
+    "other": "其他"
+  }
 }

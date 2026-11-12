@@ -4,7 +4,8 @@
     "statement": "Relevé de compte client",
     "receipt": "Reçu de paiement",
     "bill": "Addition",
-    "restaurant_receipt": "Ticket de caisse"
+    "restaurant_receipt": "Ticket de caisse",
+    "rental_contract": "Contrat de location de véhicule"
   },
   "number": "N°",
   "issue_date": "Date",
@@ -76,7 +77,6 @@
   },
   "statement_note": "Ce relevé est fourni à titre d’information et ne constitue pas une facture.",
   "thanks": "Merci de votre séjour parmi nous.",
-  "check_number": "Addition {number}",
   "outlet": "Point de vente",
   "table": "Table",
   "covers": "Couverts",
@@ -91,5 +91,41 @@
   "service_charge": "Service {rate} %",
   "change": "Monnaie rendue",
   "room_charge": "Imputé sur la chambre {room}",
-  "unpaid_bill_note": "Cette addition n’est pas un reçu."
+  "unpaid_bill_note": "Cette addition n’est pas un reçu.",
+  "vehicle_rental": "Location de véhicule",
+  "vehicle": "Véhicule",
+  "rental_period": "Période de location",
+  "picked_up": "Remis le",
+  "returned": "Rendu le",
+  "fuel_eighths": "carburant {n}/8",
+  "licence": "Permis de conduire",
+  "deposit": "Caution",
+  "deposit_returned": "restituée",
+  "rental_duration": "{hours} h",
+  "driver": "Chauffeur",
+  "late_return": "Retour tardif",
+  "fuel_charge": "Carburant",
+  "renter": "Locataire",
+  "rental_terms": "Le locataire a reçu le véhicule dans l’état décrit ci-dessus et le rend dans le même état, avec le même niveau de carburant, à l’heure convenue. Il est responsable des amendes, dommages et pertes pendant la location, doit détenir un permis valable pour ce véhicule et porter un casque sur les deux-roues. Tout retard est facturé aux tarifs du véhicule.",
+  "signature_renter": "Signature du locataire",
+  "signature_hotel": "Pour l’hôtel",
+  "vehicle_kinds": {
+    "scooter": "Scooter",
+    "motorbike": "Moto",
+    "car": "Voiture",
+    "van": "Minibus",
+    "bicycle": "Vélo",
+    "e_bike": "Vélo électrique",
+    "tuk_tuk": "Tuk-tuk",
+    "boat": "Bateau",
+    "other": "Véhicule"
+  },
+  "deposit_kinds": {
+    "none": "Aucune",
+    "cash": "Espèces",
+    "card_hold": "Empreinte de carte",
+    "passport": "Passeport conservé",
+    "id_card": "Pièce d’identité conservée",
+    "other": "Autre"
+  }
 }

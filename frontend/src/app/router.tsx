@@ -20,6 +20,7 @@ const HousekeepingPage = lazy(() => import('@/modules/housekeeping/HousekeepingP
 const MaintenancePage = lazy(() => import('@/modules/maintenance/MaintenancePage'));
 const RestaurantPage = lazy(() => import('@/modules/restaurant/RestaurantPage'));
 const RestaurantOrderPage = lazy(() => import('@/modules/restaurant/OrderPage'));
+const VehiclesPage = lazy(() => import('@/modules/vehicles/VehiclesPage'));
 const ServicesPage = lazy(() => import('@/modules/services/ServicesPage'));
 const UsersPage = lazy(() => import('@/modules/users/UsersPage'));
 const SettingsPage = lazy(() => import('@/modules/settings/SettingsPage'));
@@ -72,6 +73,7 @@ const router = createBrowserRouter([
       { path: 'maintenance', element: <MaintenancePage /> },
       { path: 'restaurant/orders/:id', element: <RestaurantOrderPage /> },
       { path: 'restaurant/*', element: <RestaurantPage /> },
+      { path: 'vehicles/*', element: <VehiclesPage /> },
       { path: 'services', element: <ServicesPage /> },
       { path: 'users/*', element: <UsersPage /> },
       { path: 'settings/*', element: <SettingsPage /> },

@@ -20,7 +20,6 @@ from app.modules.restaurant.schemas import (
     CategoryUpdate,
     DiscountIn,
     FloorTable,
-    GuestRef,
     ItemIn,
     ItemOut,
     ItemUpdate,
@@ -251,11 +250,6 @@ async def kitchen(
     ctx: View, db: DB, outlet_id: uuid.UUID | None = None, station: Literal["kitchen", "bar"] | None = None
 ):
     return await service.kitchen(db, ctx, outlet_id, station)
-
-
-@router.get("/in-house", response_model=list[GuestRef])
-async def in_house(ctx: Settle, db: DB, q: Annotated[str | None, Query(max_length=100)] = None):
-    return await service.in_house_guests(db, ctx, q)
 
 
 @router.get("/breakfast", response_model=list[BreakfastRow])

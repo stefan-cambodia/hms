@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import {
   ActionIcon,
@@ -24,20 +24,20 @@ import {
   UnstyledButton,
 } from '@mantine/core';
 import { IconArrowLeft, IconCash, IconDots, IconMinus, IconPlus, IconPrinter, IconSend, IconTrash } from '@tabler/icons-react';
-import { notifications } from '@mantine/notifications';
 import { useTranslation } from 'react-i18next';
 
-import { api, ApiError } from '@/api/client';
+import { api } from '@/api/client';
 import { useHotelMutation, useHotelQuery } from '@/api/hooks';
-import type { DiningTable, GuestRef, OrderLine, PosMethod, RestaurantOrder } from '@/api/types';
+import type { DiningTable, OrderLine, RestaurantOrder } from '@/api/types';
 import { PageLoader } from '@/app/AppLayout';
 import { useAuth, useHotel } from '@/auth/AuthProvider';
 import { EmptyState, SubmitButton } from '@/components/ui';
 import { LANGUAGES } from '@/i18n';
-import { errorMessage, notifyError, notifySuccess } from '@/lib/errors';
+import { notifyError, notifySuccess } from '@/lib/errors';
 import { formatMoney, formatNumber } from '@/lib/format';
 import { ReasonModal } from '@/modules/billing/FolioDialogs';
-import { CARD_BRANDS, toBase, useDocumentUrl, usePaymentCurrencies } from '@/modules/billing/shared';
+import { SalePaymentModal } from '@/modules/billing/SalePaymentModal';
+import { useDocumentUrl } from '@/modules/billing/shared';
 import { newIdempotencyKey } from '@/modules/reservations/shared';
 import { LineStatusBadge, useLocalized, useMenu } from './shared';
 
@@ -289,7 +289,17 @@ export default function OrderPage() {
         </Grid.Col>
       </Grid>
 
-      {dialog?.kind === 'pay' && <PayModal order={o} onClose={() => setDialog(null)} />}
+      {dialog?.kind === 'pay' && (
+        <SalePaymentModal
+          path={`/restaurant/orders/${o.id}/payments`}
+          balance={o.balance}
+          allowRoomCharge={Number(o.paid_total) === 0}
+          defaultGuest={o.guest?.in_house ? o.guest.reservation_room_id : null}
+          roomChargeHint={t('restaurant.room_charge_hint')}
+          invalidates={['restaurant_order', 'payment']}
+          onClose={() => setDialog(null)}
+        />
+      )}
       {dialog?.kind === 'discount' && <DiscountModal order={o} onClose={() => setDialog(null)} onSave={(body) => run('post', '/discount', body, t('common.saved'))} />}
       {dialog?.kind === 'move' && <MoveModal order={o} onClose={() => setDialog(null)} onSave={(tableId) => run('patch', '', { version: o.version, table_id: tableId }, t('restaurant.moved_done'))} />}
       {dialog?.kind === 'cancel' && (
@@ -336,148 +346,6 @@ function Row({ label, value, strong, dimmed, testId }: { label: string; value: s
         {value}
       </Text>
     </Group>
-  );
-}
-
-function PayModal({ order: o, onClose }: { order: RestaurantOrder; onClose: () => void }) {
-  const { t, i18n } = useTranslation();
-  const hotel = useHotel();
-  const currencies = usePaymentCurrencies();
-  const [method, setMethod] = useState<PosMethod>('cash');
-  const [currency, setCurrency] = useState(hotel.currency_code);
-  const [amount, setAmount] = useState<number | string>(Number(o.balance));
-  const [brand, setBrand] = useState<string | null>(null);
-  const [last4, setLast4] = useState('');
-  const [reference, setReference] = useState('');
-  const [guest, setGuest] = useState<string | null>(o.guest?.in_house ? o.guest.reservation_room_id : null);
-  const [search, setSearch] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const key = useRef(newIdempotencyKey());
-  const guests = useHotelQuery<GuestRef[]>('reservation', '/restaurant/in-house', { q: search || undefined }, method === 'room_charge');
-  const pay = useHotelMutation<Record<string, unknown>, RestaurantOrder>(
-    (h, body) => api.post<RestaurantOrder>(h(`/restaurant/orders/${o.id}/payments`), body, { 'Idempotency-Key': key.current }),
-    ['restaurant_order', 'payment'],
-  );
-  const rate = currencies.rate(currency);
-  const due = Number(o.balance);
-  const dueInCurrency = rate ? Math.round(due * Number(rate) * 100) / 100 : due;
-  const base = toBase(Number(amount), rate);
-  const change = method === 'cash' && base !== null && base > due ? Number(amount) - dueInCurrency : 0;
-  const roomCharge = method === 'room_charge';
-  const allowRoom = Number(o.paid_total) === 0;
-  const valid = roomCharge ? !!guest : Number(amount) > 0;
-
-  const submit = () => {
-    setError(null);
-    const body: Record<string, unknown> = roomCharge
-      ? { method, reservation_room_id: guest }
-      : {
-          method,
-          amount: String(amount),
-          currency,
-          exchange_rate: currency !== hotel.currency_code ? rate : undefined,
-          reference: reference.trim() || undefined,
-          card_brand: method === 'card' ? brand || undefined : undefined,
-          card_last4: method === 'card' ? last4 || undefined : undefined,
-        };
-    pay.mutateAsync(body).then(
-      (r) => {
-        const last = r.payments.filter((p) => !p.is_void).at(-1);
-        if (r.change_due && Number(r.change_due) > 0 && last) {
-          // Stays on screen long enough to count the change.
-          notifications.show({ color: 'teal', autoClose: 15000, title: t('restaurant.paid_done'), message: t('restaurant.give_change', { amount: formatMoney(r.change_due, last.currency, i18n.language) }) });
-        } else {
-          notifySuccess(r.status === 'closed' ? t('restaurant.paid_done') : t('restaurant.part_paid_done', { amount: formatMoney(r.balance, hotel.currency_code, i18n.language) }));
-        }
-        onClose();
-      },
-      (err) => {
-        if (!(err instanceof ApiError) || !err.isNetwork) key.current = newIdempotencyKey();
-        setError(errorMessage(err));
-      },
-    );
-  };
-
-  const methods: PosMethod[] = ['cash', 'card', 'bank_transfer', ...(allowRoom ? (['room_charge'] as PosMethod[]) : []), 'other'];
-  return (
-    <Modal opened onClose={onClose} title={t('restaurant.payment_title', { amount: formatMoney(o.balance, hotel.currency_code, i18n.language) })} size="lg">
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (valid) submit();
-        }}
-      >
-        <Stack>
-          {error && <Alert color="red">{error}</Alert>}
-          <SegmentedControl
-            value={method}
-            onChange={(v) => setMethod(v as PosMethod)}
-            data={methods.map((m) => ({ value: m, label: m === 'room_charge' ? t('restaurant.room_charge') : t(`billing.methods.${m}`) }))}
-            fullWidth
-          />
-          {roomCharge ? (
-            <>
-              <Select
-                label={t('restaurant.guest_room')}
-                searchable
-                searchValue={search}
-                onSearchChange={setSearch}
-                data={(guests.data ?? []).map((g) => ({ value: g.reservation_room_id, label: `${g.room_number ?? '—'} · ${g.guest_name}` }))}
-                value={guest}
-                onChange={setGuest}
-                nothingFoundMessage={t('restaurant.no_guest_found')}
-              />
-              <Text size="sm" c="dimmed">
-                {t('restaurant.room_charge_hint')}
-              </Text>
-            </>
-          ) : (
-            <>
-              <Group grow align="flex-end">
-                <Select
-                  label={t('billing.currency')}
-                  allowDeselect={false}
-                  data={currencies.list}
-                  value={currency}
-                  onChange={(v) => {
-                    if (!v) return;
-                    setCurrency(v);
-                    const r = currencies.rate(v);
-                    if (r) setAmount(Math.round(due * Number(r) * 100) / 100);
-                  }}
-                />
-                <NumberInput label={t('billing.amount')} min={0.01} decimalScale={2} thousandSeparator="," value={amount} onChange={setAmount} data-autofocus />
-              </Group>
-              {currency !== hotel.currency_code && (
-                <Text size="sm" c="dimmed">
-                  {t('restaurant.due_in', { amount: formatMoney(dueInCurrency, currency, i18n.language) })}
-                </Text>
-              )}
-              {change > 0 && (
-                <Alert color="teal" p="xs" data-testid="change">
-                  {t('restaurant.give_change', { amount: formatMoney(change, currency, i18n.language) })}
-                </Alert>
-              )}
-              {method === 'card' && (
-                <Group grow>
-                  <Select label={t('billing.card_brand')} clearable data={CARD_BRANDS.map((b) => ({ value: b, label: t(`billing.card_brands.${b}`) }))} value={brand} onChange={setBrand} />
-                  <TextInput label={t('billing.card_last4')} maxLength={4} inputMode="numeric" value={last4} onChange={(e) => setLast4(e.currentTarget.value.replace(/\D/g, ''))} />
-                </Group>
-              )}
-              {method !== 'cash' && <TextInput label={t('billing.reference')} maxLength={100} value={reference} onChange={(e) => setReference(e.currentTarget.value)} />}
-            </>
-          )}
-          <Group justify="flex-end">
-            <Button variant="default" onClick={onClose}>
-              {t('common.cancel')}
-            </Button>
-            <SubmitButton color="teal" loading={pay.isPending} disabled={!valid}>
-              {roomCharge ? t('restaurant.charge_room') : t('billing.record_payment')}
-            </SubmitButton>
-          </Group>
-        </Stack>
-      </form>
-    </Modal>
   );
 }
 

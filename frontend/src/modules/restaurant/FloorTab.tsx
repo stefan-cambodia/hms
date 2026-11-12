@@ -132,7 +132,7 @@ function OpenOrderModal({ outletId, opening, onClose, onOpened }: { outletId: st
   const [search, setSearch] = useState('');
   const [error, setError] = useState<string | null>(null);
   const needGuest = opening.type === 'room_service';
-  const guests = useHotelQuery<GuestRef[]>('reservation', '/restaurant/in-house', { q: search || undefined }, needGuest);
+  const guests = useHotelQuery<GuestRef[]>('reservation', '/in-house-guests', { q: search || undefined }, needGuest);
   const create = useHotelMutation<Record<string, unknown>, RestaurantOrder>((h, body) => api.post<RestaurantOrder>(h('/restaurant/orders'), body), ['restaurant_order']);
   const valid = Number(covers) >= 1 && (!needGuest || !!guest);
   return (

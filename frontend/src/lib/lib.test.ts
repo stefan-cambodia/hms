@@ -82,3 +82,14 @@ describe('real-time invalidation', () => {
     expect(stale(keys.otherHotel)).toBe(false);
   });
 });
+
+describe('hotel-local date-times', () => {
+  it('converts between hotel time and UTC instants', async () => {
+    const { hotelLocalToIso, isoToHotelLocal, tzOffsetMinutes } = await import('./dates');
+    expect(tzOffsetMinutes(new Date('2026-11-12T00:00:00Z'), 'Asia/Phnom_Penh')).toBe(420);
+    expect(hotelLocalToIso('2026-11-12 09:00:00', 'Asia/Phnom_Penh')).toBe('2026-11-12T02:00:00.000Z');
+    expect(hotelLocalToIso('2026-11-12 09:00', 'Europe/Paris')).toBe('2026-11-12T08:00:00.000Z');
+    expect(hotelLocalToIso('2026-07-01 09:00', 'Europe/Paris')).toBe('2026-07-01T07:00:00.000Z');
+    expect(isoToHotelLocal('2026-11-12T02:00:00Z', 'Asia/Phnom_Penh')).toBe('2026-11-12 09:00:00');
+  });
+});

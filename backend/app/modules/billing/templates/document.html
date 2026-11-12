@@ -41,6 +41,9 @@
            color: rgba(185, 28, 28, 0.18); transform: rotate(-24deg); }
   .receipt td { padding: 1.6mm 4mm 1.6mm 0; vertical-align: top; }
   .receipt td:first-child { color: #4b5563; }
+  .signatures { display: flex; gap: 16mm; margin-top: 16mm; page-break-inside: avoid; }
+  .signature { flex: 1; font-size: 8.5pt; color: #4b5563; }
+  .signature .line { border-bottom: 0.3mm solid #111827; height: 14mm; margin-bottom: 1.5mm; }
 </style>
 </head>
 <body>
@@ -117,5 +120,11 @@
 {% endif %}
 
 {% if doc.notes %}<div class="notes">{% for n in doc.notes %}<p>{{ n }}</p>{% endfor %}</div>{% endif %}
+
+{% if doc.signatures %}
+<div class="signatures">
+  {% for s in doc.signatures %}<div class="signature"><div class="line"></div>{{ s }}</div>{% endfor %}
+</div>
+{% endif %}
 </body>
 </html>

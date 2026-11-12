@@ -55,8 +55,8 @@
   reference and notes, charge descriptions, reservation and guest notes, void
   reasons) reject any 13–19 digit sequence that passes the Luhn check
   (`card_number_not_allowed`).
-* **Financial records:** folio charges, payments and invoices are
-  append-only. A database trigger refuses deletes and any update other than
+* **Financial records:** folio charges, payments and invoices, restaurant
+  payments and vehicle rental payments are append-only. A database trigger refuses deletes and any update other than
   voiding (with a mandatory reason); a void cannot be undone. Invoice and
   receipt numbers are gapless. Waiving fees, discounts, voiding charges and
   checking out with money owed need `folio.adjust`; refunds and payment voids
@@ -65,7 +65,8 @@
 * **Documents:** PDFs are rendered server-side from escaped templates; the
   renderer is not allowed to fetch any URL (no SSRF through documents).
 * **Encryption at rest** for secrets that must be recoverable (OTA
-  credentials, TOTP secrets, identity document numbers): AES-GCM through
+  credentials, TOTP secrets, identity document numbers, renters' driving
+  licence numbers, of which screens and contracts show only the last 4 digits): AES-GCM through
   `cryptography`'s Fernet-compatible scheme, with the key provided by the
   `HMS_DATA_KEY` environment variable or a secrets file, and never in the
   database or its backups. Backups are therefore useless without the key, and

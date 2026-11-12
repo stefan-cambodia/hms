@@ -8,6 +8,7 @@ import {
   IconAddressBook,
   IconBrush,
   IconToolsKitchen2,
+  IconMotorbike,
   IconTool,
   IconHotelService,
   IconLayoutDashboard,
@@ -30,7 +31,7 @@ export interface NavItem {
   icon: ComponentType<{ size?: number; stroke?: number }>;
   permission: string | null;
   /** Shown only when the hotel uses this feature (e.g. has a restaurant). */
-  feature?: 'restaurant';
+  feature?: 'restaurant' | 'vehicles';
 }
 
 export const NAV_ITEMS: NavItem[] = [
@@ -39,6 +40,7 @@ export const NAV_ITEMS: NavItem[] = [
   { key: 'reservations', path: '/reservations', icon: IconClipboardList, permission: 'reservations.view' },
   { key: 'calendar', path: '/calendar', icon: IconCalendarMonth, permission: 'reservations.view' },
   { key: 'restaurant', path: '/restaurant', icon: IconToolsKitchen2, permission: 'restaurant.view', feature: 'restaurant' },
+  { key: 'vehicles', path: '/vehicles', icon: IconMotorbike, permission: 'vehicles.view', feature: 'vehicles' },
   { key: 'housekeeping', path: '/housekeeping', icon: IconBrush, permission: 'housekeeping.view' },
   { key: 'maintenance', path: '/maintenance', icon: IconTool, permission: 'maintenance.view' },
   { key: 'rooms', path: '/rooms', icon: IconDoor, permission: 'rooms.view' },

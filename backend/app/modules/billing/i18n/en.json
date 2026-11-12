@@ -4,7 +4,8 @@
     "statement": "Guest folio",
     "receipt": "Payment receipt",
     "bill": "Bill",
-    "restaurant_receipt": "Receipt"
+    "restaurant_receipt": "Receipt",
+    "rental_contract": "Vehicle rental agreement"
   },
   "number": "No.",
   "issue_date": "Date",
@@ -75,7 +76,6 @@
   },
   "statement_note": "This statement is for information only and is not a tax invoice.",
   "thanks": "Thank you for staying with us.",
-  "check_number": "Check {number}",
   "outlet": "Outlet",
   "table": "Table",
   "covers": "Guests",
@@ -90,5 +90,41 @@
   "service_charge": "Service charge {rate}%",
   "change": "Change",
   "room_charge": "Charged to room {room}",
-  "unpaid_bill_note": "This bill is not a receipt."
+  "unpaid_bill_note": "This bill is not a receipt.",
+  "vehicle_rental": "Vehicle rental",
+  "vehicle": "Vehicle",
+  "rental_period": "Rental period",
+  "picked_up": "Picked up",
+  "returned": "Returned",
+  "fuel_eighths": "fuel {n}/8",
+  "licence": "Driving licence",
+  "deposit": "Deposit",
+  "deposit_returned": "returned",
+  "rental_duration": "{hours} h",
+  "driver": "Driver",
+  "late_return": "Late return",
+  "fuel_charge": "Fuel",
+  "renter": "Renter",
+  "rental_terms": "The renter received the vehicle in the condition described above and returns it in the same condition, with the same fuel level, at the agreed time. The renter is responsible for fines, damage and loss during the rental, must hold a valid licence for the vehicle and wear a helmet on two-wheelers. Late returns are charged at the vehicle rates.",
+  "signature_renter": "Renter's signature",
+  "signature_hotel": "For the hotel",
+  "vehicle_kinds": {
+    "scooter": "Scooter",
+    "motorbike": "Motorbike",
+    "car": "Car",
+    "van": "Van",
+    "bicycle": "Bicycle",
+    "e_bike": "E-bike",
+    "tuk_tuk": "Tuk-tuk",
+    "boat": "Boat",
+    "other": "Vehicle"
+  },
+  "deposit_kinds": {
+    "none": "None",
+    "cash": "Cash",
+    "card_hold": "Card guarantee",
+    "passport": "Passport held",
+    "id_card": "ID card held",
+    "other": "Other"
+  }
 }

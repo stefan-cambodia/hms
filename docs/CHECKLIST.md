@@ -170,6 +170,23 @@ Last updated: 2026-11-12. Test counts: backend 48 (pytest, real PostgreSQL), fro
 | Stock / recipes / purchasing | ⬜ | Not included |
 | Table reservations, kitchen printers, online ordering | ⬜ | Not included |
 
+## Vehicle rental (added on request) ✅
+
+| Item | Status | Notes |
+|------|--------|-------|
+| Fleet: scooters, motorbikes, cars, vans, bicycles, e-bikes, tuk-tuks, boats; rates per day/hour, driver, deposit; odometer; status; insurance and registration expiry with warnings | ✅ | test_vehicles.py |
+| Module hidden when the hotel has no vehicles (managers can set it up) | ✅ | |
+| Bookings by the hour for in-house guests or other customers (CRM guest created on the fly); availability per period | ✅ | |
+| No double booking: database exclusion constraint (concurrency and raw SQL tested) | ✅ | |
+| Price fixed when booked; change of return time reprices; late return fee with 59-minute grace | ✅ | |
+| Hand-over: licence (encrypted, last 4 shown), odometer, fuel, condition, deposit (cash, card guarantee, passport/ID held); early hand-over starts the rental | ✅ | |
+| Return: odometer, fuel, condition, fuel and damage charges, deposit given back, send vehicle to maintenance; waiving late fee needs a manager | ✅ | |
+| Safety: no rental with expired insurance/registration, vehicle in maintenance, or still out with a previous renter | ✅ | |
+| Payment: cash with change, card, transfer, currencies; charge to room after return; voids; discounts | ✅ | Shared with the restaurant (billing/pos.py) |
+| Rental contract PDF in 5 languages with terms and signature lines | ✅ | Khmer checked visually |
+| Today board (to hand over, out, due back, coming), 14-day schedule, fleet management | ✅ | E2E on 3 devices |
+| Photos of damage, GPS tracking, online booking by guests | ⬜ | Not included |
+
 ## Phase 6 — Multi-user ✅ (largely delivered early) / ⬜ (remaining)
 
 Delivered in phase 2: real-time sync, sessions, connected-users view, conflict detection and stale-edit warning, offline banner.
@@ -201,4 +218,5 @@ The dashboard currently shows configuration and room-readiness data only. Occupa
 | Restore procedure with safety backup and checksum check | ✅ | Restore drill performed 2026-11-12 |
 | Backup history and restore in the admin UI | ⬜ | Script-based today (`last-run.json`) |
 | CI pipeline (lint, tests, i18n, build, Docker images) | ✅ | Green on GitHub Actions |
+| End-to-end suite (Playwright, 3 devices) against the demo hotel | ✅ | Run locally, not in CI. Tests create their own data through the API; when tonight is sold out after many runs, `e2e/support.ts` adds a "T-…" room instead of failing |
 | Load tests, security audit, RLS | ⬜ | |

@@ -1,5 +1,7 @@
 import { expect, type APIRequestContext, type Page, test } from '@playwright/test';
 
+import { freeRoom, hotelDay } from './support';
+
 const EMAIL = process.env.E2E_EMAIL ?? 'admin@demo.local';
 const PASSWORD = process.env.E2E_PASSWORD ?? 'Demo-Admin-2026';
 const SHOTS = 'e2e-results/screenshots';
@@ -25,29 +27,12 @@ async function call<T = Record<string, unknown>>(s: Session, method: 'GET' | 'PO
   return (await r.json()) as T;
 }
 
-function hotelDay(tz: string, offset = 0): string {
-  const today = new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
-  const d = new Date(`${today}T00:00:00Z`);
-  d.setUTCDate(d.getUTCDate() + offset);
-  return d.toISOString().slice(0, 10);
-}
-
-/** A reservation arriving today in a free, clean room of a category that still
- * has availability (the demo data is shared between runs). Created through the API. */
+/** A reservation arriving today in a free, clean room (see `freeRoom`). Created through the API. */
 async function arrivalToday(s: Session, lastName: string, nights = 2): Promise<{ id: string; code: string; room: string }> {
-  const start = hotelDay(s.hotel.timezone);
-  const end = hotelDay(s.hotel.timezone, nights);
-  const availability = await call<{ room_type_id: string; nights: { available: number }[] }[]>(s, 'GET', `/availability?start=${start}&end=${end}`);
-  const left = new Map(availability.map((a) => [a.room_type_id, Math.min(...a.nights.map((n) => n.available))]));
-  const free = (await call<{ id: string; number: string; room_type_id: string }[]>(s, 'GET', `/available-rooms?start=${start}&end=${end}`))
-    .filter((r) => (left.get(r.room_type_id) ?? 0) > 0)
-    .sort((a, b) => (left.get(b.room_type_id) ?? 0) - (left.get(a.room_type_id) ?? 0));
-  expect(free.length, 'a free room tonight in a category that is not sold out').toBeGreaterThan(0);
-  const room = free[0];
-  await call(s, 'POST', `/rooms/${room.id}/housekeeping-status`, { status: 'clean' });
+  const room = await freeRoom(s, nights);
   const res = await call<{ id: string; code: string }>(s, 'POST', '/reservations', {
-    arrival: start,
-    departure: end,
+    arrival: hotelDay(s.hotel.timezone),
+    departure: hotelDay(s.hotel.timezone, nights),
     guest: { first_name: 'Desk', last_name: lastName },
     rooms: [{ room_type_id: room.room_type_id, room_id: room.id, adults: 2 }],
     override_restrictions: true,

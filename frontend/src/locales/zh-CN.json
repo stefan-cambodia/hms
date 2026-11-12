@@ -46,7 +46,8 @@
     "billing": "收款与发票",
     "housekeeping": "客房部",
     "maintenance": "维修",
-    "restaurant": "餐厅与酒吧"
+    "restaurant": "餐厅与酒吧",
+    "vehicles": "车辆租赁"
   },
   "auth": {
     "title": "酒店管理系统",
@@ -492,7 +493,8 @@
       "channels": "渠道管理",
       "administration": "系统管理",
       "folio": "客人账单",
-      "restaurant": "餐厅与酒吧"
+      "restaurant": "餐厅与酒吧",
+      "vehicles": "车辆租赁"
     },
     "codes": {
       "hotel_view": "查看酒店信息",
@@ -548,7 +550,10 @@
       "restaurant_kitchen": "厨房显示（制作、出品、沽清）",
       "restaurant_settle": "结账收款及挂房账",
       "restaurant_void": "退菜、作废收款及打折",
-      "restaurant_manage": "管理营业点、菜单和桌台，查看销售"
+      "restaurant_manage": "管理营业点、菜单和桌台，查看销售",
+      "vehicles_view": "查看车队和租车单",
+      "vehicles_rent": "租车（预订、办理取车和还车、收款）",
+      "vehicles_manage": "管理车队和租金；作废收款、打折及免收逾时还车费"
     }
   },
   "sessions": {
@@ -880,7 +885,27 @@
     "BREAKFAST_NOT_INCLUDED": "该宾客今日不含早餐。",
     "TOO_MANY_COVERS": "此房间最多 {{max}} 份早餐。",
     "BREAKFAST_MARK_NOT_FOUND": "此房间今日没有早餐记录。",
-    "VOID_FROM_OUTLET": "这是餐厅或酒吧的账单：请在该账单中作废，而不是在客人账单中作废。"
+    "VOID_FROM_OUTLET": "这是餐厅或酒吧的账单：请在该账单中作废，而不是在客人账单中作废。",
+    "VEHICLE_UNAVAILABLE": "该车辆在此期间的部分时段已被租用。",
+    "VEHICLE_CODE_EXISTS": "已存在使用此车辆编号的车辆。",
+    "VEHICLE_IN_USE": "该车辆已有租车记录，无法删除。请改为停用。",
+    "VEHICLE_NOT_FOUND": "未找到该车辆。",
+    "VEHICLE_NOT_AVAILABLE": "车辆 {{vehicle}} 当前无法出租（{{status}}）。",
+    "INSURANCE_EXPIRED": "{{vehicle}} 的保险有效期至 {{date}}：请先续保再出租。",
+    "REGISTRATION_EXPIRED": "{{vehicle}} 的行驶证有效期至 {{date}}：请先办理续期再出租。",
+    "NO_DRIVER_SERVICE": "此车辆不提供司机服务。",
+    "RENTAL_NOT_FOUND": "未找到该租车单。",
+    "RENTAL_CLOSED": "该租车单已关闭。",
+    "PICKUP_TOO_EARLY": "尚未到取车时间，暂不能办理取车。",
+    "VEHICLE_NOT_RETURNED": "{{vehicle}} 尚未归还（租车单 {{rental}}）。",
+    "LICENCE_REQUIRED": "租用此车辆须提供驾驶证。",
+    "LICENCE_EXPIRED": "驾驶证将在租期结束前过期。",
+    "ODOMETER_BELOW_RECORDED": "里程表读数不能低于 {{odometer}} 公里。",
+    "INVALID_RETURN_TIME": "无法使用此还车时间。",
+    "NO_DEPOSIT_HELD": "此租车单未收取押金。",
+    "NO_SHOW_BEFORE_START": "只能在取车时间之后登记未到店。",
+    "RENTAL_HAS_PAYMENTS": "此租车单已有收款。请先作废收款。",
+    "ROOM_CHARGE_AFTER_RETURN": "车辆归还后才能将租车费用挂房账（届时才能确定最终金额）。"
   },
   "reservations": {
     "description": "所有来源的全部预订。点击预订即可进行管理。",
@@ -1505,8 +1530,7 @@
     "bill_to": "付款方",
     "invoice_search": "编号、预订号、姓名或公司",
     "no_invoices": "暂无发票",
-    "no_invoices_hint": "发票需从预订的客人账单中开具。",
-    "check": "账单 {{number}}"
+    "no_invoices_hint": "发票需从预订的客人账单中开具。"
   },
   "housekeeping": {
     "description": "今日清扫任务：制定计划并分配任务，逐房跟进进度，对清扫完毕的房间进行查房。",
@@ -1832,6 +1856,139 @@
       "area": "区域",
       "area_placeholder": "露台、室内…",
       "seats": "座位数"
+    }
+  },
+  "vehicles": {
+    "description": "踏板摩托车、汽车、自行车等：预订、取车和还车（记录里程表读数和油量）、押金、合同及收款（或挂房账）。",
+    "tabs": {
+      "today": "今日",
+      "schedule": "排期",
+      "fleet": "车队"
+    },
+    "new_rental": "新建租车",
+    "rental": "租车单",
+    "create": "预订",
+    "created_done": "租车单 {{number}} 已预订",
+    "start": "取车时间",
+    "end": "还车时间",
+    "end_after_start": "必须晚于取车时间",
+    "vehicle": "车辆",
+    "no_vehicle": "无匹配车辆",
+    "day": "天",
+    "with_driver": "含司机（每天 +{{rate}}）",
+    "driver": "司机",
+    "driver_included": "含司机",
+    "hotel_guest": "酒店宾客",
+    "other_customer": "其他客户",
+    "notes": "备注",
+    "duration": "{{hours}} 小时 · 按 {{days}} 天计费",
+    "deposit_hint": "取车时收取押金：{{amount}}",
+    "unavailable": {
+      "booked": "已被租用",
+      "maintenance": "维修中",
+      "retired": "已停用",
+      "documents": "保险或行驶证已过期"
+    },
+    "statuses": {
+      "reserved": "已预订",
+      "out": "租用中",
+      "returned": "已还车",
+      "cancelled": "已取消",
+      "no_show": "未到店"
+    },
+    "overdue": "逾期未还",
+    "to_hand_over": "待取车",
+    "out_now": "租用中",
+    "due_back": "今日待还",
+    "upcoming": "后续预订",
+    "nothing_active": "暂无进行中的租车",
+    "nothing_active_hint": "请通过“新建租车”预订车辆。",
+    "picked_up_line": "取车 {{time}} · {{km}} 公里 · 油量 {{fuel}}",
+    "returned_line": "还车 {{time}} · {{km}} 公里 · 油量 {{fuel}}",
+    "licence_line": "驾驶证 ••••{{last4}}",
+    "deposit": "押金",
+    "deposit_kinds": {
+      "none": "无",
+      "cash": "现金",
+      "card_hold": "信用卡预授权",
+      "passport": "押护照",
+      "id_card": "押身份证",
+      "other": "其他"
+    },
+    "deposit_returned": "已退还",
+    "give_back_deposit": "退还押金",
+    "deposit_returned_done": "押金已标记为已退还",
+    "vehicle_price": "车辆租金",
+    "late_fee": "逾时还车",
+    "fuel_charge": "燃油",
+    "damage": "损坏赔偿",
+    "damage_note": "损坏说明",
+    "hand_over": "办理取车",
+    "handed_over_done": "已取车",
+    "take_back": "办理还车",
+    "returned_done": "已还车",
+    "returned_late_done": "已还车（逾时还车费 {{fee}}）",
+    "late_hint": "此车辆逾时归还：超出时间按该车辆的租金标准收费（前 59 分钟免费）。",
+    "change_end": "更改还车时间",
+    "change_end_hint": "车辆租金将重新计算；如其他租车单需要使用该车辆，则无法更改。",
+    "cancel_rental": "取消租车",
+    "cancel_body": "请说明取消此租车单的原因。车辆将恢复可租。",
+    "no_show": "标记未到店",
+    "no_show_done": "已标记为未到店",
+    "contract": "租赁合同",
+    "room_charge_hint": "整笔租车费用将计入宾客的客人账单，在退房时结算。",
+    "void_payment_body": "该笔收款将被作废。如为挂房账，该费用也会从宾客的客人账单中移除。",
+    "licence_number": "驾驶证号",
+    "licence_hint": "加密存储，仅显示后 4 位",
+    "licence_country": "签发国家/地区",
+    "licence_expiry": "有效期至",
+    "odometer": "里程表读数",
+    "fuel": "油量",
+    "condition": "车况",
+    "condition_placeholder": "划痕、凹陷、缺失物品…（包括头盔、钥匙）",
+    "deposit_given_back": "已向承租人退还押金",
+    "needs_maintenance": "将车辆送修",
+    "waive_late_fee": "免收逾时还车费",
+    "fleet_hint": "酒店出租的所有车辆及其租金和证件。保险或行驶证已过期的车辆无法出租。",
+    "add_vehicle": "添加车辆",
+    "edit_vehicle": "编辑车辆",
+    "delete_vehicle": "删除车辆 {{code}}？",
+    "no_fleet": "暂无车辆",
+    "no_fleet_hint": "请添加酒店出租的踏板摩托车、汽车或自行车。",
+    "rates": "租金",
+    "code": "车辆编号",
+    "kind": "类型",
+    "plate": "车牌号",
+    "make": "品牌",
+    "model": "型号",
+    "color": "颜色",
+    "seats": "座位数",
+    "daily_rate": "日租金",
+    "hourly_rate": "小时租金",
+    "driver_rate": "司机费（每天）",
+    "insurance_expiry": "保险有效期至",
+    "registration_expiry": "行驶证有效期至",
+    "kinds": {
+      "scooter": "踏板摩托车",
+      "motorbike": "摩托车",
+      "car": "汽车",
+      "van": "面包车",
+      "bicycle": "自行车",
+      "e_bike": "电动自行车",
+      "tuk_tuk": "嘟嘟车",
+      "boat": "船",
+      "other": "其他"
+    },
+    "vehicle_status": {
+      "available": "可租",
+      "maintenance": "维修中",
+      "retired": "已停用"
+    },
+    "document_warnings": {
+      "insurance_expiry_expired": "保险已于 {{date}} 过期",
+      "insurance_expiry_soon": "保险将于 {{date}} 到期",
+      "registration_expiry_expired": "行驶证已于 {{date}} 过期",
+      "registration_expiry_soon": "行驶证将于 {{date}} 到期"
     }
   }
 }

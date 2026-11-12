@@ -224,6 +224,27 @@ folio as a `folio_charges` row of kind `outlet` (net amount + the check's tax
 lines), so the folio grows by exactly the check total and the invoice shows the
 right taxes; it can only be voided from the check, which voids both together.
 
+### Vehicle rental
+
+| Table | Notes |
+|-------|-------|
+| `vehicles` | id, hotel_id, code (fleet number, `UNIQUE(hotel_id, code)`), plate, kind (`scooter` \| `motorbike` \| `car` \| `van` \| `bicycle` \| `e_bike` \| `tuk_tuk` \| `boat` \| `other`), make, model, color, year, seats, transmission, daily_rate, hourly_rate, driver_daily_rate, deposit_amount, odometer, status (`available` \| `maintenance` \| `retired`), insurance_expiry, registration_expiry, notes, version. A hotel without vehicles does not show the module (except to managers). |
+| `vehicle_rentals` | id, hotel_id, number (`RNT-000001`, gapless), vehicle_id, guest_id (CRM guest; created on the fly for walk-in customers), reservation_room_id (in-house guest), status (`reserved` → `out` → `returned`, or `cancelled` / `no_show`), start_at, end_at, picked_up_at, returned_at, **period** = `tstzrange(start_at, coalesce(returned_at, end_at))` (generated), with_driver, licence_number (**encrypted**) + last 4 + country + expiry, odometer/fuel/condition out and in, deposit kind/amount/currency/note/returned_at, base_amount and driver_amount (fixed when booked), late_fee, fuel_charge, damage_charge + note, discount + reason, subtotal, tax_total, tax_breakdown, total, paid_total, notes, cancel_reason, version. |
+| `vehicle_rental_payments` | Same shape and append-only trigger as restaurant payments (cash change, currencies, card brand/last 4, room charge with folio_charge_id). |
+
+Integrity: `EXCLUDE USING gist (vehicle_id WITH =, period WITH &&) WHERE status IN ('reserved','out')`
+— a vehicle can never be rented twice for overlapping periods (tested with
+concurrent requests and raw SQL). Price = whole days × daily rate + remaining
+started hours × hourly rate (capped at a day) or a started day; driver per
+started day; late return = price difference between actual and planned
+periods after a 59-minute grace (also applied to the hour rounding). Safety:
+no rental of a vehicle in maintenance/retired or whose insurance or
+registration expires before the end; licence required at hand-over for
+motorised self-drive vehicles; a vehicle still out cannot be handed over
+again. A room charge (once returned) posts the rental to the guest's folio as
+an `outlet` charge with its tax lines, through the same helpers as the
+restaurant (`billing/pos.py`).
+
 ### Users and security
 
 | Table | Notes |

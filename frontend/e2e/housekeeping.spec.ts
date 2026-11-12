@@ -1,5 +1,7 @@
 import { expect, type Page, test } from '@playwright/test';
 
+import { freeRoom } from './support';
+
 const EMAIL = process.env.E2E_EMAIL ?? 'admin@demo.local';
 const PASSWORD = process.env.E2E_PASSWORD ?? 'Demo-Admin-2026';
 const SHOTS = 'e2e-results/screenshots';
@@ -20,26 +22,6 @@ async function get<T>(page: Page, s: Session, path: string): Promise<T> {
   const r = await page.request.get(`/api/v1/hotels/${s.hotel.id}${path}`);
   expect(r.ok(), `${path}: ${r.status()}`).toBeTruthy();
   return (await r.json()) as T;
-}
-
-function hotelDay(tz: string, offset = 0): string {
-  const today = new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
-  const d = new Date(`${today}T00:00:00Z`);
-  d.setUTCDate(d.getUTCDate() + offset);
-  return d.toISOString().slice(0, 10);
-}
-
-/** A room free tonight in a category that is not sold out (demo data is shared between runs). */
-async function freeRoomTonight(page: Page, s: Session): Promise<string> {
-  const start = hotelDay(s.hotel.timezone);
-  const end = hotelDay(s.hotel.timezone, 1);
-  const availability = await get<{ room_type_id: string; nights: { available: number }[] }[]>(page, s, `/availability?start=${start}&end=${end}`);
-  const left = new Map(availability.map((a) => [a.room_type_id, Math.min(...a.nights.map((n) => n.available))]));
-  const free = (await get<{ number: string; room_type_id: string }[]>(page, s, `/available-rooms?start=${start}&end=${end}`)).filter(
-    (r) => (left.get(r.room_type_id) ?? 0) > 1,
-  );
-  expect(free.length, 'a free room tonight').toBeGreaterThan(0);
-  return free[Math.floor(Math.random() * free.length)].number;
 }
 
 async function openApp(page: Page, path: string) {
@@ -93,7 +75,7 @@ test('cleaning task: add, start, done, approve; the room shows as inspected', as
 test('maintenance: report with room out of service, work, complete; room back in service and to clean', async ({ page }, info) => {
   test.skip(info.project.name !== 'desktop', 'workflow checked once');
   const s = await apiLogin(page);
-  const number = await freeRoomTonight(page, s);
+  const number = (await freeRoom({ request: page.request, ...s }, 1, 2)).number;
   const title = `Leaking tap ${Date.now() % 100000}`;
 
   await openApp(page, '/maintenance');

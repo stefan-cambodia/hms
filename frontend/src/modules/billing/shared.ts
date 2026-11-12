@@ -46,7 +46,7 @@ export function toBase(amount: number, unitsPerBase: string | null): number | nu
 
 export function chargeTitle(c: FolioCharge, t: TFunction, language: string, fallback: string): string {
   if (c.kind === 'service') return pickLocalized(c.name, language, fallback) || c.description || '';
-  if (c.kind === 'outlet') return `${pickLocalized(c.name, language, fallback)} · ${t('billing.check', { number: c.description })}`;
+  if (c.kind === 'outlet') return `${pickLocalized(c.name, language, fallback)} · ${c.description ?? ''}`;
   if (c.kind === 'fee') return t(`billing.fee_types.${c.fee_type ?? 'other'}`);
   return t('billing.adjustment');
 }

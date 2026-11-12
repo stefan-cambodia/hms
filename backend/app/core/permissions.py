@@ -54,6 +54,10 @@ class P(StrEnum):
     RESTAURANT_SETTLE = "restaurant.settle"
     RESTAURANT_VOID = "restaurant.void"
     RESTAURANT_MANAGE = "restaurant.manage"
+    # Vehicle rental
+    VEHICLES_VIEW = "vehicles.view"
+    VEHICLES_RENT = "vehicles.rent"
+    VEHICLES_MANAGE = "vehicles.manage"
     # Pricing
     PRICING_VIEW = "pricing.view"
     PRICING_MANAGE = "pricing.manage"
@@ -113,6 +117,7 @@ PERMISSION_GROUPS: dict[str, list[P]] = {
         P.RESTAURANT_VOID,
         P.RESTAURANT_MANAGE,
     ],
+    "vehicles": [P.VEHICLES_VIEW, P.VEHICLES_RENT, P.VEHICLES_MANAGE],
     "pricing": [P.PRICING_VIEW, P.PRICING_MANAGE],
     "housekeeping": [P.HOUSEKEEPING_VIEW, P.HOUSEKEEPING_UPDATE, P.HOUSEKEEPING_ASSIGN],
     "maintenance": [P.MAINTENANCE_VIEW, P.MAINTENANCE_REPORT, P.MAINTENANCE_MANAGE],
@@ -148,6 +153,8 @@ _FRONT = {
     P.HOUSEKEEPING_VIEW,
     P.MAINTENANCE_VIEW,
     P.MAINTENANCE_REPORT,
+    P.VEHICLES_VIEW,
+    P.VEHICLES_RENT,
 }
 
 # code -> permissions. Names/descriptions are translated client-side (roles.system.<code>).

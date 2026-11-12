@@ -1,5 +1,7 @@
 import { expect, type Page, test } from '@playwright/test';
 
+import { freeRoom, hotelDay } from './support';
+
 const EMAIL = process.env.E2E_EMAIL ?? 'admin@demo.local';
 const PASSWORD = process.env.E2E_PASSWORD ?? 'Demo-Admin-2026';
 const SHOTS = 'e2e-results/screenshots';
@@ -21,13 +23,6 @@ async function call<T = Record<string, unknown>>(page: Page, s: Session, method:
   const r = method === 'GET' ? await page.request.get(url) : await page.request.post(url, { data, headers: { 'X-CSRF-Token': s.csrf } });
   if (!r.ok()) throw new Error(`${method} ${path}: ${r.status()} ${await r.text()}`);
   return (await r.json()) as T;
-}
-
-function hotelDay(tz: string, offset = 0): string {
-  const today = new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
-  const d = new Date(`${today}T00:00:00Z`);
-  d.setUTCDate(d.getUTCDate() + offset);
-  return d.toISOString().slice(0, 10);
 }
 
 /** The demo hotel's restaurant, menu and tables (created once, reused by later runs). */
@@ -130,13 +125,7 @@ test('room service charged to the guest room appears on the folio', async ({ pag
   // A guest checked in today.
   const start = hotelDay(s.hotel.timezone);
   const end = hotelDay(s.hotel.timezone, 1);
-  const availability = await call<{ room_type_id: string; nights: { available: number }[] }[]>(page, s, 'GET', `/availability?start=${start}&end=${end}`);
-  const left = new Map(availability.map((a) => [a.room_type_id, Math.min(...a.nights.map((n) => n.available))]));
-  const free = (await call<{ id: string; number: string; room_type_id: string }[]>(page, s, 'GET', `/available-rooms?start=${start}&end=${end}`)).filter(
-    (r) => (left.get(r.room_type_id) ?? 0) > 0,
-  );
-  const room = free[0];
-  await call(page, s, 'POST', `/rooms/${room.id}/housekeeping-status`, { status: 'clean' });
+  const room = await freeRoom({ request: page.request, ...s });
   const guestName = `Diner${Date.now() % 100000}`;
   const res = await call<{ id: string; version: number }>(page, s, 'POST', '/reservations', {
     arrival: start,

@@ -35,9 +35,7 @@ from app.core.errors import Conflict, Forbidden, NotFound, ValidationFailed, fie
 from app.core.money import ZERO, round_money
 from app.core.permissions import P
 from app.modules.auth.models import User
-from app.modules.billing import folio
-from app.modules.billing import service as billing
-from app.modules.billing.models import FolioCharge
+from app.modules.billing import folio, pos
 from app.modules.facilities.models import Facility
 from app.modules.guests.models import Guest
 from app.modules.hotels.models import Hotel
@@ -324,21 +322,6 @@ def _require_open(order: Order) -> None:
         raise Conflict("ORDER_CLOSED", params={"status": order.status})
 
 
-async def _stay(
-    db: AsyncSession, hotel_id: uuid.UUID, rr_id: uuid.UUID, *, in_house: bool
-) -> ReservationRoom:
-    rr = (
-        await db.scalars(
-            select(ReservationRoom).where(ReservationRoom.id == rr_id, ReservationRoom.hotel_id == hotel_id)
-        )
-    ).one_or_none()
-    if rr is None:
-        raise NotFound("RESERVATION_ROOM_NOT_FOUND")
-    if in_house and (rr.checked_in_at is None or rr.checked_out_at is not None):
-        raise Conflict("GUEST_NOT_IN_HOUSE")
-    return rr
-
-
 # --- orders --------------------------------------------------------------------------------
 
 
@@ -351,7 +334,7 @@ async def open_order(db: AsyncSession, ctx: HotelContext, data: Any) -> Order:
         if table.outlet_id != outlet.id or not table.is_active:
             raise ValidationFailed("TABLE_NOT_FOUND", fields=[field_error("table_id", "TABLE_NOT_FOUND")])
     if data.reservation_room_id:
-        await _stay(db, ctx.hotel_id, data.reservation_room_id, in_house=True)
+        await pos.in_house_stay(db, ctx.hotel_id, data.reservation_room_id)
     hotel = await _hotel(db, ctx.hotel_id)
     order = Order(
         id=uuid.uuid4(),
@@ -387,7 +370,7 @@ async def update_order(db: AsyncSession, ctx: HotelContext, order_id: uuid.UUID,
         if table.outlet_id != order.outlet_id:
             raise ValidationFailed("TABLE_NOT_FOUND", fields=[field_error("table_id", "TABLE_NOT_FOUND")])
     if changes.get("reservation_room_id"):
-        await _stay(db, ctx.hotel_id, changes["reservation_room_id"], in_house=True)
+        await pos.in_house_stay(db, ctx.hotel_id, changes["reservation_room_id"])
     before = {k: getattr(order, k) for k in changes}
     for k, v in changes.items():
         setattr(order, k, v)
@@ -664,20 +647,19 @@ async def record_payment(
             raise ValidationFailed(
                 "ROOM_REQUIRED", fields=[field_error("reservation_room_id", "ROOM_REQUIRED")]
             )
-        rr = await _stay(db, ctx.hotel_id, rr_id, in_house=True)
+        rr = await pos.in_house_stay(db, ctx.hotel_id, rr_id)
         if order.paid_total != ZERO:
             raise Conflict("ROOM_CHARGE_FULL_ONLY")  # the whole check goes to the room
-        res = await billing.load_reservation(db, ctx.hotel_id, rr.reservation_id, for_update=True)
         outlet = await db.get(Outlet, order.outlet_id)
         assert outlet is not None
-        charge = await billing.post_outlet_charge(
+        charge = await pos.charge_to_room(
             db,
             ctx,
-            res,
-            reservation_room_id=rr.id,
+            rr,
             name=dict(outlet.name),
-            description=order.number,
-            net_amount=order.total - order.tax_total,
+            reference=order.number,
+            total=order.total,
+            tax_total=order.tax_total,
             tax_lines=order.tax_breakdown,
             service_date=order.business_date,
         )
@@ -698,33 +680,18 @@ async def record_payment(
         )
         order.reservation_room_id = rr.id
     else:
-        currency = data.currency or base_cur
-        rate = await billing.current_rate(db, hotel, currency)
-        if data.exchange_rate is not None and data.exchange_rate != rate:
-            raise Conflict("EXCHANGE_RATE_CHANGED", params={"currency": currency, "rate": str(rate)})
-        amount = data.amount
-        amount_base = round_money(amount / rate, base_cur)
-        if amount_base <= ZERO:
-            raise ValidationFailed("AMOUNT_TOO_SMALL", fields=[field_error("amount", "AMOUNT_TOO_SMALL")])
-        tendered = None
-        if amount_base > balance:
-            if data.method != "cash":
-                raise Conflict("PAYMENT_EXCEEDS_BALANCE", params={"balance": str(balance)})
-            # Cash: keep the balance, give the rest back as change.
-            tendered = amount
-            amount = round_money(balance * rate, currency)
-            amount_base = balance
-            change = tendered - amount
+        tendered = await pos.tender(db, hotel, balance, data)
+        change = tendered.change
         payment = OrderPayment(
             id=uuid.uuid4(),
             hotel_id=ctx.hotel_id,
             order_id=order.id,
             method=data.method,
-            amount=amount,
-            currency=currency,
-            exchange_rate=rate,
-            amount_base=amount_base,
-            tendered=tendered,
+            amount=tendered.amount,
+            currency=tendered.currency,
+            exchange_rate=tendered.exchange_rate,
+            amount_base=tendered.amount_base,
+            tendered=tendered.tendered,
             reference=data.reference,
             card_brand=data.card_brand,
             card_last4=data.card_last4,
@@ -774,10 +741,7 @@ async def void_payment(
         raise Conflict("ALREADY_VOID")
     now = datetime.now(UTC)
     if payment.folio_charge_id:
-        charge = await db.get(FolioCharge, payment.folio_charge_id)
-        assert charge is not None
-        res = await billing.load_reservation(db, ctx.hotel_id, charge.reservation_id, for_update=True)
-        await billing.void_charge_tx(db, ctx, res, charge, f"{order.number}: {reason}")
+        await pos.void_room_charge(db, ctx, payment.folio_charge_id, f"{order.number}: {reason}")
     payment.is_void, payment.void_reason, payment.voided_at, payment.voided_by = (
         True,
         reason,
@@ -1003,30 +967,6 @@ async def kitchen(
         )
         t["lines"].append(LineOut.model_validate(line))
     return list(tickets.values())
-
-
-async def in_house_guests(db: AsyncSession, ctx: HotelContext, q: str | None) -> list[dict[str, Any]]:
-    stmt = (
-        select(ReservationRoom.id)
-        .join(Reservation, Reservation.id == ReservationRoom.reservation_id)
-        .join(Guest, Guest.id == Reservation.booker_guest_id)
-        .outerjoin(Room, Room.id == ReservationRoom.room_id)
-        .where(
-            ReservationRoom.hotel_id == ctx.hotel_id,
-            ReservationRoom.checked_in_at.is_not(None),
-            ReservationRoom.checked_out_at.is_(None),
-        )
-    )
-    if q:
-        like = f"%{q.strip()}%"
-        stmt = stmt.where(
-            Room.number.ilike(like)
-            | func.concat(Guest.first_name, " ", Guest.last_name).ilike(like)
-            | Reservation.code.ilike(like)
-        )
-    ids = set(await db.scalars(stmt.limit(50)))
-    refs = await _guest_refs(db, ids)
-    return sorted(refs.values(), key=lambda r: (r["room_number"] or "", r["guest_name"]))
 
 
 # --- breakfast ----------------------------------------------------------------------------

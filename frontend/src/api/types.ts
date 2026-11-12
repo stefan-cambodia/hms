@@ -998,3 +998,105 @@ export interface SalesReport {
   top_items: { menu_item_id: UUID | null; name: LocalizedText; quantity: number; amount: string }[];
   by_method: { method: PosMethod; currency: string; count: number; amount: string; amount_base: string }[];
 }
+
+// --- vehicle rental -----------------------------------------------------------------
+
+export type VehicleKind = 'scooter' | 'motorbike' | 'car' | 'van' | 'bicycle' | 'e_bike' | 'tuk_tuk' | 'boat' | 'other';
+export type RentalStatus = 'reserved' | 'out' | 'returned' | 'cancelled' | 'no_show';
+export type DepositKind = 'none' | 'cash' | 'card_hold' | 'passport' | 'id_card' | 'other';
+
+export interface Vehicle {
+  id: UUID;
+  code: string;
+  plate: string | null;
+  kind: VehicleKind;
+  make: string | null;
+  model: string | null;
+  color: string | null;
+  year: number | null;
+  seats: number;
+  transmission: 'manual' | 'automatic' | null;
+  daily_rate: string;
+  hourly_rate: string | null;
+  driver_daily_rate: string | null;
+  deposit_amount: string;
+  odometer: number;
+  status: 'available' | 'maintenance' | 'retired';
+  insurance_expiry: string | null;
+  registration_expiry: string | null;
+  notes: string | null;
+  sort_order: number;
+  version: number;
+  available: boolean | null;
+  unavailable_reason: string | null;
+  document_warning: string | null;
+}
+
+export interface RentalQuote {
+  hours: number;
+  charge_days: number;
+  base_amount: string;
+  driver_amount: string;
+  subtotal: string;
+  tax_total: string;
+  total: string;
+  deposit_amount: string;
+}
+
+export interface Rental {
+  id: UUID;
+  number: string;
+  vehicle_id: UUID;
+  vehicle_code: string;
+  vehicle_label: string;
+  vehicle_kind: VehicleKind;
+  vehicle_odometer: number;
+  guest_id: UUID;
+  guest_name: string;
+  guest_phone: string | null;
+  reservation_room_id: UUID | null;
+  room_number: string | null;
+  in_house: boolean;
+  status: RentalStatus;
+  start_at: string;
+  end_at: string;
+  picked_up_at: string | null;
+  returned_at: string | null;
+  overdue: boolean;
+  with_driver: boolean;
+  licence_required: boolean;
+  licence_last4: string | null;
+  licence_country: string | null;
+  licence_expiry: string | null;
+  odometer_out: number | null;
+  odometer_in: number | null;
+  fuel_out: number | null;
+  fuel_in: number | null;
+  condition_out: string | null;
+  condition_in: string | null;
+  deposit_kind: DepositKind;
+  deposit_amount: string | null;
+  deposit_currency: string | null;
+  deposit_note: string | null;
+  deposit_returned_at: string | null;
+  base_amount: string;
+  driver_amount: string;
+  late_fee: string;
+  fuel_charge: string;
+  damage_charge: string;
+  damage_note: string | null;
+  discount_amount: string;
+  discount_reason: string | null;
+  subtotal: string;
+  tax_total: string;
+  tax_breakdown: TaxLine[];
+  total: string;
+  paid_total: string;
+  balance: string;
+  notes: string | null;
+  cancel_reason: string | null;
+  created_at: string;
+  version: number;
+  payments: OrderPayment[];
+  change_due: string | null;
+}

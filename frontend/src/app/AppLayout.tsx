@@ -66,7 +66,16 @@ export function AppLayout() {
     enabled: !!hotel && can('restaurant.view'),
     staleTime: 60_000,
   });
-  const features = { restaurant: can('restaurant.manage') || (outlets.data ?? []).some((o) => o.is_active) };
+  const fleet = useQuery({
+    queryKey: hotel ? hotelKey(hotel.id, 'vehicle', 'nav') : ['no-hotel-fleet'],
+    queryFn: ({ signal }) => api.get<{ status: string }[]>(`/hotels/${hotel!.id}/vehicles`, signal),
+    enabled: !!hotel && can('vehicles.view'),
+    staleTime: 60_000,
+  });
+  const features = {
+    restaurant: can('restaurant.manage') || (outlets.data ?? []).some((o) => o.is_active),
+    vehicles: can('vehicles.manage') || (fleet.data ?? []).some((v) => v.status !== 'retired'),
+  };
 
   if (!me || !hotel) return null;
   const items = NAV_ITEMS.filter((i) => (!i.permission || can(i.permission)) && (!i.feature || features[i.feature]));

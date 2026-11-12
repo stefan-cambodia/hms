@@ -44,6 +44,8 @@ const DEPENDENTS: Record<string, string[]> = {
   currency: ['currency'],
   housekeeping_task: ['housekeeping_task', 'room_board'],
   restaurant_order: ['restaurant_order'],
+  vehicle: ['vehicle', 'vehicle_rental'],
+  vehicle_rental: ['vehicle_rental', 'vehicle'],
   menu_item: ['menu_item', 'restaurant_order'],
   restaurant_outlet: ['restaurant_outlet', 'restaurant_order'],
   maintenance_request: ['maintenance_request', 'room_board', 'calendar'],

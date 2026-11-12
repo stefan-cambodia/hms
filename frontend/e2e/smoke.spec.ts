@@ -80,10 +80,13 @@ test('interface language switches instantly and persists per user', async ({ pag
   await page.getByLabel(/Password|Mot de passe/).fill(PASSWORD);
   await page.getByRole('button', { name: /Sign in|Se connecter/ }).click();
   await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
-  // Restore English for the following tests.
+  // Restore English for the following tests, and wait until the preference is
+  // saved: the page closes right after this test, which would abort the request.
   await page.getByRole('button', { name: /Langue|Language/ }).click();
+  const saved = page.waitForResponse((r) => r.url().endsWith('/api/v1/auth/me') && r.request().method() === 'PATCH');
   await page.getByRole('menuitem', { name: 'English' }).click();
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  expect((await saved).ok()).toBeTruthy();
 });
 
 test('a change on one device appears on another without refresh', async ({ browser }, info) => {

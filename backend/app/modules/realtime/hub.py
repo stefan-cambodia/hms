@@ -36,6 +36,8 @@ ENTITY_PERMISSIONS: dict[str, str] = {
     "maintenance_request": P.MAINTENANCE_VIEW,
     "rate": P.PRICING_VIEW,
     "restaurant_order": P.RESTAURANT_VIEW,
+    "vehicle": P.VEHICLES_VIEW,
+    "vehicle_rental": P.VEHICLES_VIEW,
     "menu_item": P.RESTAURANT_VIEW,
     "restaurant_outlet": P.RESTAURANT_VIEW,
     "rate_plan": P.PRICING_VIEW,

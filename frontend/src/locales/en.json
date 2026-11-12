@@ -46,7 +46,8 @@
     "billing": "Payments & invoices",
     "housekeeping": "Housekeeping",
     "maintenance": "Maintenance",
-    "restaurant": "Restaurant & bar"
+    "restaurant": "Restaurant & bar",
+    "vehicles": "Vehicle rental"
   },
   "auth": {
     "title": "Hotel Management System",
@@ -499,7 +500,8 @@
       "channels": "Channel manager",
       "administration": "Administration",
       "folio": "Guest folio",
-      "restaurant": "Restaurant & bar"
+      "restaurant": "Restaurant & bar",
+      "vehicles": "Vehicle rental"
     },
     "codes": {
       "hotel_view": "View hotel information",
@@ -555,7 +557,10 @@
       "restaurant_kitchen": "Kitchen display (prepare, ready, sold out)",
       "restaurant_settle": "Take payment and charge checks to rooms",
       "restaurant_void": "Void items and payments, give discounts",
-      "restaurant_manage": "Set up outlets, menus and tables; see sales"
+      "restaurant_manage": "Set up outlets, menus and tables; see sales",
+      "vehicles_view": "See the fleet and rentals",
+      "vehicles_rent": "Rent vehicles: book, hand over, take back, take payment",
+      "vehicles_manage": "Manage the fleet and rates; void payments, discounts, waive late fees"
     }
   },
   "sessions": {
@@ -887,7 +892,27 @@
     "BREAKFAST_NOT_INCLUDED": "Breakfast is not included for this guest today.",
     "TOO_MANY_COVERS": "At most {{max}} breakfasts for this room.",
     "BREAKFAST_MARK_NOT_FOUND": "No breakfast recorded for this room today.",
-    "VOID_FROM_OUTLET": "This is a restaurant or bar check: void it from the check, not from the folio."
+    "VOID_FROM_OUTLET": "This is a restaurant or bar check: void it from the check, not from the folio.",
+    "VEHICLE_UNAVAILABLE": "This vehicle is already rented for part of this period.",
+    "VEHICLE_CODE_EXISTS": "A vehicle with this fleet number already exists.",
+    "VEHICLE_IN_USE": "This vehicle has rentals and cannot be deleted. Retire it instead.",
+    "VEHICLE_NOT_FOUND": "Vehicle not found.",
+    "VEHICLE_NOT_AVAILABLE": "Vehicle {{vehicle}} cannot be rented at the moment ({{status}}).",
+    "INSURANCE_EXPIRED": "The insurance of {{vehicle}} ends on {{date}}: renew it before renting.",
+    "REGISTRATION_EXPIRED": "The registration of {{vehicle}} ends on {{date}}: renew it before renting.",
+    "NO_DRIVER_SERVICE": "No driver is offered with this vehicle.",
+    "RENTAL_NOT_FOUND": "Rental not found.",
+    "RENTAL_CLOSED": "This rental is closed.",
+    "PICKUP_TOO_EARLY": "Too early to hand over this vehicle.",
+    "VEHICLE_NOT_RETURNED": "{{vehicle}} has not been returned yet by rental {{rental}}.",
+    "LICENCE_REQUIRED": "A driving licence is required for this vehicle.",
+    "LICENCE_EXPIRED": "The driving licence expires before the end of the rental.",
+    "ODOMETER_BELOW_RECORDED": "The odometer cannot be below {{odometer}} km.",
+    "INVALID_RETURN_TIME": "This return time is not possible.",
+    "NO_DEPOSIT_HELD": "No deposit is held for this rental.",
+    "NO_SHOW_BEFORE_START": "A no-show can only be recorded after the start time.",
+    "RENTAL_HAS_PAYMENTS": "This rental has payments. Void them first.",
+    "ROOM_CHARGE_AFTER_RETURN": "A rental can be charged to the room once the vehicle is returned (the final amount is then known)."
   },
   "reservations": {
     "description": "Every booking, whatever its source. Click a reservation to manage it.",
@@ -1529,8 +1554,7 @@
     "bill_to": "Billed to",
     "invoice_search": "Number, reservation, name or company",
     "no_invoices": "No invoices",
-    "no_invoices_hint": "Invoices are issued from a reservation's folio.",
-    "check": "check {{number}}"
+    "no_invoices_hint": "Invoices are issued from a reservation's folio."
   },
   "housekeeping": {
     "description": "Today's cleaning tasks: plan and assign them, follow progress room by room, inspect finished rooms.",
@@ -1867,6 +1891,139 @@
       "area": "Area",
       "area_placeholder": "Terrace, inside…",
       "seats": "Seats"
+    }
+  },
+  "vehicles": {
+    "description": "Scooters, cars, bicycles and more: bookings, hand-over and return with odometer and fuel, deposits, contracts and payment (or charge to the guest's room).",
+    "tabs": {
+      "today": "Today",
+      "schedule": "Schedule",
+      "fleet": "Fleet"
+    },
+    "new_rental": "New rental",
+    "rental": "Rental",
+    "create": "Book",
+    "created_done": "Rental {{number}} booked",
+    "start": "From",
+    "end": "Until",
+    "end_after_start": "Must be after the start",
+    "vehicle": "Vehicle",
+    "no_vehicle": "No vehicle",
+    "day": "day",
+    "with_driver": "With driver (+{{rate}} per day)",
+    "driver": "Driver",
+    "driver_included": "with driver",
+    "hotel_guest": "Hotel guest",
+    "other_customer": "Other customer",
+    "notes": "Notes",
+    "duration": "{{hours}} h · {{days}} day(s) charged",
+    "deposit_hint": "Deposit asked at hand-over: {{amount}}",
+    "unavailable": {
+      "booked": "already rented",
+      "maintenance": "in maintenance",
+      "retired": "retired",
+      "documents": "insurance or registration expired"
+    },
+    "statuses": {
+      "reserved": "Booked",
+      "out": "Out",
+      "returned": "Returned",
+      "cancelled": "Cancelled",
+      "no_show": "No-show"
+    },
+    "overdue": "Overdue",
+    "to_hand_over": "To hand over",
+    "out_now": "Out now",
+    "due_back": "Due back today",
+    "upcoming": "Coming",
+    "nothing_active": "No rental in progress",
+    "nothing_active_hint": "Book a vehicle with “New rental”.",
+    "picked_up_line": "Handed over {{time}} · {{km}} km · fuel {{fuel}}",
+    "returned_line": "Returned {{time}} · {{km}} km · fuel {{fuel}}",
+    "licence_line": "licence ••••{{last4}}",
+    "deposit": "Deposit",
+    "deposit_kinds": {
+      "none": "None",
+      "cash": "Cash",
+      "card_hold": "Card guarantee",
+      "passport": "Passport held",
+      "id_card": "ID card held",
+      "other": "Other"
+    },
+    "deposit_returned": "returned",
+    "give_back_deposit": "Deposit given back",
+    "deposit_returned_done": "Deposit marked as given back",
+    "vehicle_price": "Vehicle",
+    "late_fee": "Late return",
+    "fuel_charge": "Fuel",
+    "damage": "Damage",
+    "damage_note": "Damage details",
+    "hand_over": "Hand over",
+    "handed_over_done": "Vehicle handed over",
+    "take_back": "Take back",
+    "returned_done": "Vehicle returned",
+    "returned_late_done": "Vehicle returned (late return {{fee}})",
+    "late_hint": "This vehicle is back late: the extra time is charged at the vehicle's rates (the first 59 minutes are free).",
+    "change_end": "Change return time",
+    "change_end_hint": "The vehicle price is recalculated; refused if another rental needs the vehicle.",
+    "cancel_rental": "Cancel rental",
+    "cancel_body": "Why is this rental cancelled? The vehicle becomes available again.",
+    "no_show": "No-show",
+    "no_show_done": "Marked as no-show",
+    "contract": "Contract",
+    "room_charge_hint": "The whole rental is added to the guest's folio and paid at check-out.",
+    "void_payment_body": "The payment is cancelled. A room charge is also removed from the guest's folio.",
+    "licence_number": "Driving licence number",
+    "licence_hint": "Stored encrypted; only the last 4 digits are shown",
+    "licence_country": "Issued in",
+    "licence_expiry": "Valid until",
+    "odometer": "Odometer",
+    "fuel": "Fuel",
+    "condition": "Condition",
+    "condition_placeholder": "Scratches, dents, missing items… (also helmets, keys)",
+    "deposit_given_back": "Deposit given back to the renter",
+    "needs_maintenance": "Send the vehicle to maintenance",
+    "waive_late_fee": "Do not charge the late return",
+    "fleet_hint": "Every vehicle the hotel rents out, with its rates and documents. A vehicle whose insurance or registration has expired cannot be rented.",
+    "add_vehicle": "Add vehicle",
+    "edit_vehicle": "Edit vehicle",
+    "delete_vehicle": "Delete {{code}}?",
+    "no_fleet": "No vehicles yet",
+    "no_fleet_hint": "Add the scooters, cars or bicycles the hotel rents out.",
+    "rates": "Rates",
+    "code": "Fleet number",
+    "kind": "Type",
+    "plate": "Plate",
+    "make": "Make",
+    "model": "Model",
+    "color": "Colour",
+    "seats": "Seats",
+    "daily_rate": "Per day",
+    "hourly_rate": "Per hour",
+    "driver_rate": "Driver per day",
+    "insurance_expiry": "Insurance until",
+    "registration_expiry": "Registration until",
+    "kinds": {
+      "scooter": "Scooter",
+      "motorbike": "Motorbike",
+      "car": "Car",
+      "van": "Van",
+      "bicycle": "Bicycle",
+      "e_bike": "E-bike",
+      "tuk_tuk": "Tuk-tuk",
+      "boat": "Boat",
+      "other": "Other"
+    },
+    "vehicle_status": {
+      "available": "Available",
+      "maintenance": "Maintenance",
+      "retired": "Retired"
+    },
+    "document_warnings": {
+      "insurance_expiry_expired": "Insurance expired {{date}}",
+      "insurance_expiry_soon": "Insurance ends {{date}}",
+      "registration_expiry_expired": "Registration expired {{date}}",
+      "registration_expiry_soon": "Registration ends {{date}}"
     }
   }
 }
