@@ -1205,3 +1205,98 @@ export interface ChannelBooking {
   total: string | null;
   currency: string | null;
 }
+
+// --- Reports -------------------------------------------------------------------
+
+/** Ratios are null when the denominator is zero; amounts are null without reports.financial. */
+export interface Kpis {
+  rooms: number;
+  out_of_service: number;
+  available: number;
+  sold: number;
+  occupancy: string | null;
+  revenue: string | null;
+  adr: string | null;
+  revpar: string | null;
+}
+
+export interface DailyKpis extends Kpis {
+  date: string;
+}
+
+export interface BookingStats {
+  created: number;
+  cancelled: number;
+  cancellation_rate: string | null;
+  arrivals: number;
+  no_shows: number;
+  no_show_rate: string | null;
+  average_stay: string | null;
+  average_lead_days: string | null;
+}
+
+export interface ShareRow {
+  sold: number;
+  share: string | null;
+  revenue: string | null;
+  revenue_share: string | null;
+  adr: string | null;
+}
+
+export interface OtherRevenue {
+  services: string;
+  fees: string;
+  adjustments: string;
+  restaurant: string;
+  vehicles: string;
+  total: string;
+  restaurant_checks: number;
+  rentals: number;
+}
+
+export interface PerformanceReport {
+  start: string;
+  end: string;
+  currency: string;
+  financial: boolean;
+  totals: Kpis;
+  bookings: BookingStats;
+  daily: DailyKpis[];
+  by_source: (ShareRow & { source: string })[];
+  by_rate_plan: (ShareRow & { rate_plan_id: UUID | null })[];
+  by_room_type: (Kpis & { room_type_id: UUID })[];
+  other_revenue: OtherRevenue | null;
+  compare: {
+    kind: 'previous' | 'last_year';
+    start: string;
+    end: string;
+    totals: Kpis;
+    bookings: BookingStats;
+    daily: { date: string; occupancy: string | null; adr: string | null; revpar: string | null }[];
+    other_revenue: OtherRevenue | null;
+  } | null;
+}
+
+export interface ForecastReport {
+  start: string;
+  end: string;
+  currency: string;
+  financial: boolean;
+  totals: Kpis & { pickup: number };
+  daily: (DailyKpis & { pickup: number; pickup_revenue: string | null })[];
+}
+
+export interface TodayReport {
+  date: string;
+  currency: string;
+  financial: boolean;
+  tonight: Kpis;
+  arrivals_due: number;
+  arrived: number;
+  departures_due: number;
+  departed: number;
+  in_house: number;
+  month_to_date: Kpis;
+  month_to_date_last_year: Kpis;
+  next_days: { date: string; occupancy: string | null; sold: number; available: number }[];
+}

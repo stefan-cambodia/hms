@@ -48,7 +48,8 @@
     "maintenance": "维修",
     "restaurant": "餐厅与酒吧",
     "vehicles": "车辆租赁",
-    "channels": "渠道管理"
+    "channels": "渠道管理",
+    "reports": "报表"
   },
   "auth": {
     "title": "酒店管理系统",
@@ -92,7 +93,20 @@
       "rooms": "添加房间",
       "taxes": "配置税费",
       "facilities": "描述设施和服务"
-    }
+    },
+    "tonight": "今晚出租率",
+    "arrivals": "今日到店",
+    "arrived_of": "已入住 {{done}} · 待入住 {{due}}",
+    "departures": "今日离店",
+    "departed_of": "已退房 {{done}} · 待退房 {{due}}",
+    "in_house": "在住房间",
+    "in_house_hint": "已办理入住的宾客",
+    "mtd_occupancy": "本月出租率",
+    "mtd_adr": "本月 ADR",
+    "mtd_revpar": "本月 RevPAR",
+    "next_nights": "未来 14 晚",
+    "next_nights_hint": "在手出租率",
+    "forecast_link": "预测"
   },
   "settings": {
     "description": "酒店的所有信息均可自行配置，无需开发人员协助。",
@@ -2154,5 +2168,101 @@
     "request": "发送内容",
     "response": "接收内容",
     "redacted_hint": "密码和卡号在存储前已被移除。"
+  },
+  "reports": {
+    "description": "出租率、ADR（平均房价）、RevPAR（每间可售房收入）、预订来源及预测。",
+    "tabs": {
+      "performance": "经营业绩",
+      "forecast": "预测"
+    },
+    "range": "期间",
+    "custom_range": "日期范围",
+    "presets": {
+      "this_month": "本月",
+      "last_month": "上月",
+      "last_30": "最近 30 天",
+      "this_year": "今年",
+      "custom": "自定义"
+    },
+    "compare": "对比",
+    "compare_with": {
+      "none": "不对比",
+      "previous": "上一周期",
+      "last_year": "去年同期"
+    },
+    "vs": {
+      "previous": "较上一周期",
+      "last_year": "较去年同期"
+    },
+    "view_chart": "图表",
+    "view_table": "表格",
+    "no_plan": "无价格计划",
+    "night": "日期",
+    "rooms": "房间",
+    "out_of_service": "停用",
+    "available": "可售",
+    "sold": "已售",
+    "occupancy": "出租率",
+    "revenue": "收入",
+    "share": "占比",
+    "by": {
+      "source": "预订来源",
+      "room_type": "房型",
+      "rate_plan": "价格计划"
+    },
+    "period": "{{start}} 至 {{end}} 各晚",
+    "compared_with": "对比 {{start}} – {{end}}",
+    "export": "导出（CSV）",
+    "export_daily": "每晚数据",
+    "export_by": "按{{what}}",
+    "this_period": "本期",
+    "adr": "ADR",
+    "revpar": "RevPAR",
+    "room_revenue": "客房收入",
+    "room_nights": "已售间夜",
+    "sold_of": "共 {{available}} 间，已售 {{sold}} 间",
+    "cancellation_rate": "取消率",
+    "cancelled_of": "共 {{created}} 笔预订，已取消 {{cancelled}} 笔",
+    "no_financial": "收入数据（ADR、RevPAR、收入）需要“查看财务报表”权限。",
+    "occupancy_by_night": "每晚出租率",
+    "occupancy_hint": "已售房间数 ÷ 可售房间数（不含停用房间）",
+    "adr_by_night": "每晚 ADR",
+    "adr_hint": "客房收入 ÷ 已售房间数",
+    "share_hint": "占已售间夜的比例",
+    "bookings": "预订",
+    "bookings_hint": "取消：按期间内创建的预订统计。入住：按期间内到店统计。",
+    "created": "新建预订",
+    "arrivals": "到店入住",
+    "no_show_rate": "未到店率",
+    "average_stay": "平均入住晚数",
+    "lead_time": "平均提前预订天数",
+    "nights_n_other": "{{value}} 晚",
+    "days_n_other": "{{value}} 天",
+    "revenue_by_department": "各部门收入",
+    "revenue_hint": "不含价格之外另加的税费。挂房账的餐厅账单和租车费用只计一次。",
+    "departments": {
+      "rooms": "客房",
+      "rooms_count_other": "{{count}} 间夜",
+      "restaurant": "餐厅与酒吧",
+      "restaurant_count_other": "{{count}} 张账单",
+      "vehicles": "车辆租赁",
+      "vehicles_count_other": "{{count}} 张租车单",
+      "services": "客人账单中的服务",
+      "fees": "费用",
+      "adjustments": "调整"
+    },
+    "total_revenue": "总收入",
+    "nothing_sold": "此期间无销售",
+    "next_days_other": "未来 {{count}} 天",
+    "occupancy_on_books": "在手出租率",
+    "on_books": "在手间夜",
+    "pickup_7d": "近 7 天新增",
+    "pickup_hint": "最近 7 天内新增预订的间夜",
+    "revenue_on_books": "在手收入",
+    "forecast_hint": "自今晚起的各晚，含最近 7 天内新增的预订",
+    "booked_earlier": "此前预订",
+    "picked_up": "最近 7 天预订",
+    "rooms_sold": "已售房间",
+    "table_hint": "数值也可在表格视图和 CSV 导出中查看。"
   }
 }

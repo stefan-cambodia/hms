@@ -9,6 +9,27 @@
   --hms-login-bg: var(--mantine-color-dark-8);
 }
 
+/* Chart roles (src/components/charts.tsx). Accent = the brand teal stepped to
+   pass the chroma floor; muted = de-emphasis gray for comparisons. Validated
+   with the dataviz palette checker (CVD separation, normal-vision floor) on
+   the light and dark card surfaces; the gray's low contrast is compensated by
+   legends and table views. */
+:root {
+  --viz-surface: #ffffff;
+  --viz-accent: #008f86;
+  --viz-muted: #a5a29a;
+  --viz-grid: #ebeae6;
+  --viz-track: #d4ebe9;
+}
+
+[data-mantine-color-scheme='dark'] {
+  --viz-surface: var(--mantine-color-dark-6);
+  --viz-accent: #14a89c;
+  --viz-muted: #6b6a66;
+  --viz-grid: #3a3a3a;
+  --viz-track: #1d3b39;
+}
+
 html,
 body {
   -webkit-text-size-adjust: 100%;

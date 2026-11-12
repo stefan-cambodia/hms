@@ -98,7 +98,7 @@ Last updated: 2026-11-12. Test counts: backend 48 (pytest, real PostgreSQL), fro
 | Room blocks from the calendar (create/remove) | ✅ | API tests; UI manual |
 | Guests screens: search, profile edit, identity documents (permission-gated), stay history | ✅ | API tests; UI manual |
 | Day view / category-only grouping toggle | ⬜ | Week/2 weeks/month ranges and category filter cover current needs |
-| Dashboard KPIs from reservations (arrivals, departures, occupancy) | ⬜ | Phase 8 (data now available) |
+| Dashboard KPIs from reservations (arrivals, departures, occupancy) | ✅ | Phase 8 |
 | Multi-room reservations with different dates per room | 🟡 | Supported by the API; covered by the single-room tests only |
 
 ## Phase 5 — Operations ✅
@@ -212,9 +212,23 @@ Delivered later: `Idempotency-Key` on reservation, payment, restaurant and renta
 | OBP rates, reservation push delivery, virtual cards | ⬜ | Not implemented |
 | Booking.com / Agoda direct adapters | ⬜ | Need partner access |
 
-## Phase 8 — Analytics ⬜
+## Phase 8 — Analytics ✅
 
-The dashboard currently shows configuration and room-readiness data only. Occupancy, ADR, RevPAR and revenue need reservations (phase 4).
+Definitions: [`docs/guides/reports.md`](guides/reports.md). The formulas live in one place, `app/modules/reports/service.py`.
+
+| Item | Status | Notes |
+|------|--------|-------|
+| KPIs: occupancy, ADR, RevPAR, room revenue, room nights, out of service | ✅ | test_reports: values computed by hand on a fixture hotel |
+| Bookings: cancellation rate (booking basis), no-show rate, average stay, lead time | ✅ | |
+| Breakdowns by source, room type, rate plan; revenue by department without double counting room charges | ✅ | Restaurant and rental charges to a room counted once |
+| Comparison with the previous period or the same period last year (29 February handled) | ✅ | |
+| Forecast on the books (30–180 days) with 7-day pickup | ✅ | |
+| Dashboard: tonight, arrivals, departures, in house, month to date vs last year, next 14 nights | ✅ | E2E on 3 devices |
+| Revenue figures only with `reports.financial`; ratios null (not 0) when there is nothing to divide | ✅ | |
+| CSV exports readable by Excel in every language (BOM, `;` and decimal comma where the locale uses them, formula injection neutralised) | ✅ | Unit tests |
+| Charts: one axis, accessible (keyboard, table view, legend), colours checked for colour blindness in light and dark mode | ✅ | |
+| Historic room count (rooms taken out of service permanently) | 🟡 | Rooms count from their creation; deactivation history is not kept, so a deactivated room disappears from past periods too |
+| PDF reports, scheduled e-mail reports, night audit | ⬜ | |
 
 ## Phase 9 — Cross-platform
 

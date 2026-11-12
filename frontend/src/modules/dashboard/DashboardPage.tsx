@@ -9,6 +9,7 @@ import { useAuth, useHotel } from '@/auth/AuthProvider';
 import { PageHeader } from '@/components/ui';
 import { formatNumber } from '@/lib/format';
 import { pickLocalized } from '@/lib/localized';
+import TodayPanel from './TodayPanel';
 
 const HK = ['clean', 'inspected', 'in_progress', 'dirty'] as const;
 const HK_COLOR: Record<(typeof HK)[number], string> = { clean: 'lagoon.6', inspected: 'teal.4', in_progress: 'blue.5', dirty: 'orange.5' };
@@ -18,13 +19,13 @@ function Stat({ label, value, icon: Icon, hint, loading }: { label: string; valu
     <Card>
       <Group justify="space-between" align="flex-start" wrap="nowrap">
         <div>
-          <Text size="xs" c="dimmed" tt="uppercase" fw={600} style={{ letterSpacing: 0.4 }}>
+          <Text size="sm" c="dimmed">
             {label}
           </Text>
           {loading ? (
             <Skeleton h={36} w={64} mt={4} />
           ) : (
-            <Text fz={30} fw={700} className="hms-num" lh={1.2} mt={4}>
+            <Text fz={28} fw={650} lh={1.25} mt={2}>
               {value}
             </Text>
           )}
@@ -75,6 +76,7 @@ export default function DashboardPage() {
   return (
     <>
       <PageHeader title={t('dashboard.welcome', { hotel: hotel.name })} description={t('dashboard.description')} />
+      {(can('reports.view') || can('reservations.view')) && <TodayPanel />}
       <SimpleGrid cols={{ base: 1, xs: 2, lg: 4 }} mb="lg">
         <Stat label={t('dashboard.rooms_in_service')} value={formatNumber(active.length, lang)} icon={IconDoor} loading={loading} />
         <Stat label={t('dashboard.room_categories')} value={formatNumber(types.data?.filter((x) => x.is_active).length ?? 0, lang)} icon={IconBed} loading={loading} />
