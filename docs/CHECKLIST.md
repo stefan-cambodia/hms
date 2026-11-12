@@ -151,6 +151,25 @@ Last updated: 2026-11-12. Test counts: backend 48 (pytest, real PostgreSQL), fro
 | Recurring / preventive maintenance schedules, spare parts | ⬜ | |
 | Lost & found, minibar counts by housekeeping | ⬜ | Minibar can be charged from the folio |
 
+## Restaurant & bar (added on request) ✅
+
+| Item | Status | Notes |
+|------|--------|-------|
+| Outlets (restaurant, bar, café, room service) with service charge; module hidden when the hotel has none | ✅ | test_restaurant.py |
+| Menu: categories, multilingual items, prices, preparation station, sold-out switch (kitchen) | ✅ | |
+| Tables with areas and seats; one open check per table (DB index); move a check to another table | ✅ | |
+| Checks: dine-in, takeaway, room service (in-house guest); names and prices frozen when ordered; repeated taps add to the unsent line | ✅ | |
+| Send to kitchen/bar; kitchen display (station filter, waiting time); preparing → ready → served | ✅ | E2E |
+| Void sent items and payments (reason + restaurant.void), discounts (% or amount, reason), cancel checks | ✅ | |
+| Totals: service charge, food & beverage taxes (inclusive/exclusive) | ✅ | |
+| Payment: cash with change, card (brand + last 4), transfer, other; foreign currencies at the configured rate; split payments; auto-close when paid; void reopens | ✅ | |
+| Charge to room: whole check to an in-house guest's folio with its tax lines; voidable only from the check | ✅ | E2E |
+| Bill and receipt PDFs in 5 languages | ✅ | |
+| Breakfast list (rates with breakfast / half / full board / all inclusive) with served covers | ✅ | |
+| Sales report: totals, covers, average check, by category, best sellers, by payment method, voids | ✅ | |
+| Stock / recipes / purchasing | ⬜ | Not included |
+| Table reservations, kitchen printers, online ordering | ⬜ | Not included |
+
 ## Phase 6 — Multi-user ✅ (largely delivered early) / ⬜ (remaining)
 
 Delivered in phase 2: real-time sync, sessions, connected-users view, conflict detection and stale-edit warning, offline banner.

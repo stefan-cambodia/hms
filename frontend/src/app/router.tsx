@@ -18,6 +18,8 @@ const FrontDeskPage = lazy(() => import('@/modules/frontdesk/FrontDeskPage'));
 const BillingPage = lazy(() => import('@/modules/billing/BillingPage'));
 const HousekeepingPage = lazy(() => import('@/modules/housekeeping/HousekeepingPage'));
 const MaintenancePage = lazy(() => import('@/modules/maintenance/MaintenancePage'));
+const RestaurantPage = lazy(() => import('@/modules/restaurant/RestaurantPage'));
+const RestaurantOrderPage = lazy(() => import('@/modules/restaurant/OrderPage'));
 const ServicesPage = lazy(() => import('@/modules/services/ServicesPage'));
 const UsersPage = lazy(() => import('@/modules/users/UsersPage'));
 const SettingsPage = lazy(() => import('@/modules/settings/SettingsPage'));
@@ -68,6 +70,8 @@ const router = createBrowserRouter([
       { path: 'billing/*', element: <BillingPage /> },
       { path: 'housekeeping', element: <HousekeepingPage /> },
       { path: 'maintenance', element: <MaintenancePage /> },
+      { path: 'restaurant/orders/:id', element: <RestaurantOrderPage /> },
+      { path: 'restaurant/*', element: <RestaurantPage /> },
       { path: 'services', element: <ServicesPage /> },
       { path: 'users/*', element: <UsersPage /> },
       { path: 'settings/*', element: <SettingsPage /> },

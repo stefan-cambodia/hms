@@ -35,7 +35,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.models import Base, Timestamps, UUIDPk, Versioned
 
-CHARGE_KINDS = ("service", "fee", "adjustment")
+CHARGE_KINDS = ("service", "fee", "adjustment", "outlet")
 FEE_TYPES = ("cancellation", "no_show", "early_departure", "late_checkout", "damage", "other")
 PAYMENT_KINDS = ("payment", "deposit", "refund")
 PAYMENT_METHODS = ("cash", "card", "bank_transfer", "online", "other")
@@ -100,7 +100,7 @@ class FolioCharge(UUIDPk, Timestamps, Base):
         ForeignKeyConstraint(
             ["hotel_id", "service_id"], ["services.hotel_id", "services.id"], ondelete="RESTRICT"
         ),
-        CheckConstraint("kind IN ('service','fee','adjustment')", name="kind"),
+        CheckConstraint("kind IN ('service','fee','adjustment','outlet')", name="kind"),
         CheckConstraint(
             "fee_type IS NULL OR fee_type IN "
             "('cancellation','no_show','early_departure','late_checkout','damage','other')",

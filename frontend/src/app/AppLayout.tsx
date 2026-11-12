@@ -20,7 +20,11 @@ import { IconChevronDown, IconLogout, IconUserCircle } from '@tabler/icons-react
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 
-import { useRealtime } from '@/api/realtime';
+import { useQuery } from '@tanstack/react-query';
+
+import { api } from '@/api/client';
+import { hotelKey, useRealtime } from '@/api/realtime';
+import type { Outlet as SalesOutlet } from '@/api/types';
 import { HotelIcon, NAV_ITEMS } from '@/app/navigation';
 import { useAuth } from '@/auth/AuthProvider';
 import { ConnectionBanner, ConnectionIndicator } from '@/components/ConnectionIndicator';
@@ -54,9 +58,18 @@ export function AppLayout() {
   const onMeChanged = useCallback(() => void refresh().catch(() => undefined), [refresh]);
   const onSessionEnded = useCallback(() => void refresh().catch(() => undefined), [refresh]);
   useRealtime(hotel?.id, onMeChanged, onSessionEnded);
+  // Optional modules appear only when the hotel uses them (e.g. has a restaurant);
+  // managers always see them so they can set them up.
+  const outlets = useQuery({
+    queryKey: hotel ? hotelKey(hotel.id, 'restaurant_outlet', 'nav') : ['no-hotel'],
+    queryFn: ({ signal }) => api.get<SalesOutlet[]>(`/hotels/${hotel!.id}/restaurant/outlets`, signal),
+    enabled: !!hotel && can('restaurant.view'),
+    staleTime: 60_000,
+  });
+  const features = { restaurant: can('restaurant.manage') || (outlets.data ?? []).some((o) => o.is_active) };
 
   if (!me || !hotel) return null;
-  const items = NAV_ITEMS.filter((i) => !i.permission || can(i.permission));
+  const items = NAV_ITEMS.filter((i) => (!i.permission || can(i.permission)) && (!i.feature || features[i.feature]));
   const isActive = (path: string) => (path === '/' ? location.pathname === '/' : location.pathname.startsWith(path));
 
   return (

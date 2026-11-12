@@ -108,21 +108,23 @@ test('a booking made on one device appears on another calendar', async ({ browse
   const [desk, tablet] = await Promise.all(contexts.map((c) => c.newPage()));
   await login(desk);
   await login(tablet);
-  await tablet.goto('/calendar');
-  await expect(tablet.locator('[data-calendar-item="stay"]').first()).toBeVisible();
+  // Both devices look at this run's own empty week (the demo data is shared
+  // between runs, so tonight may well be sold out).
+  await tablet.goto(WEEK);
+  await expect(tablet.locator('[data-room-number="107"] [data-drop-row]')).toBeVisible();
   const name = `Sync${Date.now() % 100000}`;
-  await desk.goto('/reservations');
-  await desk.getByRole('button', { name: 'New reservation' }).click();
+  await desk.goto(WEEK);
+  const track = desk.locator('[data-room-number="107"] [data-drop-row]');
+  await track.scrollIntoViewIfNeeded();
+  const box = (await track.boundingBox())!;
+  await desk.mouse.click(box.x + (box.width / 7) * 4.5, box.y + box.height / 2);
   const drawer = desk.getByRole('dialog');
   await drawer.getByLabel('First name').fill(name);
   await drawer.getByLabel('Last name').fill('Device');
-  await drawer.getByRole('textbox', { name: 'Category' }).click();
-  // Demo data is shared between runs: pick a category that is not sold out tonight.
-  await expect(desk.getByRole('option', { name: / free$/ }).first()).toBeVisible();
-  await desk.getByRole('option', { name: / free$/ }).filter({ hasNotText: / 0 free$/ }).first().click();
   await expect(drawer.getByText('Total')).toBeVisible({ timeout: 10_000 });
   await drawer.getByRole('button', { name: 'Create reservation' }).click();
-  await expect(desk.getByRole('heading', { level: 1 })).toHaveText(/R\d+/);
+  await expect(desk.getByText(/Reservation R\d+ created/)).toBeVisible();
+  // The other device shows it without reloading (real-time update).
   await expect(tablet.locator('[data-calendar-item="stay"]', { hasText: name })).toBeVisible({ timeout: 5_000 });
   await Promise.all(contexts.map((c) => c.close()));
 });

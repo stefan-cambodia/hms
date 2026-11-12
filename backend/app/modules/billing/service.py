@@ -312,17 +312,10 @@ async def post_charge(
     return await load_reservation(db, ctx.hotel_id, res_id)
 
 
-async def void_charge(
-    db: AsyncSession, ctx: HotelContext, res_id: uuid.UUID, charge_id: uuid.UUID, reason: str
-) -> Reservation:
-    res = await load_reservation(db, ctx.hotel_id, res_id, for_update=True)
-    charge = (
-        await db.scalars(
-            select(FolioCharge).where(FolioCharge.id == charge_id, FolioCharge.reservation_id == res.id)
-        )
-    ).one_or_none()
-    if charge is None:
-        raise NotFound("CHARGE_NOT_FOUND")
+async def void_charge_tx(
+    db: AsyncSession, ctx: HotelContext, res: Reservation, charge: FolioCharge, reason: str
+) -> None:
+    """Void a charge inside the caller's transaction (reservation row locked)."""
     if charge.is_void:
         raise Conflict("ALREADY_VOID")
     charge.is_void = True
@@ -335,8 +328,82 @@ async def void_charge(
     await db.flush()
     event(db, ctx, res, "charge_voided", charge_id=charge.id, amount=charge.amount, reason=reason)
     await publish(db, ctx, res, "updated", {"charge_void": [str(charge.amount), None]})
+
+
+async def void_charge(
+    db: AsyncSession, ctx: HotelContext, res_id: uuid.UUID, charge_id: uuid.UUID, reason: str
+) -> Reservation:
+    res = await load_reservation(db, ctx.hotel_id, res_id, for_update=True)
+    charge = (
+        await db.scalars(
+            select(FolioCharge).where(FolioCharge.id == charge_id, FolioCharge.reservation_id == res.id)
+        )
+    ).one_or_none()
+    if charge is None:
+        raise NotFound("CHARGE_NOT_FOUND")
+    if charge.kind == "outlet":
+        # A restaurant check charged to the room is voided from the restaurant,
+        # so the check and the folio always agree.
+        raise Conflict("VOID_FROM_OUTLET")
+    await void_charge_tx(db, ctx, res, charge, reason)
     await db.commit()
     return await load_reservation(db, ctx.hotel_id, res_id)
+
+
+async def post_outlet_charge(
+    db: AsyncSession,
+    ctx: HotelContext,
+    res: Reservation,
+    *,
+    reservation_room_id: uuid.UUID,
+    name: dict[str, str],
+    description: str,
+    net_amount: Decimal,
+    tax_lines: list[dict[str, Any]],
+    service_date: date,
+) -> FolioCharge:
+    """Post a restaurant/bar check to a guest folio inside the caller's
+    transaction. The amount is net of exclusive taxes and the check's own tax
+    lines are kept, so the folio adds exactly the check total and the invoice
+    shows the right tax amounts (no second taxation)."""
+    charge = FolioCharge(
+        id=uuid.uuid4(),
+        hotel_id=ctx.hotel_id,
+        reservation_id=res.id,
+        reservation_room_id=reservation_room_id,
+        kind="outlet",
+        name=name,
+        description=description,
+        service_date=service_date,
+        quantity=Decimal(1),
+        unit_price=net_amount,
+        amount=net_amount,
+        tax_amount=sum((Decimal(t["amount"]) for t in tax_lines if not t["is_inclusive"]), ZERO),
+        tax_breakdown=tax_lines,
+        is_void=False,
+        created_by=ctx.actor.user_id,
+    )
+    db.add(charge)
+    await db.flush()
+    await folio.recompute(db, res)
+    _touch(res)
+    await db.flush()
+    event(
+        db,
+        ctx,
+        res,
+        "charge_posted",
+        charge_id=charge.id,
+        kind="outlet",
+        fee_type=None,
+        name=name,
+        description=description,
+        quantity=1,
+        amount=net_amount + charge.tax_amount,
+        automatic=False,
+    )
+    await publish(db, ctx, res, "updated", {"charge": [None, str(net_amount + charge.tax_amount)]})
+    return charge
 
 
 # --- payments ----------------------------------------------------------------------

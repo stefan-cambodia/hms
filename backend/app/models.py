@@ -26,4 +26,14 @@ from app.modules.reservations.models import (  # noqa: F401
     RoomAllocation,
     RoomBlock,
 )
+from app.modules.restaurant.models import (  # noqa: F401
+    BreakfastMark,
+    DiningTable,
+    MenuCategory,
+    MenuItem,
+    Order,
+    OrderLine,
+    OrderPayment,
+    Outlet,
+)
 from app.modules.rooms.models import Amenity, Room, RoomType  # noqa: F401

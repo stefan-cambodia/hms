@@ -203,6 +203,27 @@ engine, so the allocation ledger refuses it while a guest occupies the room
 and no booking can be placed on it. Releasing it ends the block tonight and
 keeps the past nights as history.
 
+### Restaurant & bar (point of sale)
+
+| Table | Notes |
+|-------|-------|
+| `restaurant_outlets` | id, hotel_id, code, name (LocalizedText), kind (`restaurant` \| `bar` \| `cafe` \| `room_service` \| `other`), facility_id (optional link to the guest-facing facility), service_charge_percent, sort_order, is_active, version. A hotel without outlets simply does not show the module (except to managers, to set it up). |
+| `menu_categories` | id, hotel_id, outlet_id, name, sort_order, is_active, version |
+| `menu_items` | id, hotel_id, outlet_id, category_id, code, name, description (LocalizedText), price, station (`kitchen` \| `bar` \| `none`), is_available ("sold out" switch), sort_order, is_active, version |
+| `restaurant_tables` | id, hotel_id, outlet_id, label (`UNIQUE(outlet_id, label)`), area, seats, sort_order, is_active, version |
+| `restaurant_orders` | The check: id, hotel_id, outlet_id, number (`CHK-000001`, gapless), business_date, table_id, order_type (`dine_in` \| `takeaway` \| `room_service`), covers, status (`open` \| `closed` \| `cancelled`), reservation_room_id (guest), discount kind/value/reason, subtotal, discount_total, service_charge, tax_total, tax_breakdown, total, paid_total, opened_by, closed_at/by, cancel_reason, version. Partial unique index: one open check per table. |
+| `restaurant_order_lines` | Name and price copied from the menu when ordered; station; quantity; amount; notes; status (`new` → `sent` → `preparing` → `ready` → `served`, or `void` with reason); timestamps. |
+| `restaurant_payments` | method (`cash` \| `card` \| `bank_transfer` \| `online` \| `other` \| `room_charge`), amount + currency + exchange_rate + amount_base, tendered (cash: change = tendered − amount), card brand/last 4, reservation_room_id + folio_charge_id for room charges, void fields. Append-only (same trigger as folio payments). |
+| `breakfast_marks` | (reservation_room_id, day) PK, covers served, marked_by. |
+
+Check money is computed in one place (`restaurant/service.py:recompute`):
+subtotal → discount → service charge (outlet %) → food & beverage taxes
+(`tax_rates.applies_to` `food_beverage` or `all`, percentage taxes, inclusive
+or exclusive) → total. A room charge posts the whole check to the guest's
+folio as a `folio_charges` row of kind `outlet` (net amount + the check's tax
+lines), so the folio grows by exactly the check total and the invoice shows the
+right taxes; it can only be voided from the check, which voids both together.
+
 ### Users and security
 
 | Table | Notes |

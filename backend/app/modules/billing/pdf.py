@@ -4,6 +4,7 @@ and Chinese render correctly with the Noto fonts installed on the server)."""
 from __future__ import annotations
 
 import asyncio
+import logging
 import threading
 from pathlib import Path
 from typing import Any
@@ -14,6 +15,10 @@ _env = Environment(
     loader=FileSystemLoader(Path(__file__).parent / "templates"),
     autoescape=select_autoescape(["html"]),
 )
+# The renderer logs every layout step at INFO: keep only warnings in the API logs.
+for _name in ("weasyprint", "weasyprint.progress", "fontTools"):
+    logging.getLogger(_name).setLevel(logging.WARNING)
+
 # Fontconfig/Pango are not reliably thread-safe: render one document at a time.
 _lock = threading.Lock()
 

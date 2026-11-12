@@ -40,7 +40,7 @@ FacilityCategory = Literal[
 PricingMode = Literal["free", "paid", "on_request"]
 PricingUnit = Literal["per_item", "per_night", "per_person", "per_person_night", "per_stay"]
 TaxKind = Literal["percent", "fixed_per_night", "fixed_per_person_night"]
-TaxScope = Literal["accommodation", "services", "all"]
+TaxScope = Literal["accommodation", "services", "food_beverage", "all"]
 WEEKDAYS = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
 _HHMM = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$|^24:00$")
 

@@ -47,6 +47,13 @@ class P(StrEnum):
     INVOICES_VIEW = "invoices.view"
     INVOICES_ISSUE = "invoices.issue"
     INVOICES_VOID = "invoices.void"
+    # Restaurant & bar
+    RESTAURANT_VIEW = "restaurant.view"
+    RESTAURANT_ORDER = "restaurant.order"
+    RESTAURANT_KITCHEN = "restaurant.kitchen"
+    RESTAURANT_SETTLE = "restaurant.settle"
+    RESTAURANT_VOID = "restaurant.void"
+    RESTAURANT_MANAGE = "restaurant.manage"
     # Pricing
     PRICING_VIEW = "pricing.view"
     PRICING_MANAGE = "pricing.manage"
@@ -98,6 +105,14 @@ PERMISSION_GROUPS: dict[str, list[P]] = {
     "folio": [P.FOLIO_POST, P.FOLIO_ADJUST],
     "payments": [P.PAYMENTS_VIEW, P.PAYMENTS_RECORD, P.PAYMENTS_REFUND, P.PAYMENTS_VOID],
     "invoices": [P.INVOICES_VIEW, P.INVOICES_ISSUE, P.INVOICES_VOID],
+    "restaurant": [
+        P.RESTAURANT_VIEW,
+        P.RESTAURANT_ORDER,
+        P.RESTAURANT_KITCHEN,
+        P.RESTAURANT_SETTLE,
+        P.RESTAURANT_VOID,
+        P.RESTAURANT_MANAGE,
+    ],
     "pricing": [P.PRICING_VIEW, P.PRICING_MANAGE],
     "housekeeping": [P.HOUSEKEEPING_VIEW, P.HOUSEKEEPING_UPDATE, P.HOUSEKEEPING_ASSIGN],
     "maintenance": [P.MAINTENANCE_VIEW, P.MAINTENANCE_REPORT, P.MAINTENANCE_MANAGE],
@@ -189,4 +204,17 @@ SYSTEM_ROLES: dict[str, set[P]] = {
     },
     "maintenance": _OPS_VIEW
     | {P.MAINTENANCE_VIEW, P.MAINTENANCE_REPORT, P.MAINTENANCE_MANAGE, P.HOUSEKEEPING_VIEW},
+    "restaurant_manager": _OPS_VIEW
+    | {
+        P.RESTAURANT_VIEW,
+        P.RESTAURANT_ORDER,
+        P.RESTAURANT_KITCHEN,
+        P.RESTAURANT_SETTLE,
+        P.RESTAURANT_VOID,
+        P.RESTAURANT_MANAGE,
+        P.MAINTENANCE_VIEW,
+        P.MAINTENANCE_REPORT,
+    },
+    "waiter": {P.HOTEL_VIEW, P.RESTAURANT_VIEW, P.RESTAURANT_ORDER, P.RESTAURANT_SETTLE},
+    "kitchen": {P.HOTEL_VIEW, P.RESTAURANT_VIEW, P.RESTAURANT_KITCHEN, P.MAINTENANCE_REPORT},
 }

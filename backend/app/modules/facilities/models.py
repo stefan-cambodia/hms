@@ -101,7 +101,9 @@ class TaxRate(UUIDPk, Timestamps, Versioned, Base):
     __table_args__ = (
         UniqueConstraint("hotel_id", "code"),
         CheckConstraint("kind IN ('percent','fixed_per_night','fixed_per_person_night')", name="kind"),
-        CheckConstraint("applies_to IN ('accommodation','services','all')", name="applies_to"),
+        CheckConstraint(
+            "applies_to IN ('accommodation','services','food_beverage','all')", name="applies_to"
+        ),
         CheckConstraint("rate >= 0", name="rate_positive"),
         CheckConstraint("kind <> 'percent' OR rate <= 100", name="percent_max"),
     )

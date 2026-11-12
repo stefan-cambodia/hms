@@ -2,7 +2,9 @@
   "title": {
     "invoice": "Facture",
     "statement": "Relevé de compte client",
-    "receipt": "Reçu de paiement"
+    "receipt": "Reçu de paiement",
+    "bill": "Addition",
+    "restaurant_receipt": "Ticket de caisse"
   },
   "number": "N°",
   "issue_date": "Date",
@@ -59,7 +61,8 @@
     "card": "Carte",
     "bank_transfer": "Virement bancaire",
     "online": "Paiement en ligne",
-    "other": "Autre"
+    "other": "Autre",
+    "room_charge": "Imputé sur la chambre"
   },
   "card": "{brand} se terminant par {last4}",
   "card_brand": {
@@ -72,5 +75,21 @@
     "other": "Carte"
   },
   "statement_note": "Ce relevé est fourni à titre d’information et ne constitue pas une facture.",
-  "thanks": "Merci de votre séjour parmi nous."
+  "thanks": "Merci de votre séjour parmi nous.",
+  "check_number": "Addition {number}",
+  "outlet": "Point de vente",
+  "table": "Table",
+  "covers": "Couverts",
+  "server": "Servi par",
+  "order_type": "Service",
+  "order_types": {
+    "dine_in": "Sur place",
+    "takeaway": "À emporter",
+    "room_service": "Service en chambre"
+  },
+  "discount": "Remise",
+  "service_charge": "Service {rate} %",
+  "change": "Monnaie rendue",
+  "room_charge": "Imputé sur la chambre {room}",
+  "unpaid_bill_note": "Cette addition n’est pas un reçu."
 }

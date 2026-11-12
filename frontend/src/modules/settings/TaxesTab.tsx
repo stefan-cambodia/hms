@@ -153,7 +153,7 @@ function TaxModal({ draft, languages, crud, onClose }: { draft: Draft; languages
           <Select
             label={t('settings.taxes.applies_to')}
             allowDeselect={false}
-            data={(['all', 'accommodation', 'services'] as const).map((k) => ({ value: k, label: t(`settings.taxes.scope.${k}`) }))}
+            data={(['all', 'accommodation', 'services', 'food_beverage'] as const).map((k) => ({ value: k, label: t(`settings.taxes.scope.${k}`) }))}
             {...form.getInputProps('applies_to')}
           />
           <Switch label={t('settings.taxes.inclusive_hint')} {...form.getInputProps('is_inclusive', { type: 'checkbox' })} />

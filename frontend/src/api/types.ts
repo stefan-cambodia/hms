@@ -188,7 +188,7 @@ export interface TaxRate {
   kind: 'percent' | 'fixed_per_night' | 'fixed_per_person_night';
   rate: string;
   is_inclusive: boolean;
-  applies_to: 'accommodation' | 'services' | 'all';
+  applies_to: 'accommodation' | 'services' | 'food_beverage' | 'all';
   sort_order: number;
   is_active: boolean;
   version: number;
@@ -570,7 +570,7 @@ export interface Offer {
 
 // --- front desk & billing (phase 5) ------------------------------------------
 
-export type ChargeKind = 'service' | 'fee' | 'adjustment';
+export type ChargeKind = 'service' | 'fee' | 'adjustment' | 'outlet';
 export type FeeType = 'cancellation' | 'no_show' | 'early_departure' | 'late_checkout' | 'damage' | 'other';
 export type PaymentKind = 'payment' | 'deposit' | 'refund';
 export type PaymentMethod = 'cash' | 'card' | 'bank_transfer' | 'online' | 'other';
@@ -811,4 +811,190 @@ export interface MaintenanceRequest {
 
 export interface MaintenanceDetail extends MaintenanceRequest {
   updates: { id: number; at: string; user_name: string | null; action: string; comment: string | null; details: Record<string, unknown> }[];
+}
+
+// --- restaurant & bar ------------------------------------------------------------
+
+export type OutletKind = 'restaurant' | 'bar' | 'cafe' | 'room_service' | 'other';
+export type Station = 'kitchen' | 'bar' | 'none';
+export type OrderType = 'dine_in' | 'takeaway' | 'room_service';
+export type LineStatus = 'new' | 'sent' | 'preparing' | 'ready' | 'served' | 'void';
+export type PosMethod = 'cash' | 'card' | 'bank_transfer' | 'online' | 'other' | 'room_charge';
+
+export interface Outlet {
+  id: UUID;
+  code: string;
+  name: LocalizedText;
+  kind: OutletKind;
+  facility_id: UUID | null;
+  service_charge_percent: string;
+  sort_order: number;
+  is_active: boolean;
+  version: number;
+}
+
+export interface MenuCategory {
+  id: UUID;
+  outlet_id: UUID;
+  name: LocalizedText;
+  sort_order: number;
+  is_active: boolean;
+  version: number;
+}
+
+export interface MenuItem {
+  id: UUID;
+  outlet_id: UUID;
+  category_id: UUID;
+  code: string | null;
+  name: LocalizedText;
+  description: LocalizedText;
+  price: string;
+  station: Station;
+  is_available: boolean;
+  sort_order: number;
+  is_active: boolean;
+  version: number;
+}
+
+export interface DiningTable {
+  id: UUID;
+  outlet_id: UUID;
+  label: string;
+  area: string | null;
+  seats: number;
+  sort_order: number;
+  is_active: boolean;
+  version: number;
+}
+
+export interface GuestRef {
+  reservation_room_id: UUID;
+  reservation_id: UUID;
+  reservation_code: string;
+  room_number: string | null;
+  guest_name: string;
+  in_house: boolean;
+}
+
+export interface OrderSummary {
+  id: UUID;
+  outlet_id: UUID;
+  number: string;
+  business_date: string;
+  table_id: UUID | null;
+  table_label: string | null;
+  order_type: OrderType;
+  covers: number;
+  status: 'open' | 'closed' | 'cancelled';
+  total: string;
+  paid_total: string;
+  balance: string;
+  lines_new: number;
+  lines_waiting: number;
+  lines_ready: number;
+  opened_at: string;
+  opened_by_name: string | null;
+  guest: GuestRef | null;
+  version: number;
+}
+
+export interface OrderLine {
+  id: UUID;
+  menu_item_id: UUID | null;
+  name: LocalizedText;
+  station: Station;
+  unit_price: string;
+  quantity: number;
+  amount: string;
+  notes: string | null;
+  status: LineStatus;
+  created_at: string;
+  sent_at: string | null;
+  ready_at: string | null;
+  served_at: string | null;
+  void_reason: string | null;
+}
+
+export interface OrderPayment {
+  id: UUID;
+  method: PosMethod;
+  amount: string;
+  currency: string;
+  exchange_rate: string;
+  amount_base: string;
+  tendered: string | null;
+  reference: string | null;
+  card_brand: string | null;
+  card_last4: string | null;
+  room_number: string | null;
+  received_at: string;
+  received_by_name: string | null;
+  is_void: boolean;
+  void_reason: string | null;
+}
+
+export interface RestaurantOrder extends OrderSummary {
+  discount_kind: 'percent' | 'amount' | null;
+  discount_value: string | null;
+  discount_reason: string | null;
+  subtotal: string;
+  discount_total: string;
+  service_charge: string;
+  service_charge_percent: string;
+  tax_total: string;
+  tax_breakdown: TaxLine[];
+  notes: string | null;
+  closed_at: string | null;
+  cancel_reason: string | null;
+  lines: OrderLine[];
+  payments: OrderPayment[];
+  change_due: string | null;
+}
+
+export interface FloorTable {
+  id: UUID;
+  label: string;
+  area: string | null;
+  seats: number;
+  order: OrderSummary | null;
+}
+
+export interface KitchenTicket {
+  order_id: UUID;
+  number: string;
+  table_label: string | null;
+  order_type: OrderType;
+  covers: number;
+  room_number: string | null;
+  lines: OrderLine[];
+}
+
+export interface BreakfastRow {
+  reservation_room_id: UUID;
+  reservation_code: string;
+  room_number: string | null;
+  guest_name: string;
+  adults: number;
+  children: number;
+  meal_plan: string;
+  served_covers: number | null;
+}
+
+export interface SalesReport {
+  start: string;
+  end: string;
+  orders: number;
+  covers: number;
+  subtotal: string;
+  discounts: string;
+  service_charge: string;
+  taxes: string;
+  total: string;
+  average_check: string;
+  voided_lines: number;
+  voided_amount: string;
+  by_category: { category_id: UUID | null; name: LocalizedText; quantity: number; amount: string }[];
+  top_items: { menu_item_id: UUID | null; name: LocalizedText; quantity: number; amount: string }[];
+  by_method: { method: PosMethod; currency: string; count: number; amount: string; amount_base: string }[];
 }
