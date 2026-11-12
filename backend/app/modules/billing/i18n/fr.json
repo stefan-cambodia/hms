@@ -1,0 +1,76 @@
+{
+  "title": {
+    "invoice": "Facture",
+    "statement": "Relevé de compte client",
+    "receipt": "Reçu de paiement"
+  },
+  "number": "N°",
+  "issue_date": "Date",
+  "description": "Désignation",
+  "quantity": "Qté",
+  "unit_price": "Prix unitaire",
+  "amount": "Montant",
+  "payments": "Paiements reçus",
+  "void_stamp": "ANNULÉ",
+  "page_of": "Page {page} sur {pages}",
+  "reservation": "Réservation",
+  "guest": "Client",
+  "stay": "Séjour",
+  "rooms": "Chambre(s)",
+  "bill_to": "Facturé à",
+  "received_from": "Reçu de",
+  "tax_id_value": "N° d’identification fiscale : {tax_id}",
+  "receipt_amount": "Montant reçu",
+  "receipt_method": "Moyen de paiement",
+  "receipt_date": "Reçu le",
+  "exchange_rate": "Taux de change",
+  "exchange_value": "1 {base} = {rate} {currency}",
+  "equivalent": "Contre-valeur",
+  "subtotal": "Sous-total",
+  "tax_included": "Dont {name}",
+  "total": "Total",
+  "paid": "Payé",
+  "balance_due": "Solde à payer",
+  "credit_balance": "Avoir (à rembourser)",
+  "room_number": "Chambre {number}",
+  "room_unassigned": "Chambre à attribuer",
+  "nights": {
+    "one": "{count} nuit",
+    "many": "{count} nuits",
+    "other": "{count} nuits"
+  },
+  "fee": {
+    "cancellation": "Frais d’annulation",
+    "no_show": "Frais de non-présentation",
+    "early_departure": "Frais de départ anticipé",
+    "late_checkout": "Frais de départ tardif",
+    "damage": "Dommages",
+    "other": "Frais"
+  },
+  "adjustment": "Ajustement",
+  "voided": "Annulé",
+  "payment_kind": {
+    "payment": "Paiement",
+    "deposit": "Acompte",
+    "refund": "Remboursement"
+  },
+  "method": {
+    "cash": "Espèces",
+    "card": "Carte",
+    "bank_transfer": "Virement bancaire",
+    "online": "Paiement en ligne",
+    "other": "Autre"
+  },
+  "card": "{brand} se terminant par {last4}",
+  "card_brand": {
+    "visa": "Visa",
+    "mastercard": "Mastercard",
+    "amex": "American Express",
+    "unionpay": "UnionPay",
+    "jcb": "JCB",
+    "discover": "Discover",
+    "other": "Carte"
+  },
+  "statement_note": "Ce relevé est fourni à titre d’information et ne constitue pas une facture.",
+  "thanks": "Merci de votre séjour parmi nous."
+}

@@ -71,6 +71,7 @@ class Reservation(UUIDPk, Timestamps, Versioned, Base):
     children: Mapped[int] = mapped_column(SmallInteger)
     currency: Mapped[str] = mapped_column(String(3))
     accommodation_total: Mapped[Decimal] = mapped_column(Numeric(14, 2), server_default="0")
+    charges_total: Mapped[Decimal] = mapped_column(Numeric(14, 2), server_default="0")
     tax_total: Mapped[Decimal] = mapped_column(Numeric(14, 2), server_default="0")
     grand_total: Mapped[Decimal] = mapped_column(Numeric(14, 2), server_default="0")
     paid_total: Mapped[Decimal] = mapped_column(Numeric(14, 2), server_default="0")

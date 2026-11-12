@@ -104,6 +104,29 @@ class ChangeRatePlanIn(UpdateModel):
 
 class CancelIn(UpdateModel):
     reason: str = Field(min_length=1, max_length=500)
+    # Waiving the policy fee needs the folio.adjust permission.
+    waive_fee: bool = False
+
+
+class NoShowIn(UpdateModel):
+    waive_fee: bool = False
+
+
+class FeeStayOut(OutputModel):
+    reservation_room_id: uuid.UUID
+    rate_plan_id: uuid.UUID | None
+    policy_id: uuid.UUID | None
+    refundable: bool
+    free_until: date | None
+    stay_total: Decimal
+    fee: Decimal
+
+
+class FeePreviewOut(OutputModel):
+    action: Literal["cancel", "no_show"]
+    currency: str
+    fee: Decimal
+    stays: list[FeeStayOut]
 
 
 class VersionIn(UpdateModel):
@@ -163,6 +186,7 @@ class ReservationOut(OutputModel):
     children: int
     currency: str
     accommodation_total: Decimal
+    charges_total: Decimal
     tax_total: Decimal
     grand_total: Decimal
     paid_total: Decimal

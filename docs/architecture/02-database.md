@@ -78,8 +78,7 @@ jobs, audit_logs, backup_runs, media_files  (cross-cutting)
 | Table | Notes |
 |-------|-------|
 | `tax_rates` | id, hotel_id, code, name, kind (`percent` \| `fixed_per_night` \| `fixed_per_person_night`), rate, is_inclusive, applies_to (`accommodation` \| `services` \| `all`), compound_order, valid_from, valid_to, is_active |
-| `hotel_currencies` | (hotel_id, currency_code), is_enabled. The base currency is `hotels.currency_code`. |
-| `exchange_rates` | id, hotel_id, currency_code, rate_to_base numeric(18,8), effective_at, source, created_by. Append-only; a payment records the rate it used. |
+| `currencies` | id, hotel_id, code, units_per_base numeric(18,6) (units of this currency per 1 unit of the hotel currency, e.g. 4100 KHR per USD), is_active, version. The base currency is `hotels.currency_code` and cannot be added here. Rate changes are audited; every payment stores the rate it used, so changing or removing a currency never alters past payments. |
 
 ### Inventory and reservations (the integrity core)
 
@@ -147,15 +146,35 @@ Nightly prices are fixed when booked: later rate, rule or plan changes never
 reprice an existing night. Changing a stay's rate plan deliberately reprices
 all its nights at current rates.
 
-### Billing
+### Billing (implemented in phase 5)
+
+One folio per reservation. Accommodation is **not** copied into charges: it
+comes from the fixed nightly prices of the live stays (`reservation_nights`),
+so there is a single source for room revenue. `billing/folio.py:recompute()`
+is the only code that computes a reservation's money and is called by every
+change (dates, rate, charges, payments, cancellation, check-out):
+
+    grand_total = accommodation + charges (non-void) + exclusive taxes
+    paid_total  = payments + deposits − refunds (non-void, in hotel currency)
+    balance     = grand_total − paid_total   (> 0 owed, < 0 refund due)
+
+Accommodation taxes are computed from the stays; service charges carry the tax
+lines computed when they were posted (percentage taxes with `applies_to`
+`services`/`all`); fees and adjustments are final amounts without tax.
 
 | Table | Notes |
 |-------|-------|
-| `folio_charges` | id, hotel_id, reservation_id, reservation_room_id, kind (`accommodation` \| `service` \| `fee` \| `discount` \| `adjustment`), service_id, description, service_date, quantity, unit_price, amount, currency, tax_breakdown jsonb, is_void, void_reason, created_by |
-| `payments` | id, hotel_id, reservation_id, guest_id, kind (`payment` \| `deposit` \| `refund`), method (`cash` \| `card` \| `bank_transfer` \| `online` \| `other`), amount, currency, exchange_rate, amount_base, reference, card_brand, card_last4, received_at, received_by, is_void, void_reason. **No full card number, CVV or track data is ever stored.** |
-| `invoices` | id, hotel_id, number, series, reservation_id, status (`draft` \| `issued` \| `void`), issue_date, language, currency, billed_to jsonb (snapshot), hotel_snapshot jsonb, subtotal, tax_total, total, pdf_file_id |
-| `invoice_lines` | invoice_id, position, description, quantity, unit_price, tax_breakdown, amount |
-| `document_sequences` | (hotel_id, kind, series) PK, prefix, next_value. Incremented with `SELECT … FOR UPDATE`, so invoice numbers are **gapless**. |
+| `reservations.charges_total` | Sum of non-void folio charges (added in migration 0004). |
+| `folio_charges` | id, hotel_id, reservation_id, reservation_room_id, kind (`service` \| `fee` \| `adjustment`), fee_type (`cancellation` \| `no_show` \| `early_departure` \| `late_checkout` \| `damage` \| `other`, fees only), service_id, name jsonb (service name in every language at posting time), description, service_date, quantity, unit_price, amount, tax_amount, tax_breakdown jsonb, is_void, void_reason, voided_at, voided_by, created_by. Only adjustments may be negative. |
+| `payments` | id, hotel_id, reservation_id, number (receipt number, gapless), kind (`payment` \| `deposit` \| `refund`), method (`cash` \| `card` \| `bank_transfer` \| `online` \| `other`), amount + currency (as tendered), exchange_rate, amount_base (hotel currency), reference, card_brand, card_last4 (`^[0-9]{4}$`), notes, received_at, received_by, is_void, void_reason, voided_at, voided_by. **No full card number, CVV or track data is ever stored.** |
+| `invoices` | id, hotel_id, reservation_id, number (gapless), status (`issued` \| `void`), issue_date, language, currency, bill_to jsonb, document jsonb (the complete localized, formatted invoice: hotel block, lines, taxes, payments, totals), subtotal, tax_total, total, paid_total, void_reason, voided_at, voided_by, created_by. At most one `issued` invoice per reservation (partial unique index); to correct one, void it and issue a new one. The PDF is rendered on demand from the stored snapshot. |
+| `document_sequences` | (hotel_id, kind) PK, next_value. Kinds `reservation`, `invoice`, `receipt`. Incremented with an upsert that holds the row lock until commit: concurrent issuers queue, and a rolled-back transaction releases its number, so committed numbers are **gapless** (tested). |
+
+Integrity: a trigger (`hms_guard_financial_row`) on `folio_charges`,
+`payments` and `invoices` rejects any DELETE and any UPDATE other than voiding
+(void fields, invoice status); a void can never be undone. Folio operations
+lock the reservation row (`SELECT … FOR UPDATE`) so concurrent postings from
+several desks keep the totals exact (tested with parallel payments).
 
 ### Operations
 

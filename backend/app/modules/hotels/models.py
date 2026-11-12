@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import uuid
-from datetime import time
+from datetime import date, datetime, time
 from decimal import Decimal
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import (
     Boolean,
@@ -64,6 +65,14 @@ class Hotel(UUIDPk, Timestamps, Versioned, Base):
     # {"cancellation": LocalizedText, "payment": LocalizedText, "house_rules": LocalizedText}
     policies: Mapped[dict[str, Any]] = mapped_column(JSONB, server_default=text("'{}'"))
     is_active: Mapped[bool] = mapped_column(Boolean, server_default=text("true"))
+
+    @property
+    def zone(self) -> ZoneInfo:
+        return ZoneInfo(self.timezone)
+
+    def today(self) -> date:
+        """The hotel's current business date (in its own time zone)."""
+        return datetime.now(self.zone).date()
 
     __table_args__ = (
         UniqueConstraint("organization_id", "code"),

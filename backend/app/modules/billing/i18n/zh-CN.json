@@ -1,0 +1,74 @@
+{
+  "title": {
+    "invoice": "发票",
+    "statement": "客人账单",
+    "receipt": "付款收据"
+  },
+  "number": "编号",
+  "issue_date": "日期",
+  "description": "项目",
+  "quantity": "数量",
+  "unit_price": "单价",
+  "amount": "金额",
+  "payments": "已收款项",
+  "void_stamp": "作废",
+  "page_of": "第 {page} 页，共 {pages} 页",
+  "reservation": "预订",
+  "guest": "客人",
+  "stay": "入住期间",
+  "rooms": "房间",
+  "bill_to": "付款方",
+  "received_from": "付款人",
+  "tax_id_value": "税号：{tax_id}",
+  "receipt_amount": "收款金额",
+  "receipt_method": "付款方式",
+  "receipt_date": "收款时间",
+  "exchange_rate": "汇率",
+  "exchange_value": "1 {base} = {rate} {currency}",
+  "equivalent": "折合",
+  "subtotal": "小计",
+  "tax_included": "含{name}",
+  "total": "合计",
+  "paid": "已付",
+  "balance_due": "应付余额",
+  "credit_balance": "余额（待退款）",
+  "room_number": "{number} 号房",
+  "room_unassigned": "待分配房间",
+  "nights": {
+    "other": "{count} 晚"
+  },
+  "fee": {
+    "cancellation": "取消费",
+    "no_show": "未入住费",
+    "early_departure": "提前退房费",
+    "late_checkout": "延迟退房费",
+    "damage": "损坏赔偿",
+    "other": "费用"
+  },
+  "adjustment": "调整",
+  "voided": "已作废",
+  "payment_kind": {
+    "payment": "付款",
+    "deposit": "订金",
+    "refund": "退款"
+  },
+  "method": {
+    "cash": "现金",
+    "card": "银行卡",
+    "bank_transfer": "银行转账",
+    "online": "在线支付",
+    "other": "其他"
+  },
+  "card": "{brand}（尾号 {last4}）",
+  "card_brand": {
+    "visa": "Visa",
+    "mastercard": "Mastercard",
+    "amex": "American Express",
+    "unionpay": "银联",
+    "jcb": "JCB",
+    "discover": "Discover",
+    "other": "银行卡"
+  },
+  "statement_note": "本账单仅供参考，不作为发票。",
+  "thanks": "感谢您的光临。"
+}

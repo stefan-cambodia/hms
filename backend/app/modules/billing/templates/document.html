@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="{{ doc.language }}">
+<head>
+<meta charset="utf-8">
+<title>{{ doc.title }}{% if doc.number %} {{ doc.number }}{% endif %}</title>
+<style>
+  @page {
+    size: A4;
+    margin: 18mm 16mm 20mm 16mm;
+    @bottom-center { content: {{ page_css }}; font-size: 8pt; color: #6b7280; }
+  }
+  html { font-family: {{ fonts }}; font-size: 9.5pt; color: #111827; line-height: {{ line_height }}; }
+  body { margin: 0; }
+  .header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12mm; }
+  .hotel-name { font-size: 15pt; font-weight: 700; margin: 0 0 1mm; }
+  .muted { color: #4b5563; }
+  .small { font-size: 8.5pt; }
+  .doc-title { text-align: right; }
+  .doc-title h1 { font-size: 18pt; margin: 0; letter-spacing: 0.02em; color: #0f4c5c; }
+  .doc-title table td { padding: 0.4mm 0 0.4mm 4mm; text-align: right; }
+  .parties { display: flex; gap: 10mm; margin: 8mm 0 6mm; }
+  .box { flex: 1; border: 0.3mm solid #d1d5db; border-radius: 1.5mm; padding: 3mm 4mm; }
+  .box h3 { font-size: 8pt; text-transform: uppercase; letter-spacing: 0.06em; color: #6b7280; margin: 0 0 1.5mm; }
+  html[lang="km"] .box h3, html[lang="zh-CN"] .box h3 { text-transform: none; letter-spacing: 0; }
+  table.meta td { padding: 0.3mm 4mm 0.3mm 0; vertical-align: top; }
+  table.meta td:first-child { white-space: nowrap; }
+  table.lines { width: 100%; border-collapse: collapse; margin-top: 2mm; }
+  table.lines th { text-align: left; font-size: 8pt; color: #374151; border-bottom: 0.4mm solid #111827; padding: 1.5mm 2mm; }
+  table.lines td { border-bottom: 0.2mm solid #e5e7eb; padding: 1.8mm 2mm; vertical-align: top; }
+  table.lines .num { text-align: right; white-space: nowrap; }
+  table.lines tr { page-break-inside: avoid; }
+  .detail { color: #6b7280; font-size: 8.5pt; }
+  .void td { color: #9ca3af; text-decoration: line-through; }
+  .totals { margin-left: auto; width: 46%; border-collapse: collapse; margin-top: 4mm; }
+  .totals td { padding: 1.2mm 2mm; }
+  .totals td.num { text-align: right; white-space: nowrap; }
+  .totals tr.strong td { font-weight: 700; border-top: 0.3mm solid #111827; font-size: 10.5pt; }
+  h2 { font-size: 10pt; margin: 7mm 0 1mm; }
+  .notes { margin-top: 8mm; color: #4b5563; font-size: 8.5pt; }
+  .stamp { position: fixed; top: 95mm; left: 0; right: 0; text-align: center; font-size: 64pt; font-weight: 700;
+           color: rgba(185, 28, 28, 0.18); transform: rotate(-24deg); }
+  .receipt td { padding: 1.6mm 4mm 1.6mm 0; vertical-align: top; }
+  .receipt td:first-child { color: #4b5563; }
+</style>
+</head>
+<body>
+{% if doc.is_void or void %}<div class="stamp">{{ doc.labels.void_stamp }}</div>{% endif %}
+<div class="header">
+  <div>
+    <p class="hotel-name">{{ doc.hotel.name }}</p>
+    {% if doc.hotel.legal_name %}<div class="muted">{{ doc.hotel.legal_name }}</div>{% endif %}
+    {% for line in doc.hotel.address %}<div class="muted small">{{ line }}</div>{% endfor %}
+    {% if doc.hotel.contact %}<div class="muted small">{{ doc.hotel.contact | join(" · ") }}</div>{% endif %}
+    {% if doc.hotel.tax_id %}<div class="muted small">{{ doc.hotel.tax_id }}</div>{% endif %}
+  </div>
+  <div class="doc-title">
+    <h1>{{ doc.title }}</h1>
+    <table>
+      {% if doc.number %}<tr><td class="muted">{{ doc.labels.number }}</td><td><b>{{ doc.number }}</b></td></tr>{% endif %}
+      <tr><td class="muted">{{ doc.labels.issue_date }}</td><td>{{ doc.issue_date }}</td></tr>
+    </table>
+  </div>
+</div>
+
+<div class="parties">
+  <div class="box">
+    <h3>{{ doc.bill_to_label }}</h3>
+    {% for line in doc.bill_to %}<div{% if loop.first %} style="font-weight:600"{% endif %}>{{ line }}</div>{% endfor %}
+  </div>
+  <div class="box">
+    <table class="meta">
+      {% for label, value in doc.meta %}<tr><td class="muted">{{ label }}</td><td>{{ value }}</td></tr>{% endfor %}
+    </table>
+  </div>
+</div>
+
+{% if doc.receipt %}
+<table class="receipt">
+  {% for label, value in doc.receipt %}<tr><td>{{ label }}</td><td><b>{{ value }}</b></td></tr>{% endfor %}
+</table>
+{% endif %}
+
+{% if doc.lines %}
+<table class="lines">
+  <thead><tr>
+    <th>{{ doc.labels.description }}</th>
+    <th class="num">{{ doc.labels.quantity }}</th>
+    <th class="num">{{ doc.labels.unit_price }}</th>
+    <th class="num">{{ doc.labels.amount }}</th>
+  </tr></thead>
+  <tbody>
+  {% for line in doc.lines %}
+    <tr{% if line.void %} class="void"{% endif %}>
+      <td>{{ line.description }}{% if line.detail %}<div class="detail">{{ line.detail }}</div>{% endif %}</td>
+      <td class="num">{{ line.quantity }}</td>
+      <td class="num">{{ line.unit_price }}</td>
+      <td class="num">{{ line.amount }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+<table class="totals">
+  {% for label, value, strong in doc.totals %}<tr{% if strong %} class="strong"{% endif %}><td>{{ label }}</td><td class="num">{{ value }}</td></tr>{% endfor %}
+</table>
+
+{% if doc.payments %}
+<h2>{{ doc.labels.payments }}</h2>
+<table class="lines">
+  <tbody>
+  {% for p in doc.payments %}
+    <tr><td style="width:22%">{{ p.date }}</td><td style="width:18%">{{ p.number }}</td><td>{{ p.label }}</td><td class="num">{{ p.amount }}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+{% if doc.notes %}<div class="notes">{% for n in doc.notes %}<p>{{ n }}</p>{% endfor %}</div>{% endif %}
+</body>
+</html>

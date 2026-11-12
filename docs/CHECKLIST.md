@@ -57,7 +57,7 @@ Last updated: 2026-11-12. Test counts: backend 48 (pytest, real PostgreSQL), fro
 | Sellable services (independent of room categories) | ✅ | |
 | Tax rates (percent / fixed per night / per person-night, inclusive/exclusive) | ✅ | Applied by the pricing engine in phase 4 |
 | Photos and logo upload (media module) | ⬜ | Model designed; upload and re-encoding not built |
-| Additional currencies and exchange rates | ⬜ | Phase 5 (with payments) |
+| Additional currencies and exchange rates | ✅ | Phase 5: Configuration → Currencies |
 | Multi-property: create additional hotels (super admin), hotel switcher | ✅ | |
 
 ## Phase 4 — Core hotel management ✅
@@ -101,9 +101,38 @@ Last updated: 2026-11-12. Test counts: backend 48 (pytest, real PostgreSQL), fro
 | Dashboard KPIs from reservations (arrivals, departures, occupancy) | ⬜ | Phase 8 (data now available) |
 | Multi-room reservations with different dates per room | 🟡 | Supported by the API; covered by the single-room tests only |
 
-## Phase 5 — Operations ⬜
+## Phase 5 — Operations 🟡 (front desk ✅, housekeeping & maintenance ⬜)
 
-Check-in/out, folio, payments (multi-currency), invoices and receipts (PDF in 5 languages), housekeeping tasks, maintenance with room blocks.
+### Front desk and billing ✅
+
+| Item | Status | Notes |
+|------|--------|-------|
+| Check-in: from arrival date (late arrivals allowed), room must be assigned, previous guest must have left, dirty room needs explicit confirmation | ✅ | test_frontdesk.py |
+| Walk-in (new reservation prefilled for tonight, source walk-in), pending reservations can be checked in | ✅ | |
+| Undo check-in (same hotel day) | ✅ | |
+| Check-out: balance must be settled (open balance needs folio.adjust; credit needs confirmation), room becomes dirty | ✅ | |
+| Early departure releases the unused nights (inventory and bill) after explicit confirmation | ✅ | |
+| In-house room move: stay split at today, booked prices kept, old room dirty, availability checked | ✅ | |
+| Front desk page: arrivals (late arrivals flagged), in house (overdue flagged), departures, balances, planning view for other days | ✅ | E2E |
+| Room board: occupancy, arrival today, out of service, cleaning status with quick change (housekeeping.update) | ✅ | E2E (3 devices) |
+| Folio: accommodation from fixed nightly prices, service charges (catalog or free text, service taxes), fees, adjustments (folio.adjust), voids with reason | ✅ | Balance math tested |
+| Payments: payment / deposit / refund, 5 methods, card brand + last 4 only, references; idempotent; concurrent postings serialised | ✅ | |
+| Multi-currency payments: accepted currencies with rates, rate stored per payment, stale-rate protection (EXCHANGE_RATE_CHANGED) | ✅ | |
+| Refunds limited to the amount paid; refund/void permissions enforced | ✅ | |
+| Card-number guard on free-text fields (payments, charges, reservation and guest notes) | ✅ | Luhn-checked |
+| Financial records append-only (DB trigger: no delete, only voiding, no un-voiding) | ✅ | |
+| Invoices: gapless numbers (concurrency + rollback tested), one active per reservation, immutable snapshot, void and reissue, bill to guest or company | ✅ | |
+| Receipts per payment (gapless numbers) and guest folio statement | ✅ | |
+| PDFs in 5 languages (WeasyPrint + HarfBuzz; Noto fonts) — Khmer and Chinese verified visually and by embedded fonts | ✅ | Also verified inside the Docker image |
+| Cancellation fees from the policy (free window, nights/percent, non-refundable), no-show fees; preview; waive needs folio.adjust | ✅ | |
+| Payments & invoices page: cash-up totals per method/currency, net received, invoice search, void | ✅ | E2E |
+| City-ledger / company accounts, split folios, credit notes | ⬜ | Invoices are corrected by void + reissue |
+| Night audit (automatic no-show, daily room revenue posting) | ⬜ | Accommodation is billed from fixed nightly prices |
+| Payment terminal / online payment gateway integration | ⬜ | Card payments are recorded, not processed |
+
+### Housekeeping and maintenance ⬜
+
+Housekeeping tasks, assignments, inspection, maintenance requests with room blocks.
 
 ## Phase 6 — Multi-user ✅ (largely delivered early) / ⬜ (remaining)
 

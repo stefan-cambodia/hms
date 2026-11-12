@@ -117,7 +117,9 @@ test('a booking made on one device appears on another calendar', async ({ browse
   await drawer.getByLabel('First name').fill(name);
   await drawer.getByLabel('Last name').fill('Device');
   await drawer.getByRole('textbox', { name: 'Category' }).click();
-  await desk.getByRole('option').first().click();
+  // Demo data is shared between runs: pick a category that is not sold out tonight.
+  await expect(desk.getByRole('option', { name: / free$/ }).first()).toBeVisible();
+  await desk.getByRole('option', { name: / free$/ }).filter({ hasNotText: / 0 free$/ }).first().click();
   await expect(drawer.getByText('Total')).toBeVisible({ timeout: 10_000 });
   await drawer.getByRole('button', { name: 'Create reservation' }).click();
   await expect(desk.getByRole('heading', { level: 1 })).toHaveText(/R\d+/);

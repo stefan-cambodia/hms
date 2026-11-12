@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import date
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Header, Query, Response, status
 
@@ -19,8 +19,10 @@ from app.modules.reservations.schemas import (
     CancelIn,
     ChangeDatesIn,
     ChangeRatePlanIn,
+    FeePreviewOut,
     MoveStayIn,
     NightOut,
+    NoShowIn,
     QuoteIn,
     QuoteOut,
     QuoteStayOut,
@@ -189,17 +191,24 @@ async def confirm(reservation_id: uuid.UUID, body: VersionIn, ctx: Edit, db: DB)
     return await service.reservation_out(db, await service.confirm(db, ctx, reservation_id, body.version))
 
 
+@router.get("/reservations/{reservation_id}/fee-preview", response_model=FeePreviewOut)
+async def fee_preview(
+    reservation_id: uuid.UUID, ctx: View, db: DB, action: Literal["cancel", "no_show"] = "cancel"
+):
+    return await service.fee_preview(db, ctx, reservation_id, action)
+
+
 @router.post("/reservations/{reservation_id}/cancel", response_model=ReservationOut)
 async def cancel(reservation_id: uuid.UUID, body: CancelIn, ctx: CancelPerm, db: DB):
     return await service.reservation_out(
-        db, await service.cancel(db, ctx, reservation_id, body.version, body.reason)
+        db, await service.cancel(db, ctx, reservation_id, body.version, body.reason, body.waive_fee)
     )
 
 
 @router.post("/reservations/{reservation_id}/no-show", response_model=ReservationOut)
-async def no_show(reservation_id: uuid.UUID, body: VersionIn, ctx: Edit, db: DB):
+async def no_show(reservation_id: uuid.UUID, body: NoShowIn, ctx: Edit, db: DB):
     return await service.reservation_out(
-        db, await service.mark_no_show(db, ctx, reservation_id, body.version)
+        db, await service.mark_no_show(db, ctx, reservation_id, body.version, body.waive_fee)
     )
 
 

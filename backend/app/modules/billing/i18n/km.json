@@ -1,0 +1,74 @@
+{
+  "title": {
+    "invoice": "វិក្កយបត្រ",
+    "statement": "តារាងគណនីភ្ញៀវ",
+    "receipt": "បង្កាន់ដៃបង់ប្រាក់"
+  },
+  "number": "លេខ",
+  "issue_date": "កាលបរិច្ឆេទ",
+  "description": "បរិយាយ",
+  "quantity": "ចំនួន",
+  "unit_price": "តម្លៃឯកតា",
+  "amount": "ទឹកប្រាក់",
+  "payments": "ការបង់ប្រាក់ដែលបានទទួល",
+  "void_stamp": "ទុកជាមោឃៈ",
+  "page_of": "ទំព័រ {page} នៃ {pages}",
+  "reservation": "ការកក់",
+  "guest": "ភ្ញៀវ",
+  "stay": "ការស្នាក់នៅ",
+  "rooms": "បន្ទប់",
+  "bill_to": "ចេញវិក្កយបត្រជូន",
+  "received_from": "ទទួលពី",
+  "tax_id_value": "លេខអត្តសញ្ញាណកម្មសារពើពន្ធ៖ {tax_id}",
+  "receipt_amount": "ទឹកប្រាក់ដែលបានទទួល",
+  "receipt_method": "វិធីបង់ប្រាក់",
+  "receipt_date": "ទទួលនៅថ្ងៃ",
+  "exchange_rate": "អត្រាប្តូរប្រាក់",
+  "exchange_value": "1 {base} = {rate} {currency}",
+  "equivalent": "ស្មើនឹង",
+  "subtotal": "សរុបរង",
+  "tax_included": "រួមបញ្ចូល {name}",
+  "total": "សរុប",
+  "paid": "បានបង់",
+  "balance_due": "សមតុល្យត្រូវបង់",
+  "credit_balance": "ប្រាក់លើស (ត្រូវសងវិញ)",
+  "room_number": "បន្ទប់ {number}",
+  "room_unassigned": "បន្ទប់នឹងត្រូវកំណត់",
+  "nights": {
+    "other": "{count} យប់"
+  },
+  "fee": {
+    "cancellation": "ថ្លៃលុបចោលការកក់",
+    "no_show": "ថ្លៃមិនមកស្នាក់នៅ",
+    "early_departure": "ថ្លៃចាកចេញមុនកំណត់",
+    "late_checkout": "ថ្លៃចាកចេញយឺត",
+    "damage": "សំណងការខូចខាត",
+    "other": "ថ្លៃផ្សេងៗ"
+  },
+  "adjustment": "ការកែតម្រូវ",
+  "voided": "បានទុកជាមោឃៈ",
+  "payment_kind": {
+    "payment": "ការបង់ប្រាក់",
+    "deposit": "ប្រាក់កក់",
+    "refund": "ការសងប្រាក់វិញ"
+  },
+  "method": {
+    "cash": "សាច់ប្រាក់",
+    "card": "កាត",
+    "bank_transfer": "ផ្ទេរតាមធនាគារ",
+    "online": "បង់តាមអនឡាញ",
+    "other": "ផ្សេងៗ"
+  },
+  "card": "{brand} លេខចុងក្រោយ {last4}",
+  "card_brand": {
+    "visa": "Visa",
+    "mastercard": "Mastercard",
+    "amex": "American Express",
+    "unionpay": "UnionPay",
+    "jcb": "JCB",
+    "discover": "Discover",
+    "other": "កាត"
+  },
+  "statement_note": "តារាងនេះសម្រាប់ជាព័ត៌មានប៉ុណ្ណោះ មិនមែនជាវិក្កយបត្រអាករទេ។",
+  "thanks": "សូមអរគុណដែលបានស្នាក់នៅជាមួយយើង។"
+}

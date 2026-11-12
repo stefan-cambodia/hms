@@ -363,6 +363,7 @@ export interface Reservation {
   children: number;
   currency: string;
   accommodation_total: string;
+  charges_total: string;
   tax_total: string;
   grand_total: string;
   paid_total: string;
@@ -565,4 +566,180 @@ export interface Offer {
   available: number;
   issues: RestrictionIssue[];
   bookable: boolean;
+}
+
+// --- front desk & billing (phase 5) ------------------------------------------
+
+export type ChargeKind = 'service' | 'fee' | 'adjustment';
+export type FeeType = 'cancellation' | 'no_show' | 'early_departure' | 'late_checkout' | 'damage' | 'other';
+export type PaymentKind = 'payment' | 'deposit' | 'refund';
+export type PaymentMethod = 'cash' | 'card' | 'bank_transfer' | 'online' | 'other';
+export type CardBrand = 'visa' | 'mastercard' | 'amex' | 'unionpay' | 'jcb' | 'discover' | 'other';
+export type HousekeepingStatus = 'clean' | 'dirty' | 'in_progress' | 'inspected';
+
+export interface Currency {
+  id: UUID;
+  code: string;
+  units_per_base: string;
+  is_active: boolean;
+  version: number;
+  updated_at: string;
+}
+
+export interface FolioCharge {
+  id: UUID;
+  reservation_room_id: UUID | null;
+  kind: ChargeKind;
+  fee_type: FeeType | null;
+  service_id: UUID | null;
+  name: LocalizedText;
+  description: string | null;
+  service_date: string;
+  quantity: string;
+  unit_price: string;
+  amount: string;
+  tax_amount: string;
+  is_void: boolean;
+  void_reason: string | null;
+  voided_at: string | null;
+  voided_by_name: string | null;
+  created_by_name: string | null;
+  created_at: string;
+}
+
+export interface Payment {
+  id: UUID;
+  number: string;
+  kind: PaymentKind;
+  method: PaymentMethod;
+  amount: string;
+  currency: string;
+  exchange_rate: string;
+  amount_base: string;
+  reference: string | null;
+  card_brand: CardBrand | null;
+  card_last4: string | null;
+  notes: string | null;
+  received_at: string;
+  received_by_name: string | null;
+  is_void: boolean;
+  void_reason: string | null;
+  voided_at: string | null;
+  voided_by_name: string | null;
+}
+
+export interface PaymentListItem extends Payment {
+  reservation_id: UUID;
+  reservation_code: string;
+  guest_name: string;
+}
+
+export interface PaymentReport {
+  items: PaymentListItem[];
+  total: number;
+  limit: number;
+  offset: number;
+  summary: { method: PaymentMethod; currency: string; kind: PaymentKind; count: number; amount: string; amount_base: string }[];
+  net_base: string;
+}
+
+export interface Invoice {
+  id: UUID;
+  reservation_id: UUID;
+  number: string;
+  status: 'issued' | 'void';
+  issue_date: string;
+  language: string;
+  currency: string;
+  bill_to: { name: string; company?: string; tax_id?: string; address?: string; city?: string; country_code?: string; email?: string };
+  subtotal: string;
+  tax_total: string;
+  total: string;
+  paid_total: string;
+  balance: string;
+  void_reason: string | null;
+  voided_at: string | null;
+  created_at: string;
+}
+
+export interface InvoiceListItem extends Invoice {
+  reservation_code: string;
+}
+
+export interface AccommodationRun {
+  reservation_room_id: UUID;
+  room_type_id: UUID;
+  room_id: UUID | null;
+  rate_plan_id: UUID | null;
+  start: string;
+  end: string;
+  nights: number;
+  unit_price: string;
+  amount: string;
+}
+
+export interface Folio {
+  reservation_id: UUID;
+  version: number;
+  currency: string;
+  accommodation: AccommodationRun[];
+  charges: FolioCharge[];
+  payments: Payment[];
+  taxes: TaxLine[];
+  totals: { accommodation: string; charges: string; tax_total: string; grand_total: string; paid_total: string; balance: string };
+  invoices: Invoice[];
+  invoice_outdated: boolean;
+}
+
+export interface FeePreview {
+  action: 'cancel' | 'no_show';
+  currency: string;
+  fee: string;
+  stays: { reservation_room_id: UUID; rate_plan_id: UUID | null; policy_id: UUID | null; refundable: boolean; free_until: string | null; stay_total: string; fee: string }[];
+}
+
+export interface StayRow {
+  reservation_id: UUID;
+  code: string;
+  status: ReservationStatus;
+  version: number;
+  reservation_room_id: UUID;
+  guest_id: UUID;
+  guest_name: string;
+  vip_level: number;
+  room_id: UUID | null;
+  room_number: string | null;
+  room_type_id: UUID;
+  housekeeping_status: HousekeepingStatus | null;
+  arrival: string;
+  departure: string;
+  adults: number;
+  children: number;
+  checked_in_at: string | null;
+  checked_out_at: string | null;
+  balance: string;
+  currency: string;
+  special_requests: string | null;
+  flags: ('late_arrival' | 'overdue')[];
+}
+
+export interface FrontDesk {
+  date: string;
+  is_today: boolean;
+  arrivals: StayRow[];
+  departures: StayRow[];
+  in_house: StayRow[];
+}
+
+export interface RoomBoardRow {
+  room_id: UUID;
+  number: string;
+  room_type_id: UUID;
+  floor_id: UUID | null;
+  housekeeping_status: HousekeepingStatus;
+  version: number;
+  block: { id: UUID; reason: string; start_date: string; end_date: string } | null;
+  occupant: StayRow | null;
+  arriving: StayRow | null;
+  departing: boolean;
 }

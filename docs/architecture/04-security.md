@@ -49,8 +49,21 @@
 ## 4.3 Data protection
 
 * **Payment cards:** no primary account number (PAN), CVV, or track data is
-  ever stored. Only brand, last 4 digits, and a processor reference, which
-  keeps the PMS out of PCI DSS scope for stored card data.
+  ever stored. Only brand, last 4 digits (database check `^[0-9]{4}$`), and a
+  processor reference, which keeps the PMS out of PCI DSS scope for stored
+  card data. Free-text fields where staff could paste a card number (payment
+  reference and notes, charge descriptions, reservation and guest notes, void
+  reasons) reject any 13–19 digit sequence that passes the Luhn check
+  (`card_number_not_allowed`).
+* **Financial records:** folio charges, payments and invoices are
+  append-only. A database trigger refuses deletes and any update other than
+  voiding (with a mandatory reason); a void cannot be undone. Invoice and
+  receipt numbers are gapless. Waiving fees, discounts, voiding charges and
+  checking out with money owed need `folio.adjust`; refunds and payment voids
+  need their own permissions. Every financial action is in the reservation
+  history and the audit log.
+* **Documents:** PDFs are rendered server-side from escaped templates; the
+  renderer is not allowed to fetch any URL (no SSRF through documents).
 * **Encryption at rest** for secrets that must be recoverable (OTA
   credentials, TOTP secrets, identity document numbers): AES-GCM through
   `cryptography`'s Fernet-compatible scheme, with the key provided by the

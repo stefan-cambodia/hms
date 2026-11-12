@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 import {
+  Alert,
   Anchor,
   Badge,
   Button,
   Card,
+  Checkbox,
   Collapse,
   Divider,
   Grid,
@@ -25,7 +27,13 @@ import { DatePickerInput } from '@mantine/dates';
 import { modals } from '@mantine/modals';
 import {
   IconArrowLeft,
+  IconArrowsExchange,
   IconBed,
+  IconCash,
+  IconDoorEnter,
+  IconDoorExit,
+  IconFileInvoice,
+  IconReceipt,
   IconCalendarEvent,
   IconCheck,
   IconChevronDown,
@@ -41,7 +49,7 @@ import { useTranslation } from 'react-i18next';
 import { api } from '@/api/client';
 import { useHotelMutation, useHotelQuery } from '@/api/hooks';
 import { ApiError } from '@/api/client';
-import type { AvailableRoom, Offer, Reservation, ReservationEvent, ReservationRoom, ReservationSource } from '@/api/types';
+import type { AvailableRoom, FeePreview, Offer, Reservation, ReservationEvent, ReservationRoom, ReservationSource } from '@/api/types';
 import { PageLoader } from '@/app/AppLayout';
 import { useAuth, useHotel } from '@/auth/AuthProvider';
 import { EmptyState, SubmitButton } from '@/components/ui';
@@ -51,9 +59,11 @@ import { countryName, formatDate, formatDateTime, formatMoney } from '@/lib/form
 import { pickLocalized } from '@/lib/localized';
 import { issueLabel, policySummary, usePricingLookups } from '@/modules/pricing/shared';
 import { addDays } from '@/lib/dates';
+import { FolioSection } from '@/modules/billing/FolioSection';
+import { useStayActions } from '@/modules/frontdesk/actions';
 import { FlagBadges, SOURCES, StatusBadge, useHotelToday, useInventory } from './shared';
 
-const INVALIDATES = ['reservation', 'calendar'];
+const INVALIDATES = ['reservation', 'calendar', 'folio', 'front_desk', 'room_board'];
 
 export default function ReservationDetailPage() {
   const { id } = useParams();
@@ -63,8 +73,9 @@ export default function ReservationDetailPage() {
   const today = useHotelToday();
   const res = useHotelQuery<Reservation>('reservation', `/reservations/${id}`);
   const history = useHotelQuery<ReservationEvent[]>('reservation', `/reservations/${id}/events`);
-  const [cancelling, setCancelling] = useState(false);
+  const [cancelling, setCancelling] = useState<'cancel' | 'no_show' | null>(null);
   const [editing, setEditing] = useState(false);
+  const stayActions = useStayActions();
 
   const action = useHotelMutation<{ path: string; body: Record<string, unknown> }, Reservation>(
     (h, { path, body }) => api.post<Reservation>(h(`/reservations/${id}/${path}`), body),
@@ -78,6 +89,10 @@ export default function ReservationDetailPage() {
   const canEdit = can('reservations.edit') && (open || r.status === 'checked_in');
   const run = (path: string, body: Record<string, unknown>, done: string) =>
     action.mutateAsync({ path, body: { version: r.version, ...body } }).then(() => notifySuccess(done), notifyError);
+  const waiting = r.rooms.filter((rr) => rr.occupies_inventory && !rr.checked_in_at && rr.arrival <= today && today < rr.departure);
+  const inHouse = r.rooms.filter((rr) => rr.checked_in_at && !rr.checked_out_at);
+  const canCheckIn = can('frontdesk.checkin') && (open || r.status === 'checked_in') && waiting.length > 0;
+  const canCheckOut = can('frontdesk.checkout') && r.status === 'checked_in' && inHouse.length > 0;
 
   return (
     <>
@@ -103,24 +118,30 @@ export default function ReservationDetailPage() {
           </Text>
         </div>
         <Group gap="xs">
+          {canCheckIn && (
+            <Button
+              color="teal"
+              leftSection={<IconDoorEnter size={16} />}
+              loading={stayActions.busy}
+              disabled={waiting.some((rr) => !rr.room_id)}
+              title={waiting.some((rr) => !rr.room_id) ? t('frontdesk.assign_room_first') : undefined}
+              onClick={() => void stayActions.checkIn(r.id, r.version)}
+            >
+              {t('frontdesk.check_in')}
+            </Button>
+          )}
+          {canCheckOut && (
+            <Button leftSection={<IconDoorExit size={16} />} loading={stayActions.busy} onClick={() => void stayActions.checkOut(r.id, r.version)}>
+              {t('frontdesk.check_out')}
+            </Button>
+          )}
           {can('reservations.edit') && r.status === 'pending' && (
             <Button leftSection={<IconCheck size={16} />} loading={action.isPending} onClick={() => run('confirm', {}, t('reservations.confirmed_done'))}>
               {t('reservations.actions.confirm')}
             </Button>
           )}
           {can('reservations.edit') && open && r.arrival <= today && (
-            <Button
-              variant="default"
-              onClick={() =>
-                modals.openConfirmModal({
-                  title: t('reservations.actions.no_show'),
-                  children: <Text size="sm">{t('reservations.no_show_body')}</Text>,
-                  labels: { confirm: t('reservations.actions.no_show'), cancel: t('common.cancel') },
-                  confirmProps: { color: 'red' },
-                  onConfirm: () => void run('no-show', {}, t('reservations.no_show_done')),
-                })
-              }
-            >
+            <Button variant="default" onClick={() => setCancelling('no_show')}>
               {t('reservations.actions.no_show')}
             </Button>
           )}
@@ -130,7 +151,7 @@ export default function ReservationDetailPage() {
             </Button>
           )}
           {can('reservations.cancel') && open && (
-            <Button variant="light" color="red" leftSection={<IconX size={16} />} onClick={() => setCancelling(true)}>
+            <Button variant="light" color="red" leftSection={<IconX size={16} />} onClick={() => setCancelling('cancel')}>
               {t('reservations.actions.cancel')}
             </Button>
           )}
@@ -150,8 +171,9 @@ export default function ReservationDetailPage() {
         <Grid.Col span={{ base: 12, lg: 8 }}>
           <Stack gap="md">
             {r.rooms.map((rr, i) => (
-              <StayCard key={rr.id} reservation={r} stay={rr} index={i} editable={canEdit} />
+              <StayCard key={rr.id} reservation={r} stay={rr} index={i} editable={canEdit} onUndoCheckIn={() => void stayActions.undoCheckIn(r, rr.id)} />
             ))}
+            {can('payments.view') && <FolioSection reservation={r} />}
             {(r.special_requests || r.internal_notes) && (
               <Card>
                 <SimpleGrid cols={{ base: 1, sm: 2 }}>
@@ -178,7 +200,7 @@ export default function ReservationDetailPage() {
               <Title order={3} mb="md">
                 {t('reservations.history')}
               </Title>
-              <HistoryTimeline events={history.data ?? []} />
+              <HistoryTimeline events={history.data ?? []} currency={r.currency} />
             </Card>
           </Stack>
         </Grid.Col>
@@ -211,6 +233,7 @@ export default function ReservationDetailPage() {
               </Title>
               <Stack gap={6}>
                 <Row label={t('reservations.accommodation')} value={formatMoney(r.accommodation_total, r.currency, i18n.language)} />
+                {Number(r.charges_total) !== 0 && <Row label={t('billing.extras')} value={formatMoney(r.charges_total, r.currency, i18n.language)} />}
                 {r.tax_breakdown.map((tax) => (
                   <Row
                     key={tax.code}
@@ -222,11 +245,8 @@ export default function ReservationDetailPage() {
                 <Divider />
                 <Row strong label={t('reservations.total')} value={formatMoney(r.grand_total, r.currency, i18n.language)} />
                 <Row dimmed label={t('reservations.paid')} value={formatMoney(r.paid_total, r.currency, i18n.language)} />
-                <Row strong label={t('reservations.balance')} value={formatMoney(r.balance, r.currency, i18n.language)} />
+                <Row strong label={Number(r.balance) < 0 ? t('billing.credit') : t('reservations.balance')} value={formatMoney(Math.abs(Number(r.balance)), r.currency, i18n.language)} />
               </Stack>
-              <Text size="xs" c="dimmed" mt="sm">
-                {t('reservations.payments_later')}
-              </Text>
             </Card>
           </Stack>
         </Grid.Col>
@@ -234,11 +254,16 @@ export default function ReservationDetailPage() {
 
       {cancelling && (
         <CancelModal
-          onClose={() => setCancelling(false)}
-          onConfirm={(reason) => run('cancel', { reason }, t('reservations.cancelled_done')).then(() => setCancelling(false))}
+          reservation={r}
+          mode={cancelling}
+          onClose={() => setCancelling(null)}
+          onConfirm={(body) =>
+            run(cancelling === 'cancel' ? 'cancel' : 'no-show', body, cancelling === 'cancel' ? t('reservations.cancelled_done') : t('reservations.no_show_done')).then(() => setCancelling(null))
+          }
           loading={action.isPending}
         />
       )}
+      {stayActions.element}
       {editing && <EditDetailsModal reservation={r} onClose={() => setEditing(false)} />}
     </>
   );
@@ -257,11 +282,26 @@ function Row({ label, value, strong, dimmed }: { label: string; value: string; s
   );
 }
 
-function StayCard({ reservation: r, stay, index, editable }: { reservation: Reservation; stay: ReservationRoom; index: number; editable: boolean }) {
+function StayCard({
+  reservation: r,
+  stay,
+  index,
+  editable,
+  onUndoCheckIn,
+}: {
+  reservation: Reservation;
+  stay: ReservationRoom;
+  index: number;
+  editable: boolean;
+  onUndoCheckIn: () => void;
+}) {
   const { t, i18n } = useTranslation();
+  const hotel = useHotel();
   const inv = useInventory();
   const [showNights, setShowNights] = useState(false);
   const [changingDates, setChangingDates] = useState(false);
+  const [moving, setMoving] = useState(false);
+  const inHouse = !!stay.checked_in_at && !stay.checked_out_at;
   const live = stay.occupies_inventory;
   const free = useHotelQuery<AvailableRoom[]>(
     'calendar',
@@ -357,13 +397,32 @@ function StayCard({ reservation: r, stay, index, editable }: { reservation: Rese
               {stay.room_id ? inv.roomNumber(stay.room_id) : t('reservations.unassigned')}
             </Badge>
           )}
-          {editable && live && (
+          {editable && live && !stay.checked_out_at && (
             <Button variant="default" leftSection={<IconCalendarEvent size={16} />} onClick={() => setChangingDates(true)}>
               {t('reservations.actions.change_dates')}
             </Button>
           )}
         </Group>
       </Group>
+      {stay.checked_in_at && (
+        <Group gap={6} mt="xs" wrap="wrap">
+          <Badge color={inHouse ? 'teal' : 'gray'} variant="light" radius="sm">
+            {inHouse
+              ? t('frontdesk.checked_in_at', { time: formatDateTime(stay.checked_in_at, i18n.language, hotel.timezone) })
+              : t('frontdesk.checked_out_at', { time: formatDateTime(stay.checked_out_at, i18n.language, hotel.timezone) })}
+          </Badge>
+          {inHouse && can('frontdesk.checkin') && (
+            <Button size="xs" variant="default" leftSection={<IconArrowsExchange size={14} />} onClick={() => setMoving(true)}>
+              {t('frontdesk.move_room')}
+            </Button>
+          )}
+          {inHouse && can('frontdesk.checkin') && localDate(stay.checked_in_at, hotel.timezone) === hotelDay && (
+            <Button size="xs" variant="subtle" color="gray" onClick={onUndoCheckIn}>
+              {t('frontdesk.undo_check_in')}
+            </Button>
+          )}
+        </Group>
+      )}
       <Group mt="sm" gap="sm" wrap="wrap" align="flex-end">
         {editable && live && !stay.checked_out_at ? (
           <Select
@@ -428,7 +487,87 @@ function StayCard({ reservation: r, stay, index, editable }: { reservation: Rese
         </Table>
       </Collapse>
       {changingDates && <ChangeDatesModal reservation={r} stay={stay} onClose={() => setChangingDates(false)} />}
+      {moving && <MoveRoomModal reservation={r} stay={stay} onClose={() => setMoving(false)} />}
     </Card>
+  );
+}
+
+/** Calendar date of an instant in the hotel's time zone (YYYY-MM-DD). */
+function localDate(iso: string | null, timeZone: string): string | null {
+  if (!iso) return null;
+  return new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(iso));
+}
+
+function MoveRoomModal({ reservation: r, stay, onClose }: { reservation: Reservation; stay: ReservationRoom; onClose: () => void }) {
+  const { t, i18n } = useTranslation();
+  const inv = useInventory();
+  const today = useHotelToday();
+  const start = today > stay.arrival ? today : stay.arrival;
+  const free = useHotelQuery<AvailableRoom[]>('calendar', '/available-rooms', { start, end: stay.departure });
+  const [roomId, setRoomId] = useState<string | null>(null);
+  const [reason, setReason] = useState('');
+  const [notReady, setNotReady] = useState<string | null>(null);
+  const move = useHotelMutation<boolean, Reservation>(
+    (h, ignore) =>
+      api.post<Reservation>(h(`/reservations/${r.id}/rooms/${stay.id}/room-move`), {
+        version: r.version,
+        room_id: roomId,
+        reason: reason.trim() || undefined,
+        ignore_room_status: ignore,
+      }),
+    INVALIDATES,
+  );
+  const submit = (ignore: boolean) =>
+    move.mutateAsync(ignore).then(
+      () => {
+        notifySuccess(t('frontdesk.moved_done'));
+        onClose();
+      },
+      (err) => {
+        if (err instanceof ApiError && err.code === 'ROOM_NOT_READY' && !ignore) setNotReady(errorMessage(err));
+        else notifyError(err);
+      },
+    );
+  return (
+    <Modal opened onClose={onClose} title={t('frontdesk.move_room')}>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (roomId) void submit(!!notReady);
+        }}
+      >
+        <Stack>
+          <Text size="sm">{t('frontdesk.move_room_body', { date: formatDate(start, i18n.language) })}</Text>
+          <Select
+            label={t('frontdesk.new_room')}
+            searchable
+            data={(free.data ?? []).map((room) => ({ value: room.id, label: `${room.number} · ${inv.typeName(room.room_type_id)}` }))}
+            value={roomId}
+            onChange={(v) => {
+              setRoomId(v);
+              setNotReady(null);
+            }}
+            nothingFoundMessage={t('frontdesk.no_free_room')}
+          />
+          <TextInput label={t('frontdesk.move_reason')} maxLength={300} value={reason} onChange={(e) => setReason(e.currentTarget.value)} />
+          {notReady && (
+            <Alert color="orange" p="sm">
+              <Text size="sm">
+                {notReady} {t('frontdesk.room_not_ready_body')}
+              </Text>
+            </Alert>
+          )}
+          <Group justify="flex-end">
+            <Button variant="default" onClick={onClose}>
+              {t('common.cancel')}
+            </Button>
+            <SubmitButton loading={move.isPending} disabled={!roomId}>
+              {notReady ? t('frontdesk.move_anyway') : t('frontdesk.move_room')}
+            </SubmitButton>
+          </Group>
+        </Stack>
+      </form>
+    </Modal>
   );
 }
 
@@ -479,26 +618,63 @@ function ChangeDatesModal({ reservation: r, stay, onClose }: { reservation: Rese
   );
 }
 
-function CancelModal({ onClose, onConfirm, loading }: { onClose: () => void; onConfirm: (reason: string) => void; loading: boolean }) {
-  const { t } = useTranslation();
+function CancelModal({
+  reservation: r,
+  mode,
+  onClose,
+  onConfirm,
+  loading,
+}: {
+  reservation: Reservation;
+  mode: 'cancel' | 'no_show';
+  onClose: () => void;
+  onConfirm: (body: Record<string, unknown>) => void;
+  loading: boolean;
+}) {
+  const { t, i18n } = useTranslation();
+  const { can } = useAuth();
   const [reason, setReason] = useState('');
+  const [waive, setWaive] = useState(false);
+  const preview = useHotelQuery<FeePreview>('reservation', `/reservations/${r.id}/fee-preview`, { action: mode });
+  const fee = Number(preview.data?.fee ?? 0);
+  const needsReason = mode === 'cancel';
   return (
-    <Modal opened onClose={onClose} title={t('reservations.actions.cancel')}>
+    <Modal opened onClose={onClose} title={mode === 'cancel' ? t('reservations.actions.cancel') : t('reservations.actions.no_show')}>
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          if (reason.trim()) onConfirm(reason.trim());
+          if (needsReason && !reason.trim()) return;
+          onConfirm({ ...(needsReason ? { reason: reason.trim() } : {}), waive_fee: waive });
         }}
       >
         <Stack>
-          <Text size="sm">{t('reservations.cancel_body')}</Text>
-          <Textarea label={t('reservations.cancel_reason')} required autosize minRows={2} value={reason} onChange={(e) => setReason(e.currentTarget.value)} data-autofocus />
+          <Text size="sm">{mode === 'cancel' ? t('reservations.cancel_body') : t('reservations.no_show_body')}</Text>
+          {preview.data && (
+            <Alert color={fee > 0 ? 'orange' : 'teal'} p="sm" data-testid="fee-preview">
+              <Text size="sm">
+                {fee > 0
+                  ? t(mode === 'cancel' ? 'billing.cancellation_fee_due' : 'billing.no_show_fee_due', { amount: formatMoney(fee, r.currency, i18n.language) })
+                  : t(mode === 'cancel' ? 'billing.cancellation_free' : 'billing.no_show_free')}
+              </Text>
+              {preview.data.stays
+                .filter((s) => s.free_until)
+                .map((s) => (
+                  <Text key={s.reservation_room_id} size="xs" c="dimmed">
+                    {t('reservations.free_cancellation_until', { date: formatDate(s.free_until, i18n.language) })}
+                  </Text>
+                ))}
+            </Alert>
+          )}
+          {fee > 0 && can('folio.adjust') && <Checkbox label={t('billing.waive_fee')} checked={waive} onChange={(e) => setWaive(e.currentTarget.checked)} />}
+          {needsReason && (
+            <Textarea label={t('reservations.cancel_reason')} required autosize minRows={2} value={reason} onChange={(e) => setReason(e.currentTarget.value)} data-autofocus />
+          )}
           <Group justify="flex-end">
             <Button variant="default" onClick={onClose}>
               {t('common.cancel')}
             </Button>
-            <SubmitButton color="red" loading={loading} disabled={!reason.trim()}>
-              {t('reservations.actions.cancel')}
+            <SubmitButton color="red" loading={loading} disabled={(needsReason && !reason.trim()) || preview.isPending}>
+              {mode === 'cancel' ? t('reservations.actions.cancel') : t('reservations.actions.no_show')}
             </SubmitButton>
           </Group>
         </Stack>
@@ -559,19 +735,70 @@ const EVENT_ICONS: Record<string, typeof IconCheck> = {
   rate_plan_changed: IconCurrencyDollar,
   dates_changed: IconCalendarEvent,
   details_updated: IconPencil,
+  checked_in: IconDoorEnter,
+  check_in_undone: IconDoorEnter,
+  checked_out: IconDoorExit,
+  room_moved: IconArrowsExchange,
+  charge_posted: IconReceipt,
+  charge_voided: IconReceipt,
+  payment_recorded: IconCash,
+  payment_voided: IconCash,
+  invoice_issued: IconFileInvoice,
+  invoice_voided: IconFileInvoice,
 };
 
-function HistoryTimeline({ events }: { events: ReservationEvent[] }) {
+function HistoryTimeline({ events, currency }: { events: ReservationEvent[]; currency: string }) {
   const { t, i18n } = useTranslation();
   const hotel = useHotel();
+  const money = (v: unknown, cur = currency) => formatMoney(String(v), cur, i18n.language);
   const describe = (e: ReservationEvent): string => {
     const d = e.details as Record<string, unknown>;
     const date = (v: unknown) => formatDate(String(v), i18n.language);
     switch (e.action) {
       case 'created':
         return t('reservations.events.created', { status: t(`reservations.status.${d.status}`), source: t(`reservations.sources.${d.source}`) });
-      case 'status_changed':
-        return t('reservations.events.status_changed', { from: t(`reservations.status.${d.from}`), to: t(`reservations.status.${d.to}`) }) + (d.reason ? ` — ${d.reason}` : '');
+      case 'status_changed': {
+        let text = t('reservations.events.status_changed', { from: t(`reservations.status.${d.from}`), to: t(`reservations.status.${d.to}`) }) + (d.reason ? ` — ${d.reason}` : '');
+        if (d.fee && Number(d.fee) > 0) text += ` · ${d.fee_waived ? t('reservations.events.fee_waived', { amount: money(d.fee) }) : t('reservations.events.fee_charged', { amount: money(d.fee) })}`;
+        return text;
+      }
+      case 'checked_in':
+        return t('reservations.events.checked_in', { rooms: (d.rooms as string[]).join(', ') }) + ((d.room_not_ready as string[] | undefined)?.length ? ` · ${t('reservations.events.room_not_ready')}` : '');
+      case 'check_in_undone':
+        return t('reservations.events.check_in_undone', { room: d.room ?? '—' });
+      case 'checked_out': {
+        let text = t('reservations.events.checked_out', { rooms: (d.rooms as string[]).join(', ') });
+        const early = Object.values((d.early_departure ?? {}) as Record<string, { nights: number }>);
+        if (early.length) text += ` · ${t('reservations.events.early_departure', { count: early.reduce((n, x) => n + x.nights, 0) })}`;
+        if (d.open_balance) text += ` · ${t('reservations.events.open_balance', { amount: money(d.open_balance) })}`;
+        return text;
+      }
+      case 'room_moved':
+        return t('reservations.events.room_moved', { from: d.old_room ?? '—', to: d.new_room }) + (d.reason ? ` — ${d.reason}` : '');
+      case 'charge_posted': {
+        const name =
+          d.kind === 'fee'
+            ? t(`billing.fee_types.${d.fee_type ?? 'other'}`)
+            : d.kind === 'adjustment'
+              ? `${t('billing.adjustment')}${d.description ? ` (${d.description})` : ''}`
+              : pickLocalized(d.name as Record<string, string>, i18n.language, hotel.default_language) || String(d.description ?? '');
+        return t(d.automatic ? 'reservations.events.charge_posted_auto' : 'reservations.events.charge_posted', { name, amount: money(d.amount) });
+      }
+      case 'charge_voided':
+        return t('reservations.events.charge_voided', { amount: money(d.amount), reason: d.reason });
+      case 'payment_recorded':
+        return t('reservations.events.payment_recorded', {
+          number: d.number,
+          kind: t(`billing.payment_kinds.${d.kind}`),
+          method: t(`billing.methods.${d.method}`),
+          amount: money(d.amount, String(d.currency)),
+        });
+      case 'payment_voided':
+        return t('reservations.events.payment_voided', { number: d.number, reason: d.reason });
+      case 'invoice_issued':
+        return t('reservations.events.invoice_issued', { number: d.number, amount: money(d.total) });
+      case 'invoice_voided':
+        return t('reservations.events.invoice_voided', { number: d.number, reason: d.reason });
       case 'room_assigned':
         return t('reservations.events.room_assigned', { from: d.old_room ?? t('reservations.unassigned'), to: d.new_room ?? t('reservations.unassigned') });
       case 'dates_changed': {

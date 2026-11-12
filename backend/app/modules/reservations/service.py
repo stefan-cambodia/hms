@@ -15,33 +15,35 @@ Integrity rules enforced here (and, for physical rooms, by the database):
 
 from __future__ import annotations
 
-import hashlib
-import json
 import uuid
 from collections.abc import Iterable
 from datetime import UTC, date, datetime
 from typing import Any
-from zoneinfo import ZoneInfo
 
-from sqlalchemy import func, or_, select, text
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.core import audit, crud, events
+from app.core import audit, crud, events, sequences
 from app.core.context import HotelContext
 from app.core.errors import Conflict, Forbidden, NotFound, ValidationFailed, field_error, register_constraint
-from app.core.money import ZERO
+from app.core.money import ZERO, round_money
 from app.core.permissions import P
+from app.modules.billing import folio
+from app.modules.billing import service as billing
+from app.modules.billing.schemas import ChargeIn
 from app.modules.guests import service as guests
 from app.modules.guests.models import Guest
 from app.modules.hotels.models import Hotel
 from app.modules.inventory import service as inventory
 from app.modules.pricing import engine as pricing_engine
 from app.modules.pricing import service as pricing
+from app.modules.pricing.models import CancellationPolicy, RatePlan
+from app.modules.reservations import idempotency
+from app.modules.reservations.history import event as _event
+from app.modules.reservations.history import publish as _publish
 from app.modules.reservations.models import (
     OCCUPYING_STATUSES,
-    IdempotencyKey,
     Reservation,
     ReservationEvent,
     ReservationNight,
@@ -66,7 +68,7 @@ from app.modules.rooms.models import Room, RoomType
 register_constraint("ex_room_allocations_no_overlap", "ROOM_UNAVAILABLE")
 
 TRANSITIONS: dict[str, set[str]] = {
-    "pending": {"confirmed", "cancelled", "no_show"},
+    "pending": {"confirmed", "checked_in", "cancelled", "no_show"},
     "confirmed": {"checked_in", "cancelled", "no_show"},
     "checked_in": {"checked_out"},
     "checked_out": set(),
@@ -80,47 +82,11 @@ CLOSED = {"checked_out", "cancelled", "no_show"}
 
 
 def hotel_today(hotel: Hotel) -> date:
-    return datetime.now(ZoneInfo(hotel.timezone)).date()
+    return hotel.today()
 
 
-async def _next_code(db: AsyncSession, hotel_id: uuid.UUID, kind: str = "reservation") -> str:
-    n = await db.scalar(
-        text(
-            "INSERT INTO document_sequences (hotel_id, kind, next_value) VALUES (:h, :k, 2) "
-            "ON CONFLICT (hotel_id, kind) DO UPDATE SET next_value = document_sequences.next_value + 1 "
-            "RETURNING next_value - 1"
-        ),
-        {"h": hotel_id, "k": kind},
-    )
-    return f"R{int(n):06d}"
-
-
-def _event(db: AsyncSession, ctx: HotelContext, res: Reservation, action: str, **details: Any) -> None:
-    db.add(
-        ReservationEvent(
-            hotel_id=ctx.hotel_id,
-            reservation_id=res.id,
-            user_id=ctx.actor.user_id,
-            source=ctx.actor.source,
-            action=action,
-            details=audit._jsonable(details),
-        )
-    )
-
-
-async def _publish(db: AsyncSession, ctx: HotelContext, res: Reservation, action: str, changes: dict) -> None:
-    audit.record(
-        db, ctx.actor, f"reservation.{action}", "reservation", res.id, hotel_id=ctx.hotel_id, changes=changes
-    )
-    await events.emit(
-        db,
-        hotel_id=ctx.hotel_id,
-        entity="reservation",
-        action=action,
-        entity_id=res.id,
-        version=res.version,
-        actor=ctx.actor,
-    )
+async def _next_code(db: AsyncSession, hotel_id: uuid.UUID) -> str:
+    return f"R{await sequences.next_value(db, hotel_id, 'reservation'):06d}"
 
 
 async def _load_types(
@@ -165,41 +131,8 @@ def _check_occupancy(rt: RoomType, room: Room | None, adults: int, children: int
         )
 
 
-def _apply_totals(res: Reservation, taxes: list[pricing.TaxLine]) -> None:
-    res.accommodation_total = sum((rr.accommodation_total for rr in res.rooms if rr.occupies_inventory), ZERO)
-    res.tax_breakdown = [
-        {
-            "code": t.code,
-            "name": t.name,
-            "kind": t.kind,
-            "rate": str(t.rate),
-            "is_inclusive": t.is_inclusive,
-            "amount": str(t.amount),
-        }
-        for t in taxes
-    ]
-    res.tax_total = sum((t.amount for t in taxes if not t.is_inclusive), ZERO)
-    res.grand_total = res.accommodation_total + res.tax_total
-    res.adults = sum(rr.adults for rr in res.rooms) or 1
-    res.children = sum(rr.children for rr in res.rooms)
-    live = [rr for rr in res.rooms if rr.occupies_inventory] or res.rooms
-    res.arrival = min(rr.arrival for rr in live)
-    res.departure = max(rr.departure for rr in live)
-
-
 async def _recompute(db: AsyncSession, res: Reservation) -> None:
-    live = [rr for rr in res.rooms if rr.occupies_inventory]
-    accommodation = sum((rr.accommodation_total for rr in live), ZERO)
-    room_nights = sum(len(rr.nights) for rr in live)
-    person_nights = sum(len(rr.nights) * (rr.adults + rr.children) for rr in live)
-    taxes = pricing.compute_taxes(
-        await pricing.active_taxes(db, res.hotel_id, "accommodation"),
-        accommodation,
-        room_nights,
-        person_nights,
-        res.currency,
-    )
-    _apply_totals(res, taxes)
+    await folio.recompute(db, res)
 
 
 def _touch(res: Reservation) -> None:
@@ -240,6 +173,7 @@ async def reservation_out(db: AsyncSession, res: Reservation) -> ReservationOut:
                 "children",
                 "currency",
                 "accommodation_total",
+                "charges_total",
                 "tax_total",
                 "grand_total",
                 "paid_total",
@@ -338,29 +272,16 @@ async def quote(
 # --- create ------------------------------------------------------------------
 
 
-def _payload_hash(data: ReservationIn) -> str:
-    return hashlib.sha256(json.dumps(data.model_dump(mode="json"), sort_keys=True).encode()).hexdigest()
-
-
-async def _replay(db: AsyncSession, ctx: HotelContext, key: str, digest: str) -> Reservation | None:
-    row = await db.get(IdempotencyKey, (ctx.hotel_id, ctx.actor.user_id, key))
-    if row is None:
-        return None
-    if row.request_hash != digest:
-        raise Conflict("IDEMPOTENCY_KEY_REUSED", "This Idempotency-Key was used for a different request")
-    return await get_reservation(db, ctx.hotel_id, row.resource_id)
-
-
 async def create_reservation(
     db: AsyncSession, ctx: HotelContext, data: ReservationIn, idempotency_key: str | None = None
 ) -> tuple[Reservation, bool]:
     """Returns (reservation, created). created=False when an idempotent retry
     returned the reservation made by the first attempt."""
-    digest = _payload_hash(data)
+    digest = idempotency.digest("reservation", data.model_dump(mode="json"))
     if idempotency_key:
-        existing = await _replay(db, ctx, idempotency_key, digest)
+        existing = await idempotency.previous(db, ctx, idempotency_key, digest)
         if existing:
-            return existing, False
+            return await get_reservation(db, ctx.hotel_id, existing), False
     if data.allow_overbooking and not ctx.has(P.RESERVATIONS_OVERBOOK):
         raise Forbidden("PERMISSION_DENIED", params={"permission": P.RESERVATIONS_OVERBOOK})
 
@@ -372,25 +293,9 @@ async def create_reservation(
     end = max(r.departure for r in requests)
 
     if idempotency_key:
-        # Claim the key first: a concurrent retry blocks here until we commit,
-        # then fails on the primary key and replays our result.
-        db.add(
-            IdempotencyKey(
-                hotel_id=ctx.hotel_id,
-                user_id=ctx.actor.user_id,
-                key=idempotency_key,
-                request_hash=digest,
-                resource_id=uuid.uuid4(),
-            )
-        )
-        try:
-            await db.flush()
-        except IntegrityError:
-            await db.rollback()
-            existing = await _replay(db, ctx, idempotency_key, digest)
-            if existing:
-                return existing, False
-            raise
+        existing = await idempotency.claim(db, ctx, idempotency_key, digest)
+        if existing:
+            return await get_reservation(db, ctx.hotel_id, existing), False
 
     if data.guest_id:
         guest = await crud.get_scoped(db, Guest, ctx.hotel_id, data.guest_id, code="GUEST_NOT_FOUND")
@@ -448,7 +353,7 @@ async def create_reservation(
             for n in sq.nights
         ]
         res.rooms.append(rr)
-    _apply_totals(res, q.taxes)
+    await folio.recompute(db, res)
     db.add(res)
     await db.flush()  # room_allocations trigger + exclusion constraint run here
 
@@ -463,9 +368,7 @@ async def create_reservation(
         res.is_overbooked = True
 
     if idempotency_key:
-        key_row = await db.get(IdempotencyKey, (ctx.hotel_id, ctx.actor.user_id, idempotency_key))
-        assert key_row is not None
-        key_row.resource_id = res.id
+        await idempotency.bind(db, ctx, idempotency_key, res.id)
 
     _event(
         db,
@@ -768,26 +671,116 @@ async def confirm(db: AsyncSession, ctx: HotelContext, res_id: uuid.UUID, versio
     return await reload(db, res)
 
 
-async def cancel(
-    db: AsyncSession, ctx: HotelContext, res_id: uuid.UUID, version: int, reason: str
-) -> Reservation:
+async def fee_lines(db: AsyncSession, res: Reservation, action: str, today: date) -> list[dict[str, Any]]:
+    """Cancellation or no-show fee of each stay, from its rate plan's policy."""
+    plan_ids = {rr.rate_plan_id for rr in res.rooms if rr.rate_plan_id}
+    plans = (
+        {p.id: p for p in await db.scalars(select(RatePlan).where(RatePlan.id.in_(plan_ids)))}
+        if plan_ids
+        else {}
+    )
+    policy_ids = {p.cancellation_policy_id for p in plans.values() if p.cancellation_policy_id}
+    policies = (
+        {
+            p.id: p
+            for p in await db.scalars(select(CancellationPolicy).where(CancellationPolicy.id.in_(policy_ids)))
+        }
+        if policy_ids
+        else {}
+    )
+    lines = []
+    for rr in res.rooms:
+        if not rr.occupies_inventory or rr.checked_in_at:
+            continue
+        plan = plans.get(rr.rate_plan_id) if rr.rate_plan_id else None
+        policy = policies.get(plan.cancellation_policy_id) if plan and plan.cancellation_policy_id else None
+        prices = [n.price for n in sorted(rr.nights, key=lambda n: n.night)]
+        refundable = plan is None or plan.is_refundable
+        if action == "cancel":
+            fee = pricing.cancellation_fee(plan, policy, prices, rr.arrival, today, res.currency)
+        else:
+            fee = pricing.no_show_fee(plan, policy, prices)
+        lines.append(
+            {
+                "reservation_room_id": rr.id,
+                "rate_plan_id": plan.id if plan else None,
+                "policy_id": policy.id if policy else None,
+                "refundable": refundable,
+                "free_until": pricing.free_cancellation_until(policy, rr.arrival) if refundable else None,
+                "stay_total": rr.accommodation_total,
+                "fee": round_money(fee, res.currency),
+            }
+        )
+    return lines
+
+
+async def fee_preview(db: AsyncSession, ctx: HotelContext, res_id: uuid.UUID, action: str) -> dict[str, Any]:
     res = await get_reservation(db, ctx.hotel_id, res_id)
+    hotel = await db.get(Hotel, ctx.hotel_id)
+    assert hotel is not None
+    lines = await fee_lines(db, res, action, hotel_today(hotel))
+    return {
+        "action": action,
+        "currency": res.currency,
+        "fee": round_money(sum((line["fee"] for line in lines), ZERO), res.currency),
+        "stays": lines,
+    }
+
+
+async def _close_with_fee(
+    db: AsyncSession,
+    ctx: HotelContext,
+    res: Reservation,
+    new_status: str,
+    waive_fee: bool,
+    **details: Any,
+) -> None:
+    """Cancel or mark no-show, posting the policy fee to the folio unless an
+    authorised user waives it. The fee is computed before inventory is released."""
+    hotel = await db.get(Hotel, ctx.hotel_id)
+    assert hotel is not None
+    action = "cancel" if new_status == "cancelled" else "no_show"
+    if new_status not in TRANSITIONS[res.status]:
+        raise Conflict("INVALID_STATUS_TRANSITION", params={"from": res.status, "to": new_status})
+    fee = sum((line["fee"] for line in await fee_lines(db, res, action, hotel_today(hotel))), ZERO)
+    waived = waive_fee and fee > ZERO
+    if waived and not ctx.has(P.FOLIO_ADJUST):
+        raise Forbidden("PERMISSION_DENIED", params={"permission": P.FOLIO_ADJUST})
+    await _transition(db, ctx, res, new_status, fee=fee, fee_waived=waived, **details)
+    if fee > ZERO and not waived:
+        await billing.add_charge(
+            db,
+            ctx,
+            res,
+            ChargeIn(
+                kind="fee", fee_type="cancellation" if action == "cancel" else "no_show", unit_price=fee
+            ),
+            system=True,
+        )
+
+
+async def cancel(
+    db: AsyncSession, ctx: HotelContext, res_id: uuid.UUID, version: int, reason: str, waive_fee: bool = False
+) -> Reservation:
+    res = await get_reservation(db, ctx.hotel_id, res_id, for_update=True)
     crud.check_version(res, version)
     res.cancelled_at = datetime.now(UTC)
     res.cancellation_reason = reason
-    await _transition(db, ctx, res, "cancelled", reason=reason)
+    await _close_with_fee(db, ctx, res, "cancelled", waive_fee, reason=reason)
     await db.commit()
     return await reload(db, res)
 
 
-async def mark_no_show(db: AsyncSession, ctx: HotelContext, res_id: uuid.UUID, version: int) -> Reservation:
-    res = await get_reservation(db, ctx.hotel_id, res_id)
+async def mark_no_show(
+    db: AsyncSession, ctx: HotelContext, res_id: uuid.UUID, version: int, waive_fee: bool = False
+) -> Reservation:
+    res = await get_reservation(db, ctx.hotel_id, res_id, for_update=True)
     crud.check_version(res, version)
     hotel = await db.get(Hotel, ctx.hotel_id)
     assert hotel is not None
     if hotel_today(hotel) < res.arrival:
         raise Conflict("NO_SHOW_BEFORE_ARRIVAL")
-    await _transition(db, ctx, res, "no_show")
+    await _close_with_fee(db, ctx, res, "no_show", waive_fee)
     await db.commit()
     return await reload(db, res)
 

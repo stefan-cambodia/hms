@@ -1,0 +1,75 @@
+{
+  "title": {
+    "invoice": "Invoice",
+    "statement": "Guest folio",
+    "receipt": "Payment receipt"
+  },
+  "number": "No.",
+  "issue_date": "Date",
+  "description": "Description",
+  "quantity": "Qty",
+  "unit_price": "Unit price",
+  "amount": "Amount",
+  "payments": "Payments received",
+  "void_stamp": "VOID",
+  "page_of": "Page {page} of {pages}",
+  "reservation": "Reservation",
+  "guest": "Guest",
+  "stay": "Stay",
+  "rooms": "Room(s)",
+  "bill_to": "Bill to",
+  "received_from": "Received from",
+  "tax_id_value": "Tax ID: {tax_id}",
+  "receipt_amount": "Amount received",
+  "receipt_method": "Payment method",
+  "receipt_date": "Received on",
+  "exchange_rate": "Exchange rate",
+  "exchange_value": "1 {base} = {rate} {currency}",
+  "equivalent": "Equivalent",
+  "subtotal": "Subtotal",
+  "tax_included": "Including {name}",
+  "total": "Total",
+  "paid": "Paid",
+  "balance_due": "Balance due",
+  "credit_balance": "Credit (to be refunded)",
+  "room_number": "Room {number}",
+  "room_unassigned": "Room to be assigned",
+  "nights": {
+    "one": "{count} night",
+    "other": "{count} nights"
+  },
+  "fee": {
+    "cancellation": "Cancellation fee",
+    "no_show": "No-show fee",
+    "early_departure": "Early departure fee",
+    "late_checkout": "Late check-out fee",
+    "damage": "Damage",
+    "other": "Fee"
+  },
+  "adjustment": "Adjustment",
+  "voided": "Voided",
+  "payment_kind": {
+    "payment": "Payment",
+    "deposit": "Deposit",
+    "refund": "Refund"
+  },
+  "method": {
+    "cash": "Cash",
+    "card": "Card",
+    "bank_transfer": "Bank transfer",
+    "online": "Online payment",
+    "other": "Other"
+  },
+  "card": "{brand} ending {last4}",
+  "card_brand": {
+    "visa": "Visa",
+    "mastercard": "Mastercard",
+    "amex": "American Express",
+    "unionpay": "UnionPay",
+    "jcb": "JCB",
+    "discover": "Discover",
+    "other": "Card"
+  },
+  "statement_note": "This statement is for information only and is not a tax invoice.",
+  "thanks": "Thank you for staying with us."
+}

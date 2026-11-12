@@ -1,0 +1,77 @@
+{
+  "title": {
+    "invoice": "Счёт",
+    "statement": "Выписка по счёту гостя",
+    "receipt": "Квитанция об оплате"
+  },
+  "number": "№",
+  "issue_date": "Дата",
+  "description": "Наименование",
+  "quantity": "Кол-во",
+  "unit_price": "Цена",
+  "amount": "Сумма",
+  "payments": "Полученные платежи",
+  "void_stamp": "АННУЛИРОВАН",
+  "page_of": "Стр. {page} из {pages}",
+  "reservation": "Бронирование",
+  "guest": "Гость",
+  "stay": "Проживание",
+  "rooms": "Номер(а)",
+  "bill_to": "Плательщик",
+  "received_from": "Получено от",
+  "tax_id_value": "ИНН: {tax_id}",
+  "receipt_amount": "Получено",
+  "receipt_method": "Способ оплаты",
+  "receipt_date": "Дата получения",
+  "exchange_rate": "Курс обмена",
+  "exchange_value": "1 {base} = {rate} {currency}",
+  "equivalent": "Эквивалент",
+  "subtotal": "Промежуточный итог",
+  "tax_included": "В т. ч. {name}",
+  "total": "Итого",
+  "paid": "Оплачено",
+  "balance_due": "К оплате",
+  "credit_balance": "Переплата (к возврату)",
+  "room_number": "Номер {number}",
+  "room_unassigned": "Номер будет назначен",
+  "nights": {
+    "one": "{count} ночь",
+    "few": "{count} ночи",
+    "many": "{count} ночей",
+    "other": "{count} ночи"
+  },
+  "fee": {
+    "cancellation": "Плата за отмену",
+    "no_show": "Плата за неявку",
+    "early_departure": "Плата за досрочный выезд",
+    "late_checkout": "Плата за поздний выезд",
+    "damage": "Возмещение ущерба",
+    "other": "Сбор"
+  },
+  "adjustment": "Корректировка",
+  "voided": "Аннулировано",
+  "payment_kind": {
+    "payment": "Оплата",
+    "deposit": "Предоплата",
+    "refund": "Возврат"
+  },
+  "method": {
+    "cash": "Наличные",
+    "card": "Карта",
+    "bank_transfer": "Банковский перевод",
+    "online": "Онлайн-оплата",
+    "other": "Другое"
+  },
+  "card": "{brand}, последние цифры {last4}",
+  "card_brand": {
+    "visa": "Visa",
+    "mastercard": "Mastercard",
+    "amex": "American Express",
+    "unionpay": "UnionPay",
+    "jcb": "JCB",
+    "discover": "Discover",
+    "other": "Карта"
+  },
+  "statement_note": "Выписка носит информационный характер и не является счётом-фактурой.",
+  "thanks": "Благодарим вас за выбор нашего отеля."
+}

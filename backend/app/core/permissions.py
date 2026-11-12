@@ -16,6 +16,7 @@ class P(StrEnum):
     CONFIG_ROOMS = "config.rooms.manage"
     CONFIG_FACILITIES = "config.facilities.manage"
     CONFIG_TAXES = "config.taxes.manage"
+    CONFIG_CURRENCIES = "config.currencies.manage"
     # Rooms
     ROOMS_VIEW = "rooms.view"
     ROOMS_BLOCK = "rooms.block"
@@ -35,6 +36,9 @@ class P(StrEnum):
     # Front desk
     FRONTDESK_CHECKIN = "frontdesk.checkin"
     FRONTDESK_CHECKOUT = "frontdesk.checkout"
+    # Guest folio
+    FOLIO_POST = "folio.post"
+    FOLIO_ADJUST = "folio.adjust"
     # Finance
     PAYMENTS_VIEW = "payments.view"
     PAYMENTS_RECORD = "payments.record"
@@ -72,7 +76,14 @@ ALL_PERMISSIONS: frozenset[str] = frozenset(p.value for p in P)
 
 # UI grouping (group key is translated client-side as permissions.groups.<key>).
 PERMISSION_GROUPS: dict[str, list[P]] = {
-    "configuration": [P.HOTEL_VIEW, P.CONFIG_HOTEL, P.CONFIG_ROOMS, P.CONFIG_FACILITIES, P.CONFIG_TAXES],
+    "configuration": [
+        P.HOTEL_VIEW,
+        P.CONFIG_HOTEL,
+        P.CONFIG_ROOMS,
+        P.CONFIG_FACILITIES,
+        P.CONFIG_TAXES,
+        P.CONFIG_CURRENCIES,
+    ],
     "rooms": [P.ROOMS_VIEW, P.ROOMS_BLOCK],
     "reservations": [
         P.RESERVATIONS_VIEW,
@@ -84,6 +95,7 @@ PERMISSION_GROUPS: dict[str, list[P]] = {
     ],
     "guests": [P.GUESTS_VIEW, P.GUESTS_EDIT, P.GUESTS_VIEW_SENSITIVE, P.GUESTS_EXPORT, P.GUESTS_MERGE],
     "frontdesk": [P.FRONTDESK_CHECKIN, P.FRONTDESK_CHECKOUT],
+    "folio": [P.FOLIO_POST, P.FOLIO_ADJUST],
     "payments": [P.PAYMENTS_VIEW, P.PAYMENTS_RECORD, P.PAYMENTS_REFUND, P.PAYMENTS_VOID],
     "invoices": [P.INVOICES_VIEW, P.INVOICES_ISSUE, P.INVOICES_VOID],
     "pricing": [P.PRICING_VIEW, P.PRICING_MANAGE],
@@ -112,6 +124,7 @@ _FRONT = {
     P.GUESTS_EDIT,
     P.FRONTDESK_CHECKIN,
     P.FRONTDESK_CHECKOUT,
+    P.FOLIO_POST,
     P.PAYMENTS_VIEW,
     P.PAYMENTS_RECORD,
     P.INVOICES_VIEW,
@@ -135,6 +148,7 @@ SYSTEM_ROLES: dict[str, set[P]] = {
         P.RESERVATIONS_EDIT,
         P.RESERVATIONS_CANCEL,
         P.RESERVATIONS_OVERBOOK,
+        P.RESERVATIONS_OVERRIDE,
         P.GUESTS_VIEW,
         P.GUESTS_EDIT,
         P.GUESTS_MERGE,
@@ -150,6 +164,8 @@ SYSTEM_ROLES: dict[str, set[P]] = {
     | {
         P.RESERVATIONS_VIEW,
         P.GUESTS_VIEW,
+        P.FOLIO_POST,
+        P.FOLIO_ADJUST,
         P.PAYMENTS_VIEW,
         P.PAYMENTS_RECORD,
         P.PAYMENTS_REFUND,
@@ -160,6 +176,7 @@ SYSTEM_ROLES: dict[str, set[P]] = {
         P.REPORTS_VIEW,
         P.REPORTS_FINANCIAL,
         P.PRICING_VIEW,
+        P.CONFIG_CURRENCIES,
     },
     "maintenance": _OPS_VIEW
     | {P.MAINTENANCE_VIEW, P.MAINTENANCE_REPORT, P.MAINTENANCE_MANAGE, P.HOUSEKEEPING_VIEW},

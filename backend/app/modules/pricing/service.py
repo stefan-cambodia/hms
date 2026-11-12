@@ -6,10 +6,9 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass, field
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 from decimal import Decimal
 from typing import Any
-from zoneinfo import ZoneInfo
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -38,7 +37,7 @@ __all__ = ["NightPrice", "Stay", "nights_between"]
 
 
 def hotel_today(hotel: Hotel) -> date:
-    return datetime.now(ZoneInfo(hotel.timezone)).date()
+    return hotel.today()
 
 
 async def load_context(db: AsyncSession, hotel_id: uuid.UUID, start: date, end: date) -> PricingContext:
@@ -654,3 +653,45 @@ def free_cancellation_until(policy: CancellationPolicy | None, arrival: date) ->
     if policy is None or policy.free_until_days is None:
         return None
     return arrival - timedelta(days=policy.free_until_days)
+
+
+# --- cancellation and no-show fees -------------------------------------------------
+# Same rule as the reservation screen: a stay's terms come from its rate plan's
+# own policy; a non-refundable plan has no free window and owes the full stay.
+
+
+def _full_stay(night_prices: list[Decimal]) -> Decimal:
+    return sum(night_prices, ZERO)
+
+
+def cancellation_fee(
+    plan: RatePlan | None,
+    policy: CancellationPolicy | None,
+    night_prices: list[Decimal],
+    arrival: date,
+    today: date,
+    currency: str,
+) -> Decimal:
+    """Fee owed when a stay is cancelled on `today` (hotel date)."""
+    refundable = plan is None or plan.is_refundable
+    if not refundable:
+        return _full_stay(night_prices)
+    if policy is None:
+        return ZERO
+    free_until = free_cancellation_until(policy, arrival)
+    if free_until is not None and today <= free_until:
+        return ZERO
+    if policy.penalty_kind == "percent":
+        return round_money(_full_stay(night_prices) * policy.penalty_value / 100, currency)
+    return sum(night_prices[: int(policy.penalty_value)], ZERO)
+
+
+def no_show_fee(
+    plan: RatePlan | None, policy: CancellationPolicy | None, night_prices: list[Decimal]
+) -> Decimal:
+    """Fee owed when the guest does not arrive."""
+    if plan is not None and not plan.is_refundable:
+        return _full_stay(night_prices)
+    if policy is None:
+        return ZERO
+    return sum(night_prices[: policy.no_show_nights], ZERO)

@@ -1,7 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { Tabs } from '@mantine/core';
-import { IconBed, IconBuilding, IconHome, IconListCheck, IconReceiptTax } from '@tabler/icons-react';
+import { IconBed, IconBuilding, IconCurrencyDollar, IconHome, IconListCheck, IconReceiptTax } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 
 import { PageLoader } from '@/app/AppLayout';
@@ -13,6 +13,7 @@ const TABS = {
   'room-types': { icon: IconBed, Component: lazy(() => import('./RoomTypesTab')) },
   amenities: { icon: IconListCheck, Component: lazy(() => import('./AmenitiesTab')) },
   taxes: { icon: IconReceiptTax, Component: lazy(() => import('./TaxesTab')) },
+  currencies: { icon: IconCurrencyDollar, Component: lazy(() => import('./CurrenciesTab')) },
 } as const;
 type TabKey = keyof typeof TABS;
 

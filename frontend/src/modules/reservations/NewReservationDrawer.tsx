@@ -45,6 +45,7 @@ export interface ReservationDraft {
   departure?: string;
   room_type_id?: string;
   room_id?: string;
+  source?: ReservationSource;
 }
 
 interface Line {
@@ -89,7 +90,7 @@ function ReservationForm({ draft, onDone, onCancel }: { draft?: ReservationDraft
   const [lines, setLines] = useState<Line[]>([
     { key: 'l0', room_type_id: draft?.room_type_id ?? null, room_id: draft?.room_id ?? null, rate_plan_id: null, adults: 2, children: 0 },
   ]);
-  const [source, setSource] = useState<ReservationSource>('direct');
+  const [source, setSource] = useState<ReservationSource>(draft?.source ?? 'direct');
   const [status, setStatus] = useState<'confirmed' | 'pending'>('confirmed');
   const [externalRef, setExternalRef] = useState('');
   const [requests, setRequests] = useState('');
