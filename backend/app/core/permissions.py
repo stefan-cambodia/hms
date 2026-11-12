@@ -1,0 +1,164 @@
+"""Permission catalog — the single source of truth for authorisation codes.
+
+The database stores grants (role -> permission code); this module defines which
+codes exist, how they are grouped in the UI, and the default system roles.
+"""
+
+from __future__ import annotations
+
+from enum import StrEnum
+
+
+class P(StrEnum):
+    # Hotel configuration
+    HOTEL_VIEW = "hotel.view"
+    CONFIG_HOTEL = "config.hotel.manage"
+    CONFIG_ROOMS = "config.rooms.manage"
+    CONFIG_FACILITIES = "config.facilities.manage"
+    CONFIG_TAXES = "config.taxes.manage"
+    # Rooms
+    ROOMS_VIEW = "rooms.view"
+    ROOMS_BLOCK = "rooms.block"
+    # Reservations
+    RESERVATIONS_VIEW = "reservations.view"
+    RESERVATIONS_CREATE = "reservations.create"
+    RESERVATIONS_EDIT = "reservations.edit"
+    RESERVATIONS_CANCEL = "reservations.cancel"
+    RESERVATIONS_OVERBOOK = "reservations.overbook"
+    # Guests
+    GUESTS_VIEW = "guests.view"
+    GUESTS_EDIT = "guests.edit"
+    GUESTS_VIEW_SENSITIVE = "guests.view_sensitive"
+    GUESTS_EXPORT = "guests.export"
+    GUESTS_MERGE = "guests.merge"
+    # Front desk
+    FRONTDESK_CHECKIN = "frontdesk.checkin"
+    FRONTDESK_CHECKOUT = "frontdesk.checkout"
+    # Finance
+    PAYMENTS_VIEW = "payments.view"
+    PAYMENTS_RECORD = "payments.record"
+    PAYMENTS_REFUND = "payments.refund"
+    PAYMENTS_VOID = "payments.void"
+    INVOICES_VIEW = "invoices.view"
+    INVOICES_ISSUE = "invoices.issue"
+    INVOICES_VOID = "invoices.void"
+    # Pricing
+    PRICING_VIEW = "pricing.view"
+    PRICING_MANAGE = "pricing.manage"
+    # Housekeeping & maintenance
+    HOUSEKEEPING_VIEW = "housekeeping.view"
+    HOUSEKEEPING_UPDATE = "housekeeping.update"
+    HOUSEKEEPING_ASSIGN = "housekeeping.assign"
+    MAINTENANCE_VIEW = "maintenance.view"
+    MAINTENANCE_REPORT = "maintenance.report"
+    MAINTENANCE_MANAGE = "maintenance.manage"
+    # Reporting
+    REPORTS_VIEW = "reports.view"
+    REPORTS_FINANCIAL = "reports.financial"
+    # Channel manager
+    CHANNELS_VIEW = "channels.view"
+    CHANNELS_MANAGE = "channels.manage"
+    # Administration
+    USERS_VIEW = "users.view"
+    USERS_MANAGE = "users.manage"
+    ROLES_MANAGE = "roles.manage"
+    SESSIONS_MANAGE = "sessions.manage"
+    AUDIT_VIEW = "audit.view"
+    BACKUPS_MANAGE = "backups.manage"
+
+
+ALL_PERMISSIONS: frozenset[str] = frozenset(p.value for p in P)
+
+# UI grouping (group key is translated client-side as permissions.groups.<key>).
+PERMISSION_GROUPS: dict[str, list[P]] = {
+    "configuration": [P.HOTEL_VIEW, P.CONFIG_HOTEL, P.CONFIG_ROOMS, P.CONFIG_FACILITIES, P.CONFIG_TAXES],
+    "rooms": [P.ROOMS_VIEW, P.ROOMS_BLOCK],
+    "reservations": [
+        P.RESERVATIONS_VIEW,
+        P.RESERVATIONS_CREATE,
+        P.RESERVATIONS_EDIT,
+        P.RESERVATIONS_CANCEL,
+        P.RESERVATIONS_OVERBOOK,
+    ],
+    "guests": [P.GUESTS_VIEW, P.GUESTS_EDIT, P.GUESTS_VIEW_SENSITIVE, P.GUESTS_EXPORT, P.GUESTS_MERGE],
+    "frontdesk": [P.FRONTDESK_CHECKIN, P.FRONTDESK_CHECKOUT],
+    "payments": [P.PAYMENTS_VIEW, P.PAYMENTS_RECORD, P.PAYMENTS_REFUND, P.PAYMENTS_VOID],
+    "invoices": [P.INVOICES_VIEW, P.INVOICES_ISSUE, P.INVOICES_VOID],
+    "pricing": [P.PRICING_VIEW, P.PRICING_MANAGE],
+    "housekeeping": [P.HOUSEKEEPING_VIEW, P.HOUSEKEEPING_UPDATE, P.HOUSEKEEPING_ASSIGN],
+    "maintenance": [P.MAINTENANCE_VIEW, P.MAINTENANCE_REPORT, P.MAINTENANCE_MANAGE],
+    "reports": [P.REPORTS_VIEW, P.REPORTS_FINANCIAL],
+    "channels": [P.CHANNELS_VIEW, P.CHANNELS_MANAGE],
+    "administration": [
+        P.USERS_VIEW,
+        P.USERS_MANAGE,
+        P.ROLES_MANAGE,
+        P.SESSIONS_MANAGE,
+        P.AUDIT_VIEW,
+        P.BACKUPS_MANAGE,
+    ],
+}
+assert {p for ps in PERMISSION_GROUPS.values() for p in ps} == set(P), "ungrouped permission"
+
+_OPS_VIEW = {P.HOTEL_VIEW, P.ROOMS_VIEW}
+_FRONT = {
+    P.RESERVATIONS_VIEW,
+    P.RESERVATIONS_CREATE,
+    P.RESERVATIONS_EDIT,
+    P.RESERVATIONS_CANCEL,
+    P.GUESTS_VIEW,
+    P.GUESTS_EDIT,
+    P.FRONTDESK_CHECKIN,
+    P.FRONTDESK_CHECKOUT,
+    P.PAYMENTS_VIEW,
+    P.PAYMENTS_RECORD,
+    P.INVOICES_VIEW,
+    P.INVOICES_ISSUE,
+    P.PRICING_VIEW,
+    P.HOUSEKEEPING_VIEW,
+    P.MAINTENANCE_VIEW,
+    P.MAINTENANCE_REPORT,
+}
+
+# code -> permissions. Names/descriptions are translated client-side (roles.system.<code>).
+SYSTEM_ROLES: dict[str, set[P]] = {
+    "super_admin": set(P),
+    "hotel_admin": set(P) - {P.BACKUPS_MANAGE},
+    "manager": set(P) - {P.ROLES_MANAGE, P.BACKUPS_MANAGE, P.USERS_MANAGE},
+    "receptionist": _OPS_VIEW | _FRONT | {P.ROOMS_BLOCK},
+    "reservation_manager": _OPS_VIEW
+    | {
+        P.RESERVATIONS_VIEW,
+        P.RESERVATIONS_CREATE,
+        P.RESERVATIONS_EDIT,
+        P.RESERVATIONS_CANCEL,
+        P.RESERVATIONS_OVERBOOK,
+        P.GUESTS_VIEW,
+        P.GUESTS_EDIT,
+        P.GUESTS_MERGE,
+        P.PRICING_VIEW,
+        P.PRICING_MANAGE,
+        P.CHANNELS_VIEW,
+        P.REPORTS_VIEW,
+        P.PAYMENTS_VIEW,
+    },
+    "housekeeping": _OPS_VIEW
+    | {P.HOUSEKEEPING_VIEW, P.HOUSEKEEPING_UPDATE, P.MAINTENANCE_VIEW, P.MAINTENANCE_REPORT},
+    "accountant": _OPS_VIEW
+    | {
+        P.RESERVATIONS_VIEW,
+        P.GUESTS_VIEW,
+        P.PAYMENTS_VIEW,
+        P.PAYMENTS_RECORD,
+        P.PAYMENTS_REFUND,
+        P.PAYMENTS_VOID,
+        P.INVOICES_VIEW,
+        P.INVOICES_ISSUE,
+        P.INVOICES_VOID,
+        P.REPORTS_VIEW,
+        P.REPORTS_FINANCIAL,
+        P.PRICING_VIEW,
+    },
+    "maintenance": _OPS_VIEW
+    | {P.MAINTENANCE_VIEW, P.MAINTENANCE_REPORT, P.MAINTENANCE_MANAGE, P.HOUSEKEEPING_VIEW},
+}

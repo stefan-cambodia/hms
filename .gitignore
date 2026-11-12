@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+backend/var/
+backend/.env
+
+# Node
+node_modules/
+dist/
+.vite/
+coverage/
+*.tsbuildinfo
+
+# Tauri
+desktop/src-tauri/target/
+desktop/src-tauri/gen/
+
+# Deployment secrets and data
+deploy/.env
+deploy/data/
+deploy/backups/
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/
+*.swp

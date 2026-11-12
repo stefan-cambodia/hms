@@ -1,0 +1,23 @@
+# Development services only (database). The full production stack is in
+# deploy/docker-compose.yml.
+#   docker compose -f docker-compose.dev.yml up -d
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: hms-dev-db
+    environment:
+      POSTGRES_USER: hms
+      POSTGRES_PASSWORD: hms_dev_password
+      POSTGRES_DB: hms
+    ports:
+      - "127.0.0.1:54329:5432"
+    volumes:
+      - hms_dev_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hms -d hms"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+volumes:
+  hms_dev_pg:
