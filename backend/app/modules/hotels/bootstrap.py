@@ -5,13 +5,15 @@ from __future__ import annotations
 import uuid
 from dataclasses import dataclass
 
+from pydantic import TypeAdapter, ValidationError
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core import audit
 from app.core.context import Actor
-from app.core.errors import Conflict
+from app.core.errors import Conflict, ValidationFailed, field_error
 from app.core.permissions import SYSTEM_ROLES
+from app.core.schemas import StaffEmail
 from app.core.security import hash_password
 from app.modules.auth.models import Role, RolePermission, User, UserHotelRole
 from app.modules.auth.service import check_password_policy
@@ -187,6 +189,10 @@ async def bootstrap(
     if await db.scalar(select(User.id).limit(1)) is not None:
         raise Conflict("ALREADY_INITIALIZED", "The system is already initialised")
     check_password_policy(admin_password, field="admin_password")
+    try:
+        admin_email = TypeAdapter(StaffEmail).validate_python(admin_email)
+    except ValidationError as exc:
+        raise ValidationFailed(fields=[field_error("admin_email", "INVALID_EMAIL")]) from exc
 
     org = Organization(name=organization_name)
     db.add(org)

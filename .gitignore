@@ -29,3 +29,4 @@ deploy/backups/
 .idea/
 .vscode/
 *.swp
+e2e-results/

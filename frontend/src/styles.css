@@ -1,0 +1,48 @@
+:root {
+  --hms-canvas: #f6f5f2;
+  --hms-login-bg: radial-gradient(1200px 600px at 10% -10%, #d4ebe9 0%, transparent 60%),
+    radial-gradient(900px 500px at 110% 110%, #f7eacd 0%, transparent 55%), #f6f5f2;
+}
+
+[data-mantine-color-scheme='dark'] {
+  --hms-canvas: var(--mantine-color-dark-8);
+  --hms-login-bg: var(--mantine-color-dark-8);
+}
+
+html,
+body {
+  -webkit-text-size-adjust: 100%;
+  font-feature-settings: 'cv11', 'ss01';
+}
+
+/* Khmer script has stacked subscript consonants and needs more vertical room. */
+:lang(km) {
+  line-height: 1.75;
+}
+:lang(km) .mantine-Title-root {
+  line-height: 1.6;
+}
+
+/* Comfortable touch targets on tablets. */
+@media (pointer: coarse) {
+  .mantine-Button-root,
+  .mantine-ActionIcon-root {
+    min-height: 40px;
+  }
+}
+
+.hms-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.hms-num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Khmer stacked consonants need a slightly larger size in compact components. */
+:lang(km) .mantine-Badge-root {
+  font-size: 12px;
+  height: auto;
+  padding-block: 2px;
+}

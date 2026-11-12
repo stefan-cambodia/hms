@@ -1,0 +1,12 @@
+# Build context for deploy/caddy/Dockerfile (repository root).
+**/node_modules
+**/.venv
+**/__pycache__
+**/dist
+**/.pytest_cache
+**/.ruff_cache
+frontend/e2e-results
+deploy/.env
+deploy/backups
+desktop
+.git

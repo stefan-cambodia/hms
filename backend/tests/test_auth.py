@@ -142,3 +142,22 @@ async def test_language_preference_is_per_user(admin: Api, user_factory):
     assert (await clerk.get("/api/v1/auth/me")).json()["user"]["preferred_language"] == "km"
     r = await admin.patch("/api/v1/auth/me", {"preferred_language": "de"})
     assert r.status_code == 422
+
+
+async def test_staff_accounts_may_use_internal_domains(admin: Api):
+    # Hotels on a private network often use non-public domains for staff.
+    r = await admin.post(
+        admin.h("/users"),
+        {"email": "reception@hotel.lan", "full_name": "Desk", "password": "Str0ng-Passw0rd"},
+    )
+    assert r.status_code == 201, r.text
+    async with new_client() as client:
+        r = await Api(client).login("reception@hotel.lan", "Str0ng-Passw0rd")
+        assert r.status_code == 200
+        # Login never rejects an identifier on syntax; it is simply not found.
+        r = await Api(client).login("not-an-email", "whatever")
+        assert r.status_code == 401 and error_code(r) == "INVALID_CREDENTIALS"
+    r = await admin.post(
+        admin.h("/users"), {"email": "no-at-sign", "full_name": "X", "password": "Str0ng-Passw0rd"}
+    )
+    assert r.status_code == 422

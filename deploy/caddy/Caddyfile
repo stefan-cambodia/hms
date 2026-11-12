@@ -1,0 +1,44 @@
+# HMS_SITE_ADDRESS examples:
+#   hotel.example.com          public domain, automatic Let's Encrypt certificate
+#   https://hms.lan            LAN name; with HMS_TLS=internal Caddy issues a local CA certificate
+#   :80                        plain HTTP (only for testing behind another TLS proxy)
+# HMS_TLS: "internal" (local CA) or your email address (Let's Encrypt account).
+{
+	servers {
+		trusted_proxies static private_ranges
+	}
+}
+
+{$HMS_SITE_ADDRESS::443} {
+	tls {$HMS_TLS:internal}
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "same-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		Content-Security-Policy "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+		-Server
+	}
+
+	# Basic flood protection for the login endpoint is in the API; keep request bodies small.
+	request_body {
+		max_size 20MB
+	}
+
+	handle /api/* {
+		reverse_proxy api:8000 {
+			header_up X-Request-ID {http.request.uuid}
+		}
+	}
+
+	handle {
+		root * /srv/frontend
+		@immutable path /assets/*
+		header @immutable Cache-Control "public, max-age=31536000, immutable"
+		try_files {path} /index.html
+		file_server
+	}
+}

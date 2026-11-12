@@ -5,6 +5,7 @@ from __future__ import annotations
 from decimal import Decimal
 from typing import Annotated, Generic, Literal, TypeVar, get_args
 
+from email_validator import EmailNotValidError, validate_email
 from pydantic import (
     AfterValidator,
     BaseModel,
@@ -39,6 +40,19 @@ def _require_one(value: dict[str, str]) -> dict[str, str]:
 
 
 RequiredLocalizedName = Annotated[LocalizedName, AfterValidator(_require_one)]
+
+
+def _staff_email(value: str) -> str:
+    # Staff accounts may live on internal domains (hotel.lan, .local, .internal):
+    # validate syntax only, never deliverability or "global" reachability.
+    try:
+        result = validate_email(value, check_deliverability=False, globally_deliverable=False)
+    except EmailNotValidError as exc:
+        raise ValueError("invalid email address") from exc
+    return result.normalized
+
+
+StaffEmail = Annotated[str, StringConstraints(max_length=320), AfterValidator(_staff_email)]
 
 Code = Annotated[
     str, StringConstraints(min_length=1, max_length=40, pattern=r"^[A-Za-z0-9][A-Za-z0-9_\-\.]*$")

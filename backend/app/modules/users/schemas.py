@@ -4,13 +4,13 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from pydantic import EmailStr, Field
+from pydantic import Field
 
-from app.core.schemas import Code, InputModel, LanguageCode, OutputModel, UpdateModel
+from app.core.schemas import Code, InputModel, LanguageCode, OutputModel, StaffEmail, UpdateModel
 
 
 class UserCreate(InputModel):
-    email: EmailStr
+    email: StaffEmail
     full_name: str = Field(min_length=1, max_length=200)
     password: str = Field(max_length=200)
     preferred_language: LanguageCode = "en"

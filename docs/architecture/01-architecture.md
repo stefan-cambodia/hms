@@ -25,7 +25,7 @@ multi-device communication strategy, and the offline / local-network strategy.
                 │                                               │           └───────────┘   │
                 └───────────────────────────────────────────────┼───────────────────────────┘
                                                                 │ Internet (optional, may drop)
-                                                     Booking.com / Agoda / SMTP / SMS
+                              SiteMinder (→ Booking.com, Agoda) / SMTP / SMS
 ```
 
 One central server (a Docker Compose stack) holds the only database. Every
@@ -235,10 +235,13 @@ transaction** as the change that caused it (transactional outbox). Jobs retry
 with exponential backoff and a cap; after `max_attempts` they move to `dead`
 and raise an alert on the Channel Manager dashboard. They are never dropped.
 
-**Availability sync is state-based, not delta-based.** A job says "push room
-type X for nights A→B"; the worker computes availability *at execution time*.
-A job that ran late therefore sends current data, never a stale snapshot, and
-duplicate pending jobs for the same range are coalesced by a `dedupe_key`.
+**Channel jobs carry date ranges, not values.** A change marks "room type X,
+nights A→B" as dirty; the worker computes availability and rates *at execution
+time*, then sends only the values that differ from what the channel last
+acknowledged (providers such as SiteMinder require delta-only updates). A job
+that runs late therefore sends current data, never a stale snapshot, and
+overlapping dirty ranges are coalesced. See
+[03-channel-manager.md](03-channel-manager.md).
 
 On reconnection the channel worker also runs **reconciliation**: it pulls any
 reservations created on the OTAs during the outage (idempotent on

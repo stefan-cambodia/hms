@@ -171,6 +171,8 @@ from their sources rather than stored again, so they can't drift apart.
 | `channel_connections` | id, hotel_id, channel (`booking_com` \| `agoda` \| …), external_hotel_id, status (`not_configured` \| `active` \| `paused` \| `error`), credentials (encrypted bytea), settings jsonb, last_success_at, last_error |
 | `channel_room_mappings` | connection_id, room_type_id, external_room_id — `UNIQUE(connection_id, external_room_id)` |
 | `channel_rate_mappings` | connection_id, room_type_id, rate_plan_id, external_rate_id, price_adjustment |
+| `channel_dirty_ranges` | connection_id, room_type_id, rate_plan_id NULL, date_from, date_to, created_at. Written in the same transaction as the business change; consumed by the ARI sync job. |
+| `channel_ari_state` | (connection_id, room_type_id, rate_plan_id, date) PK, availability, price, restrictions jsonb, acknowledged_at. The last values the channel accepted; deltas are computed against it. |
 | `channel_inbound_reservations` | connection_id, external_id, revision, payload (raw), status, reservation_id, error, received_at — `UNIQUE(connection_id, external_id, revision)` makes imports idempotent. |
 | `channel_messages` | Request/response log (credentials redacted), for diagnostics. |
 | `jobs` | id, hotel_id, queue, kind, payload jsonb, dedupe_key, status (`pending` \| `running` \| `succeeded` \| `failed` \| `dead`), attempts, max_attempts, run_after, locked_by, locked_until, last_error, created_at, finished_at. Partial unique index on `dedupe_key WHERE status = 'pending'`; workers claim jobs with `FOR UPDATE SKIP LOCKED`. |

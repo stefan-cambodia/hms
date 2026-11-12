@@ -3,13 +3,14 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from pydantic import EmailStr, Field
+from pydantic import Field
 
 from app.core.schemas import InputModel, LanguageCode, OutputModel
 
 
 class LoginIn(InputModel):
-    email: EmailStr
+    # Not format-validated: login must never reject an identifier on syntax.
+    email: str = Field(min_length=1, max_length=320)
     password: str = Field(min_length=1, max_length=200)
     totp_code: str | None = Field(None, pattern=r"^\d{6}$")
     device_label: str | None = Field(None, max_length=100)

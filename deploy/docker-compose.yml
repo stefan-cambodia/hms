@@ -1,0 +1,90 @@
+# HMS production stack. Usage (from this directory):
+#   cp .env.example .env && edit .env
+#   docker compose up -d --build
+#   docker compose exec api hms-entrypoint cli bootstrap --org ... (first install)
+name: hms
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: hms
+      POSTGRES_DB: hms
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hms -d hms"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    networks: [internal]
+
+  api:
+    build: ../backend
+    restart: unless-stopped
+    depends_on:
+      db: { condition: service_healthy }
+    environment:
+      HMS_ENV: production
+      HMS_DATABASE_URL: postgresql+asyncpg://hms:${POSTGRES_PASSWORD}@db:5432/hms
+      HMS_DATA_KEY: ${HMS_DATA_KEY:?set HMS_DATA_KEY in .env}
+      HMS_COOKIE_SECURE: "true"
+      HMS_ENABLE_DOCS: ${HMS_ENABLE_DOCS:-false}
+      HMS_WORKERS: ${HMS_WORKERS:-2}
+      HMS_SESSION_IDLE_MINUTES: ${HMS_SESSION_IDLE_MINUTES:-720}
+    volumes:
+      - media:/app/var/media
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health', timeout=3).status == 200 else 1)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks: [internal]
+
+  web:
+    build:
+      context: ..
+      dockerfile: deploy/caddy/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      api: { condition: service_healthy }
+    environment:
+      HMS_SITE_ADDRESS: ${HMS_SITE_ADDRESS:-:443}
+      HMS_TLS: ${HMS_TLS:-internal}
+    ports:
+      - "${HMS_HTTP_PORT:-80}:80"
+      - "${HMS_HTTPS_PORT:-443}:443"
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    networks: [internal]
+
+  backup:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    depends_on:
+      db: { condition: service_healthy }
+    entrypoint: ["/scripts/backup-loop.sh"]
+    environment:
+      PGHOST: db
+      PGUSER: hms
+      PGDATABASE: hms
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      BACKUP_INTERVAL_HOURS: ${BACKUP_INTERVAL_HOURS:-6}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-30}
+    volumes:
+      - ./scripts:/scripts:ro
+      - ${BACKUP_HOST_DIR:-./backups}:/backups
+    networks: [internal]
+
+volumes:
+  pgdata:
+  media:
+  caddy_data:
+  caddy_config:
+
+networks:
+  internal:
