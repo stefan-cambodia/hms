@@ -100,3 +100,14 @@ class LoginEvent(Base):
     reason: Mapped[str | None] = mapped_column(String(40))
     ip: Mapped[str | None] = mapped_column(String(64))
     user_agent: Mapped[str | None] = mapped_column(String(400))
+
+
+class RateLimitBucket(Base):
+    """Hit counters of the shared rate limiter (app.core.ratelimit). UNLOGGED."""
+
+    __tablename__ = "rate_limit_buckets"
+    __table_args__ = {"prefixes": ["UNLOGGED"]}
+
+    key: Mapped[str] = mapped_column(String(200), primary_key=True)
+    bucket: Mapped[datetime] = mapped_column(DateTime(timezone=True), primary_key=True)
+    hits: Mapped[int] = mapped_column(Integer)

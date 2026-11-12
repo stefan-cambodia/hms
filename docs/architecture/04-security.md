@@ -23,8 +23,10 @@
   of `SameSite=Strict`. Bearer requests are exempt because browsers never
   attach them automatically.
 * **Brute force.** Login is rate-limited per IP and per account; after 5
-  failures an account is temporarily locked with exponential backoff. Every
-  attempt goes to `login_events`.
+  failures an account is temporarily locked with exponential backoff. The
+  per-IP counters are stored in PostgreSQL (an unlogged table), so the limit
+  holds across several API processes or servers. Every attempt goes to
+  `login_events`.
 * **2FA.** Optional TOTP (RFC 6238) per user, which administrators can make
   mandatory per role. The secret is encrypted at rest; recovery codes are
   stored hashed.

@@ -20,7 +20,7 @@ from app.core.errors import (
     field_error,
 )
 from app.core.permissions import ALL_PERMISSIONS
-from app.core.ratelimit import SlidingWindowLimiter
+from app.core.ratelimit import DbRateLimiter
 from app.core.security import (
     decrypt_secret,
     encrypt_secret,
@@ -34,7 +34,7 @@ from app.core.security import (
 from app.modules.auth.models import LoginEvent, RolePermission, User, UserHotelRole, UserSession
 from app.modules.hotels.models import Hotel
 
-login_limiter = SlidingWindowLimiter(get_settings().login_rate_per_minute, 60)
+login_limiter = DbRateLimiter("login-ip", get_settings().login_rate_per_minute, 60)
 TOUCH_INTERVAL = timedelta(seconds=60)
 
 
@@ -65,7 +65,7 @@ async def login(
     user_agent: str | None,
     device_label: str | None,
 ) -> LoginResult:
-    if not login_limiter.hit(f"ip:{ip}"):
+    if not await login_limiter.hit(ip or "unknown"):
         raise AppError("TOO_MANY_ATTEMPTS", "Too many login attempts", status_code=429)
 
     now = utcnow()

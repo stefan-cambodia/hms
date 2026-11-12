@@ -44,6 +44,29 @@ async def test_account_locks_after_repeated_failures(installation):
         assert r.json()["error"]["params"]["retry_after"] > 0
 
 
+async def test_login_throttle_is_shared_by_all_api_processes(installation, monkeypatch):
+    """The per-IP counter lives in PostgreSQL, so every API process sees it."""
+    from app.core.ratelimit import DbRateLimiter
+    from app.modules.auth import service as auth_service
+
+    limit = 4
+    monkeypatch.setattr(auth_service.login_limiter, "limit", limit)
+    async with new_client() as client:
+        codes = []
+        for i in range(limit + 1):
+            body = {"email": f"nobody{i}@example.com", "password": "x"}
+            r = await client.post("/api/v1/auth/login", json=body)
+            codes.append(r.status_code)
+    assert codes == [401] * limit + [429]
+    async with sessionmaker()() as db:
+        stored = (await db.execute(text("SELECT sum(hits) FROM rate_limit_buckets"))).scalar_one()
+    assert stored == limit + 1
+    # The limiter of another process (a new instance, nothing in memory) agrees.
+    other = DbRateLimiter("login-ip", limit, 60)
+    assert await other.hit("127.0.0.1") is False
+    assert await other.hit("203.0.113.9") is True  # other addresses are not affected
+
+
 async def test_csrf_required_for_cookie_sessions(admin: Api):
     body = {"code": "A", "name": "Main"}
     del admin.client.headers["X-CSRF-Token"]

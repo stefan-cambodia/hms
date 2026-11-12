@@ -29,7 +29,6 @@ from app.core.config import get_settings  # noqa: E402
 from app.core.db import dispose_engine, sessionmaker  # noqa: E402
 from app.core.models import Base  # noqa: E402
 from app.main import app  # noqa: E402
-from app.modules.auth.service import login_limiter  # noqa: E402
 from app.modules.hotels.bootstrap import bootstrap  # noqa: E402
 
 ADMIN_EMAIL = "admin@example.com"
@@ -64,7 +63,6 @@ async def clean_tables(database):
     async with sessionmaker()() as db:
         await db.execute(text(f"TRUNCATE {tables} RESTART IDENTITY CASCADE"))
         await db.commit()
-    login_limiter.reset()
     yield
 
 

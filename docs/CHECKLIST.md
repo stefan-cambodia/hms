@@ -40,7 +40,7 @@ Last updated: 2026-11-12. Test counts: backend 48 (pytest, real PostgreSQL), fro
 | i18n infrastructure, 5 languages, per-user language stored server-side | ✅ | i18n check plus E2E |
 | Translation completeness check (keys, variables, plurals) | ✅ | `npm run i18n:check` |
 | Khmer rendering (shaping, line height) | ✅ | Screenshots verified; **native-speaker review of wording pending** |
-| Login rate limiter is per process | 🟡 | DB lockout covers multi-process; documented |
+| Login throttling per IP shared by all API processes (PostgreSQL counters) | ✅ | test_auth; account lockout on top |
 | Least-privilege DB roles (separate migration and app users) | ⬜ | Phase 10 |
 
 ## Phase 3 — Hotel configuration
@@ -187,10 +187,10 @@ Last updated: 2026-11-12. Test counts: backend 48 (pytest, real PostgreSQL), fro
 | Today board (to hand over, out, due back, coming), 14-day schedule, fleet management | ✅ | E2E on 3 devices |
 | Photos of damage, GPS tracking, online booking by guests | ⬜ | Not included |
 
-## Phase 6 — Multi-user ✅ (largely delivered early) / ⬜ (remaining)
+## Phase 6 — Multi-user ✅
 
 Delivered in phase 2: real-time sync, sessions, connected-users view, conflict detection and stale-edit warning, offline banner.
-Remaining ⬜: `Idempotency-Key` on creation endpoints (needed for reservations), multi-process login throttling.
+Delivered later: `Idempotency-Key` on reservation, payment, restaurant and rental creation (retries never create duplicates); login throttling shared by all API processes.
 
 ## Phase 7 — Channel manager ⬜
 
