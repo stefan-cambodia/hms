@@ -14,6 +14,8 @@ from app.core.db import dispose_engine, sessionmaker
 from app.core.errors import install_error_handlers
 from app.modules.auth.router import router as auth_router
 from app.modules.billing.router import router as billing_router
+from app.modules.channels.router import router as channels_router
+from app.modules.channels.worker import worker as channel_worker
 from app.modules.facilities.router import router as facilities_router
 from app.modules.frontdesk.router import router as frontdesk_router
 from app.modules.guests.router import router as guests_router
@@ -36,9 +38,14 @@ API_PREFIX = "/api/v1"
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     logging.basicConfig(level=get_settings().log_level)
     await hub.start()
+    settings = get_settings()
+    if settings.channel_worker_enabled:
+        channel_worker.interval = settings.channel_worker_interval_seconds
+        channel_worker.start()
     try:
         yield
     finally:
+        await channel_worker.stop()
         await hub.stop()
         await dispose_engine()
 
@@ -87,6 +94,7 @@ def create_app() -> FastAPI:
     api.include_router(maintenance_router)
     api.include_router(restaurant_router)
     api.include_router(vehicles_router)
+    api.include_router(channels_router)
     api.include_router(realtime_router)
     app.include_router(api)
     return app

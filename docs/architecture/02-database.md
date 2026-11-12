@@ -257,18 +257,25 @@ restaurant (`billing/pos.py`).
 | `login_events` | id, user_id NULL, email, success, reason, ip, user_agent, at |
 | `audit_logs` | id bigserial, organization_id, hotel_id, user_id, session_id, action, entity_type, entity_id, changes jsonb, ip, request_id, at. A trigger rejects `UPDATE`/`DELETE`, so the log is append-only. |
 
-### Channel manager and jobs
+### Channel manager (implemented in phase 7)
 
 | Table | Notes |
 |-------|-------|
-| `channel_connections` | id, hotel_id, channel (`booking_com` \| `agoda` \| …), external_hotel_id, status (`not_configured` \| `active` \| `paused` \| `error`), credentials (encrypted bytea), settings jsonb, last_success_at, last_error |
-| `channel_room_mappings` | connection_id, room_type_id, external_room_id — `UNIQUE(connection_id, external_room_id)` |
-| `channel_rate_mappings` | connection_id, room_type_id, rate_plan_id, external_rate_id, price_adjustment |
-| `channel_dirty_ranges` | connection_id, room_type_id, rate_plan_id NULL, date_from, date_to, created_at. Written in the same transaction as the business change; consumed by the ARI sync job. |
-| `channel_ari_state` | (connection_id, room_type_id, rate_plan_id, date) PK, availability, price, restrictions jsonb, acknowledged_at. The last values the channel accepted; deltas are computed against it. |
-| `channel_inbound_reservations` | connection_id, external_id, revision, payload (raw), status, reservation_id, error, received_at — `UNIQUE(connection_id, external_id, revision)` makes imports idempotent. |
-| `channel_messages` | Request/response log (credentials redacted), for diagnostics. |
-| `jobs` | id, hotel_id, queue, kind, payload jsonb, dedupe_key, status (`pending` \| `running` \| `succeeded` \| `failed` \| `dead`), attempts, max_attempts, run_after, locked_by, locked_until, last_error, created_at, finished_at. Partial unique index on `dedupe_key WHERE status = 'pending'`; workers claim jobs with `FOR UPDATE SKIP LOCKED`. |
+| `channel_connections` | Configuration, versioned: hotel_id, provider (`siteminder`), environment (`test` \| `production`), endpoint_url, account_code (SiteMinder PMS code), username, password (encrypted bytea, never returned by the API or audited), hotel_code, enabled, push_ari, pull_reservations, horizon_days (30–750), pull_interval_seconds (120–300), settings jsonb (`rate_amount`). `UNIQUE(hotel_id, provider, hotel_code)` |
+| `channel_sync_status` | Runtime state written by the worker, kept apart so background updates never conflict with an administrator's edit: state (`credentials_saved` \| `test_ok` \| `live` \| `degraded` \| `paused`), last test / push / pull / error, consecutive_failures, next_push_at / next_pull_at (backoff), horizon_end, full_refresh_requested, last_full_refresh_at (at most one full refresh per 24 h), external_products (codes listed by the provider) |
+| `channel_room_maps` | connection → room type ↔ provider room code (availability). `UNIQUE(connection_id, room_type_id)`, `UNIQUE(connection_id, external_code)` |
+| `channel_rate_maps` | connection → (room type, rate plan) ↔ provider rate code (prices, restrictions). `UNIQUE(connection_id, room_type_id, rate_plan_id)` |
+| `channel_dirty_ranges` | The change queue: connection_id, room_type_id (NULL = every category), start_date/end_date (NULL = whole horizon). **Written only by database triggers** on `room_allocations`, `reservation_rooms`, `rooms`, `room_types`, `daily_rates` (statement-level, one range per category), `rate_plans`, `pricing_rules` and `tax_rates`, in the same transaction as the change, for every connection with `push_ari`. |
+| `channel_inventory_state` | (connection, room type, night) → rooms to sell, as last acknowledged by the channel |
+| `channel_rate_state` | (connection, room type, rate plan, night) → price, currency and restrictions, as last acknowledged. Deltas are computed against these two tables; they are updated only after the provider confirmed success. |
+| `channel_bookings` | One row per received revision: external_id, revision (provider message id), action (`book` \| `modify` \| `cancel`), message_at, normalised data jsonb (never card data), card brand + last 4, import_status (`pending` \| `imported` \| `failed` \| `ignored`), error, reservation_id, overbooked, confirmed_at. `UNIQUE(connection_id, external_id, revision)` makes imports idempotent. |
+| `channel_messages` | Exchange log: operation, outcome, HTTP status, duration, summary, request/response bodies **after redaction** (passwords and card numbers removed), truncated to 64 KB, kept 30 days |
+
+### Jobs and notifications (planned)
+
+| Table | Notes |
+|-------|-------|
+| `jobs` | id, hotel_id, queue, kind, payload jsonb, dedupe_key, status (`pending` \| `running` \| `succeeded` \| `failed` \| `dead`), attempts, max_attempts, run_after, locked_by, locked_until, last_error, created_at, finished_at. Partial unique index on `dedupe_key WHERE status = 'pending'`; workers claim jobs with `FOR UPDATE SKIP LOCKED`. (The channel worker does not need it: its queue is `channel_dirty_ranges` and one leader process runs it, see 03-channel-manager.md.) |
 | `notifications` | id, hotel_id, user_id, type, payload, read_at |
 | `notification_preferences` | (scope role/user, type, channel), enabled |
 | `backup_runs` | id, kind, status, started_at, finished_at, file, size, sha256, verified_at, verify_result, error |

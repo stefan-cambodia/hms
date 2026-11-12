@@ -23,6 +23,10 @@ dependencies = [
   "weasyprint>=66",
   "jinja2>=3.1",
   "babel>=2.16",
+  # Channel manager: HTTPS client for provider APIs, and an XML parser that
+  # refuses entity expansion and external references (untrusted XML).
+  "httpx>=0.28",
+  "defusedxml>=0.7.1",
 ]
 
 [project.optional-dependencies]

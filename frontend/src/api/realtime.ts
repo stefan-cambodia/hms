@@ -49,6 +49,8 @@ const DEPENDENTS: Record<string, string[]> = {
   menu_item: ['menu_item', 'restaurant_order'],
   restaurant_outlet: ['restaurant_outlet', 'restaurant_order'],
   maintenance_request: ['maintenance_request', 'room_board', 'calendar'],
+  channel_connection: ['channel_connection', 'channel_message', 'channel_mapping'],
+  channel_booking: ['channel_booking', 'channel_connection', 'reservation'],
   user: ['user', 'session'],
   role: ['role', 'user'],
   session: ['session', 'user'],

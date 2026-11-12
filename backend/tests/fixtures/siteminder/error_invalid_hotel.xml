@@ -1,0 +1,10 @@
+<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/">
+   <SOAP-ENV:Header/>
+   <SOAP-ENV:Body>
+      <OTA_HotelAvailNotifRS Version="1.0" TimeStamp="2025-10-25T01:27:05+00:00" EchoToken="TEST9BA23FF4-2EE4-11EF-2426-09173F13E4C5" xmlns="http://www.opentravel.org/OTA/2003/05">
+         <Errors>
+            <Error Type="6">PMS is not authorized to access hotel with HotelCode=XXXXX</Error>
+         </Errors>
+      </OTA_HotelAvailNotifRS>
+   </SOAP-ENV:Body>
+</SOAP-ENV:Envelope>

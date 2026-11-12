@@ -14,6 +14,7 @@ const ReservationDetailPage = lazy(() => import('@/modules/reservations/Reservat
 const CalendarPage = lazy(() => import('@/modules/calendar/CalendarPage'));
 const GuestsPage = lazy(() => import('@/modules/guests/GuestsPage'));
 const PricingPage = lazy(() => import('@/modules/pricing/PricingPage'));
+const ChannelsPage = lazy(() => import('@/modules/channels/ChannelsPage'));
 const FrontDeskPage = lazy(() => import('@/modules/frontdesk/FrontDeskPage'));
 const BillingPage = lazy(() => import('@/modules/billing/BillingPage'));
 const HousekeepingPage = lazy(() => import('@/modules/housekeeping/HousekeepingPage'));
@@ -67,6 +68,7 @@ const router = createBrowserRouter([
       { path: 'rooms', element: <RoomsPage /> },
       { path: 'guests', element: <GuestsPage /> },
       { path: 'pricing/*', element: <PricingPage /> },
+      { path: 'channels', element: <ChannelsPage /> },
       { path: 'front-desk', element: <FrontDeskPage /> },
       { path: 'billing/*', element: <BillingPage /> },
       { path: 'housekeeping', element: <HousekeepingPage /> },

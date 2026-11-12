@@ -81,6 +81,16 @@ def contains_card_number(value: str) -> bool:
     return False
 
 
+def mask_card_numbers(value: str, replacement: str = "[card number removed]") -> str:
+    """Replace every card-number-like sequence (see contains_card_number)."""
+
+    def repl(match: re.Match[str]) -> str:
+        digits = re.sub(r"\D", "", match.group())
+        return replacement if 13 <= len(digits) <= 19 and _luhn_ok(digits) else match.group()
+
+    return _DIGIT_RUN.sub(repl, value)
+
+
 def _no_card_number(value: str | None) -> str | None:
     if value and contains_card_number(value):
         raise PydanticCustomError("card_number_not_allowed", "Card numbers must never be stored")

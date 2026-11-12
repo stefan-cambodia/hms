@@ -34,6 +34,9 @@ class Settings(BaseSettings):
     login_max_failures: int = 5
     login_lockout_base_seconds: int = 30
     login_rate_per_minute: int = 20
+    # Channel manager background sync (one leader among API processes).
+    channel_worker_enabled: bool = True
+    channel_worker_interval_seconds: float = 5.0
 
     enable_docs: bool = True
     media_dir: Path = Path("var/media")

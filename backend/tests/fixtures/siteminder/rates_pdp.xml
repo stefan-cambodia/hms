@@ -1,0 +1,20 @@
+<OTA_HotelRateAmountNotifRQ xmlns="http://www.opentravel.org/OTA/2003/05" EchoToken="ed8835ff-6198-4f38-b589-3058397f677c" TimeStamp="2024-07-06T15:27:41+00:00" Version="1.0">
+	<POS>
+		<Source>
+			<RequestorID Type="22" ID="PMSCODE"/>
+		</Source>
+	</POS>
+	<RateAmountMessages HotelCode="HOTEL">
+		<RateAmountMessage>
+			<StatusApplicationControl InvTypeCode="SUP" RatePlanCode="BAR"/>
+			<Rates>
+				<Rate CurrencyCode="AUD" Start="2025-03-01" End="2025-03-14">
+					<BaseByGuestAmts>
+						<BaseByGuestAmt AmountAfterTax="123.00"/> <!-- Base Rate -->
+					</BaseByGuestAmts>
+				</Rate>
+			</Rates>
+		</RateAmountMessage>
+		<!-- Additional RateAmountMessage elements -->
+	</RateAmountMessages>
+</OTA_HotelRateAmountNotifRQ>

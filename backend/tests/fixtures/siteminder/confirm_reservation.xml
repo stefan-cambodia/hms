@@ -1,0 +1,32 @@
+<SOAP-ENV:Envelope
+	xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+	<SOAP-ENV:Header>
+		<wsse:Security soap:mustUnderstand="1"
+			xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd">
+			<wsse:UsernameToken>
+				<wsse:Username>USERNAME</wsse:Username>
+				<wsse:Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText">PASSWORD</wsse:Password>
+			</wsse:UsernameToken>
+		</wsse:Security>
+	</SOAP-ENV:Header>
+	<SOAP-ENV:Body>
+		<OTA_NotifReportRQ
+			xmlns="http://www.opentravel.org/OTA/2003/05" Version="1.0" TimeStamp="2024-07-06T15:27:50+00:00" EchoToken="ed8835ff-6198-4f38-b589-3058397f677">
+			<Success/>
+			<NotifDetails>
+				<HotelNotifReport>
+					<HotelReservations>
+						<HotelReservation CreateDateTime="2025-08-20T09:28:47+02:00" ResStatus="Book">
+							<UniqueID Type="16" ID="qlmumfgwx85nlkgmtb"/>
+							<ResGlobalInfo>
+								<HotelReservationIDs>
+									<HotelReservationID ResID_Type="14" ResID_Value="ABC-1234567890"/>
+								</HotelReservationIDs>
+							</ResGlobalInfo>
+						</HotelReservation>
+					</HotelReservations>
+				</HotelNotifReport>
+			</NotifDetails>
+		</OTA_NotifReportRQ>
+	</SOAP-ENV:Body>
+</SOAP-ENV:Envelope>

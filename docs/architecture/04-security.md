@@ -66,6 +66,14 @@
   history and the audit log.
 * **Documents:** PDFs are rendered server-side from escaped templates; the
   renderer is not allowed to fetch any URL (no SSRF through documents).
+* **Channel manager:** provider credentials are encrypted at rest, write-only
+  in the API and never written to the audit log. Every message body is
+  redacted before it is stored (passwords, card numbers and CVC removed, any
+  Luhn-valid 13–19 digit sequence masked). Reservations received from a channel
+  keep only the card brand and last 4 digits. XML from the provider is parsed
+  with `defusedxml` (no entity expansion, no external references). Outgoing
+  calls only go to the configured provider endpoint over HTTPS, with no
+  redirects followed.
 * **Encryption at rest** for secrets that must be recoverable (OTA
   credentials, TOTP secrets, identity document numbers, renters' driving
   licence numbers, of which screens and contracts show only the last 4 digits): AES-GCM through

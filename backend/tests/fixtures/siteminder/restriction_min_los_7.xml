@@ -1,0 +1,16 @@
+<OTA_HotelAvailNotifRQ
+	xmlns="http://www.opentravel.org/OTA/2003/05" Version="1.0" TimeStamp="2024-07-06T15:27:41+00:00" EchoToken="ed8835ff-6198-4f38-b589-3058397f677c">
+	<POS>
+		<Source>
+			<RequestorID Type="22" ID="PMSCODE"/>
+		</Source>
+	</POS>
+	<AvailStatusMessages HotelCode="HOTELCODE">
+		<AvailStatusMessage>
+			<StatusApplicationControl Start="2025-03-01" End="2025-03-01" InvTypeCode="SUP" RatePlanCode="GLD"/>
+			<LengthsOfStay>
+				<LengthOfStay MinMaxMessageType="SetMinLOS" Time="7"/>
+			</LengthsOfStay>
+		</AvailStatusMessage>
+	</AvailStatusMessages>
+</OTA_HotelAvailNotifRQ>

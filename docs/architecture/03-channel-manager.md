@@ -105,11 +105,39 @@ The dashboard shows, per connection: last successful push and pull, pending
 dirty ranges, failed/dead jobs, recent message log (redacted), unmapped room
 types/rate plans, and manual "sync now" / "full refresh" controls.
 
-## 3.5 Delivery plan (Phase 7)
+## 3.5 Delivery status (Phase 7)
 
-1. Core: `channel_connections`, mappings, `channel_dirty_ranges`, `channel_ari_state`, inbound reservation store, job runner, dashboard. These are tested with a **test adapter that lives only in the test suite** and is never selectable in the product.
-2. **SiteMinder pmsXchange adapter**: built against the public WSDL/OpenAPI specs; ARI push and mapping fetch **verified against SiteMinder's public test environment** (shared `PMSXTEST` credentials). Reservation pull is implemented but **can only be verified after a partnership agreement**, because the shared test hotels return no reservations. It is reported as unverified until then.
-3. Booking.com and Agoda direct adapters: **not started** until partner access is granted. The onboarding steps are documented in the administrator manual.
+1. **Core — done and tested** (`app/modules/channels/`):
+   * Change queue written by database triggers (`channel_dirty_ranges`), so no code path can forget to notify the channels.
+   * Delta computation from the inventory and pricing engines against the acknowledged state; consecutive nights with the same value are merged into ranges; only the restriction types that changed are sent.
+   * Plan conditions (inactive, validity dates, booking window, categories) are sent as a stop sell; availability is never negative; MinLOS ≤ MaxLOS.
+   * Worker: one leader among API processes (PostgreSQL advisory lock), one request at a time per property, changes sent within seconds (polling every 5 s), backoff 5 s → 30 min on failure, state shown to staff.
+   * Reservation import through the reservations engine:
+     * idempotent per revision, tolerant of out-of-order messages;
+     * never refused (overbooking is flagged and announced);
+     * channel prices converted to the hotel's tax convention and currency;
+     * modification applied in place (same reservation number);
+     * cancellation without fee (the channel applies its own terms);
+     * acknowledgement only after the local commit, and failures reported to the provider with a readable text.
+   * Card data: brand and last 4 digits only; message bodies redacted before storage.
+   * Screens: connection, mapping, received bookings, activity log.
+   * Tested with an in-memory adapter that exists only in the test suite.
+2. **SiteMinder pmsXchange adapter — implemented, contract-tested, not yet verified live.**
+   * Implemented: availability, restrictions and PDP rates push; room-rates mapping fetch (also used as the connection test); reservation pull and confirmation.
+   * Messages are built and parsed with SiteMinder's own published samples as fixtures (`tests/fixtures/siteminder/`), including the minified envelope, the restriction, rate, read and confirmation messages and the reservation samples, plus an end-to-end exchange over the HTTP layer.
+   * XML from the provider is parsed with `defusedxml`.
+   * The live check against SiteMinder's public test environment (`tests/test_siteminder_live.py`, shared credentials published by SiteMinder for this purpose) **has not been run yet**. Until it passes, the adapter is not reported as working. To run it:
+
+     ```bash
+     cd backend
+     HMS_SITEMINDER_LIVE=1 HMS_SITEMINDER_USERNAME=<username> HMS_SITEMINDER_PASSWORD=<password> \
+       .venv/bin/pytest -s tests/test_siteminder_live.py
+     ```
+
+     (username and password: SiteMinder's public Postman workspace, environment "pmsXchange - Rooms and Rates TEST").
+   * Reservation pull can only be verified with a partner test account (the shared hotels return no reservations).
+   * Not implemented: OBP (occupancy-based) rates (PDP only), reservation push delivery (pull is used; push needs a public HTTPS endpoint), unmapped-rate delivery, virtual card handling, payment transaction records.
+3. Booking.com and Agoda direct adapters: **not started** until partner access is granted.
 
 ## 3.6 Onboarding procedure for the hotel (summary)
 

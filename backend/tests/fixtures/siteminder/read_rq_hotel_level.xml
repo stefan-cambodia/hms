@@ -1,0 +1,13 @@
+<OTA_ReadRQ
+	xmlns="http://www.opentravel.org/OTA/2003/05" EchoToken="ed8835ff-6198-4f38-b589-3058397f677c" TimeStamp="2024-07-06T15:27:41+00:00" Version="1.0">
+	<POS>
+		<Source>
+			<RequestorID Type="22" ID="{PMSCODE}"/>
+		</Source>
+	</POS>
+	<ReadRequests>
+		<HotelReadRequest HotelCode="{HOTELCODE}">
+			<SelectionCriteria SelectionType="Undelivered"/>
+		</HotelReadRequest>
+	</ReadRequests>
+</OTA_ReadRQ>

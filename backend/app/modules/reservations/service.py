@@ -17,10 +17,12 @@ from __future__ import annotations
 
 import uuid
 from collections.abc import Iterable
+from dataclasses import dataclass
 from datetime import UTC, date, datetime
+from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import func, or_, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -272,11 +274,46 @@ async def quote(
 # --- create ------------------------------------------------------------------
 
 
+# Channel prices for one stay: night -> (price, rate plan or None for the stay's plan).
+ChannelNights = dict[date, tuple[Decimal, uuid.UUID | None]]
+
+
+def _night(
+    hotel_id: uuid.UUID, n: pricing_engine.NightPrice, channel: tuple[Decimal, uuid.UUID | None] | None
+) -> ReservationNight:
+    if channel is None:
+        return ReservationNight(
+            night=n.night,
+            hotel_id=hotel_id,
+            price=n.price,
+            price_source=n.source,
+            rate_plan_id=n.rate_plan_id,
+        )
+    price, plan_id = channel
+    return ReservationNight(
+        night=n.night,
+        hotel_id=hotel_id,
+        price=price,
+        price_source="channel",
+        rate_plan_id=plan_id or n.rate_plan_id,
+    )
+
+
 async def create_reservation(
-    db: AsyncSession, ctx: HotelContext, data: ReservationIn, idempotency_key: str | None = None
+    db: AsyncSession,
+    ctx: HotelContext,
+    data: ReservationIn,
+    idempotency_key: str | None = None,
+    *,
+    night_prices: list[ChannelNights] | None = None,
+    commit: bool = True,
 ) -> tuple[Reservation, bool]:
     """Returns (reservation, created). created=False when an idempotent retry
-    returned the reservation made by the first attempt."""
+    returned the reservation made by the first attempt.
+
+    `night_prices` (one entry per stay) is used for bookings received from a
+    distribution channel: the guest pays the channel's price, not today's
+    rates. Nights missing from an entry are priced by the pricing engine."""
     digest = idempotency.digest("reservation", data.model_dump(mode="json"))
     if idempotency_key:
         existing = await idempotency.previous(db, ctx, idempotency_key, digest)
@@ -342,16 +379,9 @@ async def create_reservation(
             occupies_inventory=True,
             accommodation_total=sq.accommodation_total,
         )
-        rr.nights = [
-            ReservationNight(
-                night=n.night,
-                hotel_id=ctx.hotel_id,
-                price=n.price,
-                price_source=n.source,
-                rate_plan_id=n.rate_plan_id,
-            )
-            for n in sq.nights
-        ]
+        override = night_prices[len(res.rooms)] if night_prices else {}
+        rr.nights = [_night(ctx.hotel_id, n, override.get(n.night)) for n in sq.nights]
+        rr.accommodation_total = sum((n.price for n in rr.nights), ZERO)
         res.rooms.append(rr)
     await folio.recompute(db, res)
     db.add(res)
@@ -393,7 +423,8 @@ async def create_reservation(
             "departure": [None, res.departure],
         },
     )
-    await db.commit()
+    if commit:
+        await db.commit()
     return res, True
 
 
@@ -534,6 +565,109 @@ async def move_stay(
     await _publish(db, ctx, res, "updated", changes)
     await db.commit()
     return await reload(db, res)
+
+
+@dataclass
+class ChannelStay:
+    room_type_id: uuid.UUID
+    rate_plan_id: uuid.UUID | None
+    arrival: date
+    departure: date
+    adults: int
+    children: int
+    prices: ChannelNights
+
+
+_ROOM_TAKEN = text(
+    """
+    SELECT 1 FROM room_allocations
+    WHERE room_id = :room AND period && daterange(:a, :d, '[)')
+      AND reservation_room_id IS DISTINCT FROM :rr
+    LIMIT 1
+    """
+)
+
+
+async def apply_channel_modification(
+    db: AsyncSession, ctx: HotelContext, res: Reservation, stays: list[ChannelStay], *, reference: str
+) -> None:
+    """Make a reservation match a modification received from a distribution
+    channel, in place (the reservation keeps its number and folio).
+
+    Stays are matched in date order. An assigned room is kept when the category
+    is unchanged and the room is still free for the new dates; otherwise the
+    stay goes back to "unassigned". A channel booking is never refused: if the
+    category is now oversold the reservation is flagged overbooked (does not
+    commit; the caller does)."""
+    if res.status in CLOSED:
+        raise Conflict("RESERVATION_CLOSED", params={"status": res.status})
+    if any(rr.checked_in_at for rr in res.rooms):
+        raise Conflict("GUEST_IN_HOUSE")
+    if not stays:
+        raise ValidationFailed("NO_STAY")
+    types = await _load_types(db, ctx.hotel_id, [s.room_type_id for s in stays])
+    old_rooms = {rr.room_id for rr in res.rooms if rr.room_id}
+    rooms = await _load_rooms(db, ctx.hotel_id, list(old_rooms)) if old_rooms else {}
+    affected = {rr.room_type_id for rr in res.rooms} | set(types) | {r.room_type_id for r in rooms.values()}
+    await inventory.lock_room_types(db, ctx.hotel_id, affected)
+    old_window = (res.arrival, res.departure)
+    start = min(s.arrival for s in stays)
+    end = max(s.departure for s in stays)
+    pctx = await pricing.load_context(db, ctx.hotel_id, start, end)
+    before = [(rr.room_type_id, rr.arrival, rr.departure, rr.adults, rr.children) for rr in res.rooms]
+
+    existing = list(res.rooms)
+    for i, spec in enumerate(sorted(stays, key=lambda x: x.arrival)):
+        rt = types[spec.room_type_id]
+        rr = existing[i] if i < len(existing) else None
+        if rr is None:
+            rr = ReservationRoom(
+                id=uuid.uuid4(), hotel_id=ctx.hotel_id, occupies_inventory=True, room_id=None, nights=[]
+            )
+            res.rooms.append(rr)
+        keep_room = rr.room_id is not None and rooms.get(rr.room_id) is not None
+        keep_room = keep_room and rooms[rr.room_id].room_type_id == spec.room_type_id
+        if keep_room:
+            taken = await db.scalar(
+                _ROOM_TAKEN, {"room": rr.room_id, "a": spec.arrival, "d": spec.departure, "rr": rr.id}
+            )
+            keep_room = taken is None
+        plan_id = spec.rate_plan_id or rr.rate_plan_id or pctx.default_plan.id
+        stay = pricing_engine.Stay(
+            rt, None, spec.arrival, spec.departure, spec.adults, spec.children, plan_id
+        )
+        nights = [
+            _night(ctx.hotel_id, pricing_engine.night_price(pctx, stay, n), spec.prices.get(n))
+            for n in pricing_engine.nights_between(spec.arrival, spec.departure)
+        ]
+        rr.room_type_id = spec.room_type_id
+        rr.room_id = rr.room_id if keep_room else None
+        rr.rate_plan_id = plan_id
+        rr.arrival, rr.departure = spec.arrival, spec.departure
+        rr.adults, rr.children = spec.adults, spec.children
+        rr.nights = nights
+        rr.accommodation_total = sum((n.price for n in nights), ZERO)
+    for rr in existing[len(stays) :]:
+        res.rooms.remove(rr)  # delete-orphan: removed with its nights at flush
+    res.arrival, res.departure = start, end
+    await _recompute(db, res)
+    _touch(res)
+    await db.flush()
+    window = (min(old_window[0], start), max(old_window[1], end))
+    if await inventory.oversold_nights(db, ctx.hotel_id, affected, *window):
+        res.is_overbooked = True
+    after = [(rr.room_type_id, rr.arrival, rr.departure, rr.adults, rr.children) for rr in res.rooms]
+    _event(
+        db,
+        ctx,
+        res,
+        "channel_modified",
+        reference=reference,
+        old=[[str(t), a, d, ad, ch] for t, a, d, ad, ch in before],
+        new=[[str(t), a, d, ad, ch] for t, a, d, ad, ch in after],
+        overbooked=res.is_overbooked,
+    )
+    await _publish(db, ctx, res, "updated", {"dates": [list(old_window), [start, end]]})
 
 
 async def change_rate_plan(
@@ -760,13 +894,23 @@ async def _close_with_fee(
 
 
 async def cancel(
-    db: AsyncSession, ctx: HotelContext, res_id: uuid.UUID, version: int, reason: str, waive_fee: bool = False
+    db: AsyncSession,
+    ctx: HotelContext,
+    res_id: uuid.UUID,
+    version: int,
+    reason: str,
+    waive_fee: bool = False,
+    *,
+    commit: bool = True,
 ) -> Reservation:
     res = await get_reservation(db, ctx.hotel_id, res_id, for_update=True)
     crud.check_version(res, version)
     res.cancelled_at = datetime.now(UTC)
     res.cancellation_reason = reason
     await _close_with_fee(db, ctx, res, "cancelled", waive_fee, reason=reason)
+    if not commit:
+        await db.flush()
+        return res
     await db.commit()
     return await reload(db, res)
 

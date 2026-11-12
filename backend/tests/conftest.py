@@ -16,6 +16,8 @@ os.environ["HMS_DATABASE_URL"] = os.environ.get(
 os.environ["HMS_ENV"] = "test"
 os.environ["HMS_COOKIE_SECURE"] = "false"
 os.environ["HMS_LOGIN_RATE_PER_MINUTE"] = "10000"
+# Tests drive channel synchronisation explicitly (worker.run_once).
+os.environ["HMS_CHANNEL_WORKER_ENABLED"] = "false"
 
 import asyncpg  # noqa: E402
 import httpx  # noqa: E402

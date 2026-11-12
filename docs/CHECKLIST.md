@@ -86,7 +86,7 @@ Last updated: 2026-11-12. Test counts: backend 48 (pytest, real PostgreSQL), fro
 | Offers: every applicable plan with stay total and restriction warnings (reservation form, reservation page) | ✅ | |
 | Change a stay's rate plan (reprices), date changes price new nights with the stay's plan | ✅ | |
 | Cancellation policies (free-cancellation deadline shown on reservations) | ✅ | Fee charging comes with folios (phase 5) |
-| Channel-specific rate mapping | ⬜ | Phase 7 (channel manager) |
+| Channel-specific rate mapping | ✅ | Phase 7: room and rate codes per connection |
 | Guests: CRUD, fuzzy search (pg_trgm), duplicate detection, encrypted ID documents (audited reads) | ✅ | Guest merge ⬜ |
 | Calendar data endpoint (stays, blocks, unassigned, availability) | ✅ | |
 | Reservations list: quick filters (arrivals/departures today, in house, pending), search, status filter | ✅ | E2E |
@@ -192,9 +192,25 @@ Last updated: 2026-11-12. Test counts: backend 48 (pytest, real PostgreSQL), fro
 Delivered in phase 2: real-time sync, sessions, connected-users view, conflict detection and stale-edit warning, offline banner.
 Delivered later: `Idempotency-Key` on reservation, payment, restaurant and rental creation (retries never create duplicates); login throttling shared by all API processes.
 
-## Phase 7 — Channel manager ⬜
+## Phase 7 — Channel manager 🟡 (core ✅, SiteMinder adapter awaiting live verification)
 
-The adapter framework and SiteMinder pmsXchange adapter come first. **Booking.com direct is currently closed to new connectivity providers**, and Agoda direct requires Tech Partner status. See 03-channel-manager.md. No integration is reported as working until it has been verified against the provider.
+**Booking.com direct is currently closed to new connectivity providers**, and Agoda direct requires Tech Partner status (see 03-channel-manager.md). The route is SiteMinder pmsXchange. No integration is reported as working until it has been verified against the provider.
+
+| Item | Status | Notes |
+|------|--------|-------|
+| Connections (encrypted credentials, test/production, pause), status shown to staff | ✅ | test_channels |
+| Change queue written by database triggers (reservations, room assignments, blocks, rooms, rates, plans, rules, taxes) | ✅ | Bulk rate changes produce one range per category |
+| Delta-only ARI: availability (room level), restrictions and PDP rates (room-rate level), merged ranges, plan conditions as stop sell | ✅ | First sync = horizon; then only changes |
+| Worker: single leader, one request at a time per property, backoff on failure, horizon extended daily, full refresh at most once per 24 h | ✅ | |
+| Reservation import: idempotent, out of order, never refused (overbooking flagged), channel prices and taxes, in-place modification, cancellation without fee | ✅ | |
+| Acknowledgement after local commit; failures reported to the provider; retry after fixing the mapping | ✅ | |
+| Card data never stored (brand + last 4 only); message log redacted | ✅ | Tested with SiteMinder's sample containing a card |
+| Screens: connection, mapping (codes fetched from the provider), received bookings, activity log | ✅ | E2E on 3 devices; the E2E never calls the provider |
+| SiteMinder adapter: messages match the official samples; HTTP exchange end to end | ✅ | tests/fixtures/siteminder |
+| SiteMinder adapter: live check against the public test environment | ⬜ | `tests/test_siteminder_live.py`, not run yet (see 03-channel-manager.md §3.5) |
+| SiteMinder: reservation pull verified with a partner test account; certification | ⬜ | Needs a partnership agreement |
+| OBP rates, reservation push delivery, virtual cards | ⬜ | Not implemented |
+| Booking.com / Agoda direct adapters | ⬜ | Need partner access |
 
 ## Phase 8 — Analytics ⬜
 

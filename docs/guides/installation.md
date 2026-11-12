@@ -100,7 +100,31 @@ The script verifies the checksum, asks for confirmation, takes a safety backup o
 
 **Full server loss:** install a new server (section 2) with the **same `HMS_DATA_KEY`**, copy a backup file into `deploy/backups/`, start the stack, then run `restore.sh`. Test this procedure at least once a year on a spare machine. A backup that has never been restored should not be trusted.
 
-## 7. Troubleshooting
+## 7. Channel manager (SiteMinder)
+
+Optional. Without it the PMS works fully, and OTA bookings are entered by hand
+with their source.
+
+1. **Prerequisites:** a SiteMinder subscription for the hotel. The software
+   vendor must also be a SiteMinder pmsXchange partner (certification with a
+   pilot hotel). SiteMinder then gives a PMS code, a username and password, and
+   the hotel code. Booking.com, Agoda and the other channels are connected
+   inside SiteMinder.
+2. The server needs **outgoing HTTPS** (port 443) to SiteMinder. No incoming
+   connection is needed: reservations are pulled every 2 to 5 minutes.
+3. In *Channel manager*, add the connection (test environment first), then:
+   * run **Test connection**;
+   * on the *Mapping* tab, **Get codes from SiteMinder** and give each room
+     type and rate plan its code;
+   * switch on sending, then receiving reservations.
+4. The synchronisation runs inside the API service. With several API
+   processes, one of them takes the lead automatically. Set
+   `HMS_CHANNEL_WORKER_ENABLED=false` only to stop it, for example on a
+   restored copy of the database that must not talk to SiteMinder.
+5. The *Activity log* tab shows every exchange (passwords and card numbers
+   removed). Errors are retried automatically with increasing delays.
+
+## 8. Troubleshooting
 
 | Symptom | Check |
 |---------|-------|
@@ -108,4 +132,5 @@ The script verifies the checksum, asks for confirmation, takes a safety backup o
 | Browser certificate warning | Section 3: the device does not trust the local CA yet. |
 | Cannot sign in, "Account temporarily locked" | Wait for the indicated delay, or an administrator unlocks the account in *Users & permissions*. |
 | `last-run.json` shows `failed` | `docker compose logs backup`: usually a full disk or an unreachable backup directory. |
+| Channel manager shows "Errors" | *Channel manager › Activity log*: authentication errors mean wrong credentials; unknown codes mean the mapping must be fixed; network errors are retried automatically. |
 | Logs | `docker compose logs -f api` · `docker compose logs -f web` |

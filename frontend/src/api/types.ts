@@ -1100,3 +1100,108 @@ export interface Rental {
   payments: OrderPayment[];
   change_due: string | null;
 }
+
+// --- Channel manager ---------------------------------------------------------
+
+export type ChannelState = 'credentials_saved' | 'test_ok' | 'live' | 'degraded' | 'paused';
+
+export interface ChannelStatus {
+  state: ChannelState;
+  last_test_at: string | null;
+  last_test_ok: boolean | null;
+  last_test_message: string | null;
+  last_push_at: string | null;
+  last_pull_at: string | null;
+  last_error_at: string | null;
+  last_error: string | null;
+  consecutive_failures: number;
+  next_push_at: string | null;
+  next_pull_at: string | null;
+  horizon_end: string | null;
+  full_refresh_requested: boolean;
+  last_full_refresh_at: string | null;
+  products_fetched_at: string | null;
+}
+
+export interface ChannelConnection {
+  id: UUID;
+  provider: 'siteminder';
+  name: string;
+  environment: 'test' | 'production';
+  endpoint_url: string | null;
+  account_code: string;
+  username: string;
+  hotel_code: string;
+  enabled: boolean;
+  push_ari: boolean;
+  pull_reservations: boolean;
+  horizon_days: number;
+  pull_interval_seconds: number;
+  settings: { rate_amount?: 'after_tax' | 'before_tax'; rest_base_url?: string };
+  version: number;
+  created_at: string;
+  status: ChannelStatus;
+  pending_changes: number;
+  unmapped_room_types: number;
+  mapped_rates: number;
+  bookings_attention: number;
+  errors_24h: number;
+}
+
+export interface ChannelProduct {
+  room_code: string;
+  room_name: string | null;
+  rate_code: string | null;
+  rate_name: string | null;
+  included_occupancy: number | null;
+}
+
+export interface ChannelMappings {
+  rooms: { room_type_id: UUID; external_code: string }[];
+  rates: { room_type_id: UUID; rate_plan_id: UUID; external_code: string }[];
+  products: ChannelProduct[];
+  products_fetched_at: string | null;
+  unknown_codes: string[];
+}
+
+export interface ChannelMessage {
+  id: number;
+  at: string;
+  operation: string;
+  outcome: 'ok' | 'warning' | 'error';
+  http_status: number | null;
+  duration_ms: number | null;
+  summary: string | null;
+}
+
+export interface ChannelMessageDetail extends ChannelMessage {
+  request_body: string | null;
+  response_body: string | null;
+}
+
+export interface ChannelBooking {
+  id: UUID;
+  connection_id: UUID;
+  connection_name: string;
+  external_id: string;
+  revision: string;
+  action: 'book' | 'modify' | 'cancel';
+  channel_name: string | null;
+  message_at: string | null;
+  received_at: string;
+  import_status: 'pending' | 'imported' | 'failed' | 'ignored';
+  error_code: string | null;
+  error_detail: string | null;
+  reservation_id: UUID | null;
+  reservation_code: string | null;
+  overbooked: boolean;
+  attempts: number;
+  confirmed_at: string | null;
+  card_brand: string | null;
+  card_last4: string | null;
+  guest_name: string | null;
+  arrival: string | null;
+  departure: string | null;
+  total: string | null;
+  currency: string | null;
+}
