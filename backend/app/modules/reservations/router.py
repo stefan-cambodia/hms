@@ -14,9 +14,11 @@ from app.modules.reservations.models import RoomBlock
 from app.modules.reservations.schemas import (
     AssignRoomIn,
     AvailabilityOut,
+    AvailableRoomOut,
     CalendarOut,
     CancelIn,
     ChangeDatesIn,
+    MoveStayIn,
     NightOut,
     QuoteIn,
     QuoteOut,
@@ -78,11 +80,24 @@ async def list_reservations(
     end: date | None = None,
     status_: Annotated[str | None, Query(alias="status")] = None,
     q: str | None = None,
+    guest_id: uuid.UUID | None = None,
+    arrival: date | None = None,
+    departure: date | None = None,
     limit: Annotated[int, Query(ge=1, le=500)] = 50,
     offset: Annotated[int, Query(ge=0)] = 0,
 ):
     items, total = await service.list_reservations(
-        db, ctx, start=start, end=end, status=status_, q=q, limit=limit, offset=offset
+        db,
+        ctx,
+        start=start,
+        end=end,
+        status=status_,
+        q=q,
+        limit=limit,
+        offset=offset,
+        guest_id=guest_id,
+        arrival=arrival,
+        departure=departure,
     )
     return Page(items=items, total=total, limit=limit, offset=offset)
 
@@ -110,6 +125,44 @@ async def assign(reservation_id: uuid.UUID, rr_id: uuid.UUID, body: AssignRoomIn
 @router.post("/reservations/{reservation_id}/rooms/{rr_id}/dates", response_model=ReservationOut)
 async def change_dates(reservation_id: uuid.UUID, rr_id: uuid.UUID, body: ChangeDatesIn, ctx: Edit, db: DB):
     return await service.reservation_out(db, await service.change_dates(db, ctx, reservation_id, rr_id, body))
+
+
+@router.post("/reservations/{reservation_id}/rooms/{rr_id}/move", response_model=ReservationOut)
+async def move(reservation_id: uuid.UUID, rr_id: uuid.UUID, body: MoveStayIn, ctx: Edit, db: DB):
+    res = await service.move_stay(
+        db,
+        ctx,
+        reservation_id,
+        rr_id,
+        version=body.version,
+        room_id=body.room_id,
+        arrival=body.arrival,
+        departure=body.departure,
+    )
+    return await service.reservation_out(db, res)
+
+
+@router.get("/available-rooms", response_model=list[AvailableRoomOut])
+async def available_rooms(
+    ctx: View,
+    db: DB,
+    start: date,
+    end: date,
+    room_type_id: uuid.UUID | None = None,
+    ignore_reservation_room: uuid.UUID | None = None,
+):
+    from app.core.errors import ValidationFailed
+
+    if end <= start:
+        raise ValidationFailed("INVALID_RANGE")
+    return await service.available_rooms(
+        db,
+        ctx.hotel_id,
+        start,
+        end,
+        room_type_id=room_type_id,
+        ignore_reservation_room=ignore_reservation_room,
+    )
 
 
 @router.post("/reservations/{reservation_id}/confirm", response_model=ReservationOut)

@@ -73,6 +73,9 @@ def _apply(g: Guest, values: dict[str, Any], ctx: HotelContext) -> None:
         )
     for k, v in values.items():
         if k == "id_document_number":
+            current = decrypt_secret(g.id_document_number) if g.id_document_number else None
+            if v == current:
+                continue  # unchanged: keep the ciphertext (and the audit log quiet)
             v = encrypt_secret(v) if v else None
         setattr(g, k, v)
     if "phone" in values:

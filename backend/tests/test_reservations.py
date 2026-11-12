@@ -375,3 +375,62 @@ async def test_reservations_are_isolated_between_hotels(admin: Api, hotel):
     other = (await admin.post("/api/v1/hotels", {"code": "OTHER", "name": "Other"})).json()
     r = await admin.get(f"/api/v1/hotels/{other['id']}/reservations/{res['id']}")
     assert r.status_code == 404
+
+
+async def test_move_stay_room_and_dates_atomically(admin: Api, hotel):
+    """Calendar drag-and-drop: one call changes room and dates, or nothing at all."""
+    res = (await admin.post(admin.h("/reservations"), booking(hotel, 0, 2, room=hotel["r101"]))).json()
+    rr = res["rooms"][0]["id"]
+    blocker = (await admin.post(admin.h("/reservations"), booking(hotel, 5, 6, room=hotel["r102"]))).json()
+    # Target conflicts on room 102 → nothing changes (not even the dates).
+    r = await admin.post(
+        admin.h(f"/reservations/{res['id']}/rooms/{rr}/move"),
+        {"version": res["version"], "room_id": hotel["r102"], "arrival": d(4), "departure": d(6)},
+    )
+    assert r.status_code == 409 and error_code(r) == "ROOM_UNAVAILABLE"
+    same = (await admin.get(admin.h(f"/reservations/{res['id']}"))).json()
+    assert (same["arrival"], same["rooms"][0]["room_id"]) == (d(0), hotel["r101"])
+    r = await admin.post(
+        admin.h(f"/reservations/{res['id']}/rooms/{rr}/move"),
+        {"version": res["version"], "room_id": hotel["r102"], "arrival": d(1), "departure": d(3)},
+    )
+    assert r.status_code == 200, r.text
+    moved = r.json()
+    assert (moved["arrival"], moved["departure"], moved["rooms"][0]["room_id"]) == (d(1), d(3), hotel["r102"])
+    events = (await admin.get(admin.h(f"/reservations/{res['id']}/events"))).json()
+    assert [e["action"] for e in events][-2:] == ["room_assigned", "dates_changed"]
+    assert events[-1]["user_name"] == "Admin"
+    assert blocker["code"] == "R000002"
+
+
+async def test_available_rooms_and_list_filters(admin: Api, hotel):
+    res = (await admin.post(admin.h("/reservations"), booking(hotel, 0, 2, room=hotel["r101"]))).json()
+    free = (await admin.get(admin.h("/available-rooms"), params={"start": d(1), "end": d(3)})).json()
+    assert [r["number"] for r in free] == ["102"]
+    # The stay being edited does not hide its own room.
+    own = (
+        await admin.get(
+            admin.h("/available-rooms"),
+            params={"start": d(1), "end": d(3), "ignore_reservation_room": res["rooms"][0]["id"]},
+        )
+    ).json()
+    assert [r["number"] for r in own] == ["101", "102"]
+    arrivals = (await admin.get(admin.h("/reservations"), params={"arrival": d(0)})).json()
+    assert arrivals["total"] == 1 and arrivals["items"][0]["room_numbers"] == ["101"]
+    by_guest = (await admin.get(admin.h("/reservations"), params={"guest_id": res["booker"]["id"]})).json()
+    assert by_guest["total"] == 1
+    assert (await admin.get(admin.h("/reservations"), params={"departure": d(5)})).json()["total"] == 0
+
+
+async def test_resaving_identity_document_is_not_a_change(admin: Api):
+    g = (
+        await admin.post(
+            admin.h("/guests"), {"first_name": "Vanna", "last_name": "Keo", "id_document_number": "P999"}
+        )
+    ).json()
+    r = await admin.patch(
+        admin.h(f"/guests/{g['id']}"), {"version": g["version"], "id_document_number": "P999"}
+    )
+    assert r.status_code == 200 and r.json()["version"] == g["version"]
+    logs = (await admin.get(admin.h("/audit-logs"), params={"entity_type": "guest"})).json()["items"]
+    assert [e["action"] for e in logs] == ["guest.create"]

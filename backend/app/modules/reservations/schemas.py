@@ -82,6 +82,19 @@ class ChangeDatesIn(UpdateModel):
         return self
 
 
+class MoveStayIn(UpdateModel):
+    """Calendar drag-and-drop: target room (or null to unassign) and dates."""
+
+    room_id: uuid.UUID | None
+    arrival: date
+    departure: date
+
+    @model_validator(mode="after")
+    def _dates(self) -> MoveStayIn:
+        _check_dates(self.arrival, self.departure)
+        return self
+
+
 class CancelIn(UpdateModel):
     reason: str = Field(min_length=1, max_length=500)
 
@@ -182,6 +195,7 @@ class ReservationEventOut(OutputModel):
     id: int
     at: datetime
     user_id: uuid.UUID | None
+    user_name: str | None = None
     source: str
     action: str
     details: dict[str, Any]
@@ -218,6 +232,14 @@ class RoomBlockIn(InputModel):
     def _dates(self) -> RoomBlockIn:
         _check_dates(self.start_date, self.end_date)
         return self
+
+
+class AvailableRoomOut(OutputModel):
+    id: uuid.UUID
+    number: str
+    name: str | None
+    room_type_id: uuid.UUID
+    max_occupancy: int | None
 
 
 class RoomBlockOut(OutputModel):

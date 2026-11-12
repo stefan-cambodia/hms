@@ -280,3 +280,191 @@ export interface Page<T> {
   limit: number;
   offset: number;
 }
+
+// --- Guests -------------------------------------------------------------------
+
+export interface Guest {
+  id: UUID;
+  first_name: string;
+  last_name: string;
+  email: string | null;
+  phone: string | null;
+  nationality: string | null;
+  preferred_language: string | null;
+  address: string | null;
+  city: string | null;
+  country_code: string | null;
+  vip_level: number;
+  tags: string[];
+  preferences: Record<string, unknown>;
+  notes: string | null;
+  marketing_consent: boolean;
+  version: number;
+  created_at: string;
+  date_of_birth: string | null;
+  id_document_type: string | null;
+  id_document_number: string | null;
+  id_document_country: string | null;
+  id_document_expiry: string | null;
+  has_id_document: boolean;
+}
+
+export interface GuestDuplicate {
+  guest: Guest;
+  reasons: ('same_email' | 'same_phone' | 'similar_name')[];
+  score: number;
+}
+
+// --- Reservations ---------------------------------------------------------------
+
+export type ReservationStatus = 'pending' | 'confirmed' | 'checked_in' | 'checked_out' | 'cancelled' | 'no_show';
+export type ReservationSource = 'direct' | 'website' | 'booking_com' | 'agoda' | 'walk_in' | 'phone' | 'email' | 'other';
+
+export interface Night {
+  night: string;
+  price: string;
+  price_source: string;
+}
+
+export interface ReservationRoom {
+  id: UUID;
+  room_type_id: UUID;
+  room_id: UUID | null;
+  arrival: string;
+  departure: string;
+  adults: number;
+  children: number;
+  occupies_inventory: boolean;
+  accommodation_total: string;
+  checked_in_at: string | null;
+  checked_out_at: string | null;
+  nights: Night[];
+}
+
+export interface TaxLine {
+  code: string;
+  name: Record<string, string>;
+  kind: string;
+  rate: string;
+  is_inclusive: boolean;
+  amount: string;
+}
+
+export interface Reservation {
+  id: UUID;
+  code: string;
+  status: ReservationStatus;
+  source: ReservationSource;
+  external_ref: string | null;
+  arrival: string;
+  departure: string;
+  adults: number;
+  children: number;
+  currency: string;
+  accommodation_total: string;
+  tax_total: string;
+  grand_total: string;
+  paid_total: string;
+  balance: string;
+  tax_breakdown: TaxLine[];
+  is_overbooked: boolean;
+  is_modified: boolean;
+  special_requests: string | null;
+  internal_notes: string | null;
+  cancelled_at: string | null;
+  cancellation_reason: string | null;
+  booker: { id: UUID; first_name: string; last_name: string; email: string | null; phone: string | null; nationality: string | null; vip_level: number };
+  rooms: ReservationRoom[];
+  version: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ReservationListItem {
+  id: UUID;
+  code: string;
+  status: ReservationStatus;
+  source: ReservationSource;
+  arrival: string;
+  departure: string;
+  adults: number;
+  children: number;
+  guest_name: string;
+  room_numbers: string[];
+  room_count: number;
+  grand_total: string;
+  balance: string;
+  currency: string;
+  is_overbooked: boolean;
+}
+
+export interface ReservationEvent {
+  id: number;
+  at: string;
+  user_id: UUID | null;
+  user_name: string | null;
+  source: string;
+  action: string;
+  details: Record<string, unknown>;
+}
+
+export interface Quote {
+  currency: string;
+  accommodation_total: string;
+  tax_total: string;
+  grand_total: string;
+  taxes: TaxLine[];
+  rooms: Night[][];
+}
+
+export interface AvailabilityNight {
+  night: string;
+  total: number;
+  available: number;
+}
+
+export interface Availability {
+  room_type_id: UUID;
+  nights: AvailabilityNight[];
+}
+
+export interface AvailableRoom {
+  id: UUID;
+  number: string;
+  name: string | null;
+  room_type_id: UUID;
+  max_occupancy: number | null;
+}
+
+export interface CalendarItem {
+  kind: 'stay' | 'block';
+  id: UUID;
+  room_id: UUID | null;
+  room_type_id: UUID | null;
+  start: string;
+  end: string;
+  reservation_id: UUID | null;
+  code: string | null;
+  guest_name: string | null;
+  status: ReservationStatus | null;
+  adults: number | null;
+  children: number | null;
+  block_reason: string | null;
+}
+
+export interface CalendarData {
+  start: string;
+  end: string;
+  items: CalendarItem[];
+  unassigned: CalendarItem[];
+  availability: Availability[];
+}
+
+export interface RoomBlock {
+  id: UUID;
+  room_id: UUID;
+  start_date: string;
+  end_date: string;
+  reason: 'maintenance' | 'out_of_service' | 'owner_use' | 'other';
+  notes: string | null;
+}

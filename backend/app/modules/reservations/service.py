@@ -487,121 +487,147 @@ def _find_room(res: Reservation, rr_id: uuid.UUID) -> ReservationRoom:
     raise NotFound("RESERVATION_ROOM_NOT_FOUND")
 
 
-async def assign_room(
-    db: AsyncSession, ctx: HotelContext, res_id: uuid.UUID, rr_id: uuid.UUID, data: AssignRoomIn
+_UNSET: Any = object()
+
+
+async def move_stay(
+    db: AsyncSession,
+    ctx: HotelContext,
+    res_id: uuid.UUID,
+    rr_id: uuid.UUID,
+    *,
+    version: int,
+    room_id: uuid.UUID | None = _UNSET,
+    arrival: date | None = None,
+    departure: date | None = None,
 ) -> Reservation:
+    """Change the room and/or the dates of one stay in a single transaction.
+
+    Used by room assignment, date changes and calendar drag-and-drop. Nights
+    that remain booked keep their price; only new nights are priced at
+    current rates. The exclusion constraint and the category check guarantee
+    the result never double-allocates or oversells.
+    """
     res = await get_reservation(db, ctx.hotel_id, res_id)
-    crud.check_version(res, data.version)
+    crud.check_version(res, version)
     if res.status in CLOSED:
         raise Conflict("RESERVATION_CLOSED", params={"status": res.status})
     rr = _find_room(res, rr_id)
-    if rr.checked_in_at and data.room_id != rr.room_id:
-        # Moving an in-house guest is a room move (front desk, phase 5).
-        raise Conflict("GUEST_IN_HOUSE")
-    old_room_id = rr.room_id
-    if data.room_id == old_room_id:
+    new_room_id = rr.room_id if room_id is _UNSET else room_id
+    new_arrival = arrival or rr.arrival
+    new_departure = departure or rr.departure
+    if new_departure <= new_arrival:
+        raise ValidationFailed("INVALID_DATES", fields=[field_error("departure", "INVALID_DATES")])
+    room_changed = new_room_id != rr.room_id
+    dates_changed = (new_arrival, new_departure) != (rr.arrival, rr.departure)
+    if not room_changed and not dates_changed:
         return res
-    new_room = (await _load_rooms(db, ctx.hotel_id, [data.room_id]))[data.room_id] if data.room_id else None
+    if rr.checked_in_at and room_changed:
+        # Moving an in-house guest is a room move with its own workflow (front desk).
+        raise Conflict("GUEST_IN_HOUSE")
+    if rr.checked_in_at and new_arrival != rr.arrival:
+        raise Conflict("ARRIVAL_LOCKED_AFTER_CHECK_IN")
+
+    hotel = await db.get(Hotel, ctx.hotel_id)
     rt = await db.get(RoomType, rr.room_type_id)
-    assert rt is not None
-    if new_room:
+    assert hotel is not None and rt is not None
+    old_room = await db.get(Room, rr.room_id) if rr.room_id else None
+    new_room = (await _load_rooms(db, ctx.hotel_id, [new_room_id]))[new_room_id] if new_room_id else None
+    if room_changed and new_room:
         _check_occupancy(rt, new_room, rr.adults, rr.children)
-    affected = {rr.room_type_id}
-    if new_room:
-        affected.add(new_room.room_type_id)
-    if old_room_id:
-        old = await db.get(Room, old_room_id)
-        if old:
-            affected.add(old.room_type_id)
+    affected = {rr.room_type_id} | {r.room_type_id for r in (old_room, new_room) if r}
     await inventory.lock_room_types(db, ctx.hotel_id, affected)
-    rr.room_id = data.room_id
+
+    old_dates = (rr.arrival, rr.departure)
+    if dates_changed:
+        kept = {n.night: n for n in rr.nights}
+        request = pricing.StayRequest(rt, new_room, new_arrival, new_departure, rr.adults, rr.children)
+        nights = []
+        for night in pricing.nights_between(new_arrival, new_departure):
+            if night in kept:
+                nights.append(kept[night])
+            else:
+                p = pricing.nightly_price(request, night, hotel.currency_code)
+                nights.append(
+                    ReservationNight(night=night, hotel_id=ctx.hotel_id, price=p.price, price_source=p.source)
+                )
+        rr.nights = nights
+        rr.arrival, rr.departure = new_arrival, new_departure
+        rr.accommodation_total = sum((n.price for n in nights), ZERO)
+        await _recompute(db, res)
+    if room_changed:
+        rr.room_id = new_room_id
     _touch(res)
-    await db.flush()  # exclusion constraint
-    short = await inventory.oversold_nights(db, ctx.hotel_id, affected, rr.arrival, rr.departure)
+    await db.flush()  # exclusion constraint on the allocation ledger
+    window = (min(old_dates[0], new_arrival), max(old_dates[1], new_departure))
+    short = await inventory.oversold_nights(db, ctx.hotel_id, affected, *window)
     if short and not res.is_overbooked:
         raise Conflict(
             "NO_AVAILABILITY",
             params={"night": short[0].night.isoformat(), "room_type_id": str(short[0].room_type_id)},
         )
-    numbers = {
-        r.id: r.number
-        for r in await db.scalars(
-            select(Room).where(Room.id.in_([i for i in (old_room_id, data.room_id) if i]))
+    changes: dict[str, Any] = {}
+    if room_changed:
+        old_no, new_no = (old_room.number if old_room else None), (new_room.number if new_room else None)
+        _event(db, ctx, res, "room_assigned", reservation_room_id=rr.id, old_room=old_no, new_room=new_no)
+        changes["room"] = [old_no, new_no]
+    if dates_changed:
+        _event(
+            db,
+            ctx,
+            res,
+            "dates_changed",
+            reservation_room_id=rr.id,
+            old=list(old_dates),
+            new=[new_arrival, new_departure],
         )
-    }
-    _event(
-        db,
-        ctx,
-        res,
-        "room_assigned",
-        reservation_room_id=rr.id,
-        old_room=numbers.get(old_room_id),
-        new_room=numbers.get(data.room_id),
-    )
-    await _publish(db, ctx, res, "updated", {"room": [numbers.get(old_room_id), numbers.get(data.room_id)]})
+        changes["dates"] = [list(old_dates), [new_arrival, new_departure]]
+    await _publish(db, ctx, res, "updated", changes)
     await db.commit()
     return await reload(db, res)
+
+
+async def assign_room(
+    db: AsyncSession, ctx: HotelContext, res_id: uuid.UUID, rr_id: uuid.UUID, data: AssignRoomIn
+) -> Reservation:
+    return await move_stay(db, ctx, res_id, rr_id, version=data.version, room_id=data.room_id)
 
 
 async def change_dates(
     db: AsyncSession, ctx: HotelContext, res_id: uuid.UUID, rr_id: uuid.UUID, data: ChangeDatesIn
 ) -> Reservation:
-    res = await get_reservation(db, ctx.hotel_id, res_id)
-    crud.check_version(res, data.version)
-    if res.status in CLOSED:
-        raise Conflict("RESERVATION_CLOSED", params={"status": res.status})
-    rr = _find_room(res, rr_id)
-    if rr.checked_in_at and data.arrival != rr.arrival:
-        raise Conflict("ARRIVAL_LOCKED_AFTER_CHECK_IN")
-    if (rr.arrival, rr.departure) == (data.arrival, data.departure):
-        return res
-    hotel = await db.get(Hotel, ctx.hotel_id)
-    rt = await db.get(RoomType, rr.room_type_id)
-    room = await db.get(Room, rr.room_id) if rr.room_id else None
-    assert hotel is not None and rt is not None
-    affected = {rr.room_type_id} | ({room.room_type_id} if room else set())
-    await inventory.lock_room_types(db, ctx.hotel_id, affected)
-
-    # Keep the price of nights already booked; price only the new nights.
-    kept = {n.night: n for n in rr.nights}
-    wanted = pricing.nights_between(data.arrival, data.departure)
-    request = pricing.StayRequest(rt, room, data.arrival, data.departure, rr.adults, rr.children)
-    new_nights = []
-    for night in wanted:
-        if night in kept:
-            new_nights.append(kept[night])
-        else:
-            p = pricing.nightly_price(request, night, hotel.currency_code)
-            new_nights.append(
-                ReservationNight(night=night, hotel_id=ctx.hotel_id, price=p.price, price_source=p.source)
-            )
-    old_dates = (rr.arrival, rr.departure)
-    rr.nights = new_nights
-    rr.arrival, rr.departure = data.arrival, data.departure
-    rr.accommodation_total = sum((n.price for n in new_nights), ZERO)
-    await _recompute(db, res)
-    _touch(res)
-    await db.flush()  # exclusion constraint
-    window_start = min(old_dates[0], data.arrival)
-    window_end = max(old_dates[1], data.departure)
-    short = await inventory.oversold_nights(db, ctx.hotel_id, affected, window_start, window_end)
-    if short and not res.is_overbooked:
-        raise Conflict(
-            "NO_AVAILABILITY",
-            params={"night": short[0].night.isoformat(), "room_type_id": str(short[0].room_type_id)},
-        )
-    _event(
-        db,
-        ctx,
-        res,
-        "dates_changed",
-        reservation_room_id=rr.id,
-        old=list(old_dates),
-        new=[data.arrival, data.departure],
+    return await move_stay(
+        db, ctx, res_id, rr_id, version=data.version, arrival=data.arrival, departure=data.departure
     )
-    await _publish(db, ctx, res, "updated", {"dates": [list(old_dates), [data.arrival, data.departure]]})
-    await db.commit()
-    return await reload(db, res)
+
+
+async def available_rooms(
+    db: AsyncSession,
+    hotel_id: uuid.UUID,
+    start: date,
+    end: date,
+    *,
+    room_type_id: uuid.UUID | None = None,
+    ignore_reservation_room: uuid.UUID | None = None,
+) -> list[Room]:
+    """Active rooms with no allocation overlapping [start, end). The stay being
+    edited can be ignored so its own room is offered as available."""
+    busy = select(RoomAllocation.room_id).where(
+        RoomAllocation.hotel_id == hotel_id,
+        RoomAllocation.period.op("&&")(func.daterange(start, end, "[)")),
+    )
+    if ignore_reservation_room:
+        busy = busy.where(
+            or_(
+                RoomAllocation.reservation_room_id.is_(None),
+                RoomAllocation.reservation_room_id != ignore_reservation_room,
+            )
+        )
+    stmt = select(Room).where(Room.hotel_id == hotel_id, Room.is_active.is_(True), Room.id.not_in(busy))
+    if room_type_id:
+        stmt = stmt.where(Room.room_type_id == room_type_id)
+    stmt = stmt.order_by(Room.sort_order, func.length(Room.number), Room.number)
+    return list(await db.scalars(stmt))
 
 
 async def _transition(
@@ -666,6 +692,9 @@ async def list_reservations(
     q: str | None,
     limit: int,
     offset: int,
+    guest_id: uuid.UUID | None = None,
+    arrival: date | None = None,
+    departure: date | None = None,
 ) -> tuple[list[dict[str, Any]], int]:
     stmt = (
         select(Reservation, Guest)
@@ -678,6 +707,12 @@ async def list_reservations(
         stmt = stmt.where(Reservation.arrival < end)
     if status:
         stmt = stmt.where(Reservation.status == status)
+    if guest_id:
+        stmt = stmt.where(Reservation.booker_guest_id == guest_id)
+    if arrival:
+        stmt = stmt.where(Reservation.arrival == arrival)
+    if departure:
+        stmt = stmt.where(Reservation.departure == departure)
     if q and q.strip():
         term = f"%{q.strip()}%"
         stmt = stmt.where(
@@ -721,17 +756,29 @@ async def list_reservations(
     return items, int(total or 0)
 
 
-async def reservation_events(
-    db: AsyncSession, ctx: HotelContext, res_id: uuid.UUID
-) -> list[ReservationEvent]:
+async def reservation_events(db: AsyncSession, ctx: HotelContext, res_id: uuid.UUID) -> list[dict[str, Any]]:
+    """History with staff names (visible to anyone who can view the reservation)."""
+    from app.modules.auth.models import User
+
     await get_reservation(db, ctx.hotel_id, res_id)
-    return list(
-        await db.scalars(
-            select(ReservationEvent)
-            .where(ReservationEvent.reservation_id == res_id)
-            .order_by(ReservationEvent.id)
-        )
+    rows = await db.execute(
+        select(ReservationEvent, User.full_name)
+        .outerjoin(User, User.id == ReservationEvent.user_id)
+        .where(ReservationEvent.reservation_id == res_id)
+        .order_by(ReservationEvent.id)
     )
+    return [
+        {
+            "id": e.id,
+            "at": e.at,
+            "user_id": e.user_id,
+            "user_name": name,
+            "source": e.source,
+            "action": e.action,
+            "details": e.details,
+        }
+        for e, name in rows
+    ]
 
 
 async def calendar(db: AsyncSession, ctx: HotelContext, start: date, end: date) -> dict[str, Any]:

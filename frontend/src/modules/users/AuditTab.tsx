@@ -8,7 +8,7 @@ import { useHotel } from '@/auth/AuthProvider';
 import { formatDateTime } from '@/lib/format';
 
 const PAGE = 50;
-const ENTITIES = ['hotel', 'building', 'floor', 'room_type', 'room', 'amenity', 'facility', 'service', 'tax_rate', 'user', 'role', 'user_session', 'organization'];
+const ENTITIES = ['reservation', 'guest', 'room_block', 'hotel', 'building', 'floor', 'room_type', 'room', 'amenity', 'facility', 'service', 'tax_rate', 'user', 'role', 'user_session', 'organization'];
 
 function show(value: unknown): string {
   if (value === null || value === undefined) return '∅';

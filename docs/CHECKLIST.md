@@ -2,7 +2,7 @@
 
 Legend: ✅ implemented **and** covered by automated tests · 🟡 implemented, partially tested or with a known limitation · ⬜ not started
 
-Last updated: 2026-11-12. Test counts: backend 45 (pytest, real PostgreSQL), frontend unit 12 (Vitest), end-to-end 15 (Playwright on desktop, iPad landscape and Android tablet viewports; 4 are desktop-only by design).
+Last updated: 2026-11-12. Test counts: backend 48 (pytest, real PostgreSQL), frontend unit 23 (Vitest), end-to-end 21 executed across desktop, iPad landscape and Android tablet viewports (Playwright; some flows run on one viewport by design). CI (GitHub Actions) green.
 
 ## Phase 1 — Architecture ✅
 
@@ -60,7 +60,7 @@ Last updated: 2026-11-12. Test counts: backend 45 (pytest, real PostgreSQL), fro
 | Additional currencies and exchange rates | ⬜ | Phase 5 (with payments) |
 | Multi-property: create additional hotels (super admin), hotel switcher | ✅ | |
 
-## Phase 4 — Core hotel management (backend core delivered; UI pending)
+## Phase 4 — Core hotel management (reservations, calendar, guests delivered; rate plans pending)
 
 | Item | Status | Notes |
 |------|--------|-------|
@@ -80,7 +80,16 @@ Last updated: 2026-11-12. Test counts: backend 45 (pytest, real PostgreSQL), fro
 | Rate plans, daily rates, restrictions, seasonal/weekend/long-stay rules, pricing calendar | ⬜ | Extends `pricing.nightly_price()`; callers unchanged |
 | Guests: CRUD, fuzzy search (pg_trgm), duplicate detection, encrypted ID documents (audited reads) | ✅ | Guest merge ⬜ |
 | Calendar data endpoint (stays, blocks, unassigned, availability) | ✅ | |
-| **Frontend**: reservations list/form, timeline calendar (drag & drop), guests screens | ⬜ | Not in navigation until built |
+| Reservations list: quick filters (arrivals/departures today, in house, pending), search, status filter | ✅ | E2E |
+| New reservation: guest search or creation with live duplicate warning, multi-room, live availability per category, free rooms, live price quote, Idempotency-Key, explicit overbooking confirmation | ✅ | E2E |
+| Reservation detail: confirm, cancel (reason), no-show, edit details, assign/reassign room, change dates, nightly prices, totals, history with staff names | ✅ | E2E |
+| Timeline calendar: rooms × days, category groups with availability (red when oversold), unassigned lanes, blocks, today/weekend shading, week/2 weeks/month, category filter, guest search, URL-shareable view | ✅ | E2E + unit (layout) |
+| Calendar booking from an empty cell; quick view drawer | ✅ | E2E |
+| Drag & drop (room and/or dates, atomic `move`, confirmation, edge auto-scroll); long-press on tablets | ✅ | E2E: mouse (desktop) + touch via CDP (Android tablet) |
+| Room blocks from the calendar (create/remove) | ✅ | API tests; UI manual |
+| Guests screens: search, profile edit, identity documents (permission-gated), stay history | ✅ | API tests; UI manual |
+| Day view / category-only grouping toggle | ⬜ | Week/2 weeks/month ranges and category filter cover current needs |
+| Dashboard KPIs from reservations (arrivals, departures, occupancy) | ⬜ | Phase 8 (data now available) |
 | Multi-room reservations with different dates per room | 🟡 | Supported by the API; covered by the single-room tests only |
 
 ## Phase 5 — Operations ⬜
@@ -117,5 +126,5 @@ The dashboard currently shows configuration and room-readiness data only. Occupa
 | Automated backups, each verified by restoring into a scratch database | ✅ | backup-once.sh |
 | Restore procedure with safety backup and checksum check | ✅ | Restore drill performed 2026-11-12 |
 | Backup history and restore in the admin UI | ⬜ | Script-based today (`last-run.json`) |
-| CI pipeline | 🟡 | Workflow written; not yet run on a CI host |
+| CI pipeline (lint, tests, i18n, build, Docker images) | ✅ | Green on GitHub Actions |
 | Load tests, security audit, RLS | ⬜ | |
