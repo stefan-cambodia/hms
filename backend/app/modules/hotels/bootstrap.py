@@ -113,6 +113,7 @@ SYSTEM_ROLE_NAMES = {
     "receptionist": "Receptionist",
     "reservation_manager": "Reservation Manager",
     "housekeeping": "Housekeeping",
+    "housekeeping_supervisor": "Housekeeping Supervisor",
     "accountant": "Accountant",
     "maintenance": "Maintenance Staff",
 }

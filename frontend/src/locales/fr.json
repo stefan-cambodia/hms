@@ -43,7 +43,9 @@
     "guests": "Clients",
     "pricing": "Tarifs",
     "frontdesk": "Réception",
-    "billing": "Paiements et factures"
+    "billing": "Paiements et factures",
+    "housekeeping": "Ménage",
+    "maintenance": "Maintenance"
   },
   "auth": {
     "title": "Système de gestion hôtelière",
@@ -479,7 +481,8 @@
       "reservation_manager": "Responsable des réservations",
       "housekeeping": "Gouvernante",
       "accountant": "Comptable",
-      "maintenance": "Technicien de maintenance"
+      "maintenance": "Technicien de maintenance",
+      "housekeeping_supervisor": "Gouvernante générale"
     }
   },
   "permissions": {
@@ -834,7 +837,19 @@
     "SERVICE_IN_USE": "Cette prestation a déjà été facturée à des clients et ne peut pas être supprimée. Désactivez-la plutôt.",
     "AMOUNT_REQUIRED": "Saisissez un montant.",
     "FINANCIAL_RECORD_IMMUTABLE": "Les opérations financières ne peuvent être ni modifiées ni supprimées ; annulez-les plutôt.",
-    "card_number_not_allowed": "Ne saisissez jamais de numéro de carte ici. Utilisez uniquement le champ « 4 derniers chiffres »."
+    "card_number_not_allowed": "Ne saisissez jamais de numéro de carte ici. Utilisez uniquement le champ « 4 derniers chiffres ».",
+    "TASK_EXISTS": "Cette chambre a déjà une tâche de ce type pour ce jour-là.",
+    "TASK_NOT_FOUND": "Cette tâche est introuvable.",
+    "TASK_NOT_PENDING": "Seule une tâche qui n’a pas encore commencé peut être supprimée.",
+    "TASK_ASSIGNED_TO_SOMEONE_ELSE": "Cette tâche est attribuée à une autre personne.",
+    "INVALID_TASK_TRANSITION": "Cette tâche a déjà changé d’état (quelqu’un d’autre l’a peut-être mise à jour).",
+    "REASON_REQUIRED": "Veuillez indiquer un motif.",
+    "NOT_HOUSEKEEPING_STAFF": "Cette personne ne fait pas partie de l’équipe de ménage de cet hôtel.",
+    "NOT_MAINTENANCE_STAFF": "Cette personne n’est pas technicien de maintenance dans cet hôtel.",
+    "MAINTENANCE_REQUEST_NOT_FOUND": "Cette demande d’intervention est introuvable.",
+    "MAINTENANCE_CLOSED": "Cette demande est clôturée. Rouvrez-la d’abord.",
+    "NO_ROOM_TO_BLOCK": "Cette demande ne concerne aucune chambre.",
+    "ROOM_NOT_BLOCKED": "La chambre n’est pas hors service."
   },
   "reservations": {
     "description": "Toutes les réservations, quelle que soit leur origine. Cliquez sur une réservation pour la gérer.",
@@ -1364,7 +1379,9 @@
       "occupied": "Occupée",
       "blocked": "Hors service"
     },
-    "due_out": "départ du jour"
+    "due_out": "départ du jour",
+    "maintenance_open_one": "{{count}} intervention ouverte",
+    "maintenance_open_other": "{{count}} interventions ouvertes"
   },
   "billing": {
     "page_description": "Paiements reçus (avec les totaux par moyen de paiement et par devise pour la clôture de caisse) et factures émises.",
@@ -1490,5 +1507,171 @@
     "invoice_search": "Numéro, réservation, nom ou société",
     "no_invoices": "Aucune facture",
     "no_invoices_hint": "Les factures sont émises depuis le compte client d’une réservation."
+  },
+  "housekeeping": {
+    "description": "Les tâches de ménage du jour : planifiez-les et attribuez-les, suivez l’avancement chambre par chambre, contrôlez les chambres terminées.",
+    "prepare": "Préparer la liste du jour",
+    "prepared_one": "{{count}} nouvelle tâche créée",
+    "prepared_other": "{{count}} nouvelles tâches créées",
+    "add_task": "Ajouter une tâche",
+    "task_added": "Tâche ajoutée",
+    "tabs": {
+      "tasks": "Tâches du jour",
+      "mine": "Mes tâches",
+      "rooms": "Chambres"
+    },
+    "filters": {
+      "open": "À faire",
+      "finished": "Terminées",
+      "all": "Toutes"
+    },
+    "summary": "{{pending}} à faire · {{in_progress}} en cours · {{done}} à contrôler",
+    "task": "Tâche",
+    "notes": "Notes",
+    "assigned_to": "Attribuée à",
+    "assign_to": "Attribuer à…",
+    "unassigned": "Non attribuée",
+    "select_all": "Tout sélectionner",
+    "selected_one": "{{count}} tâche sélectionnée",
+    "selected_other": "{{count}} tâches sélectionnées",
+    "assigned_done_one": "{{count}} tâche attribuée",
+    "assigned_done_other": "{{count}} tâches attribuées",
+    "arrival_today": "Arrivée du jour",
+    "arrival_today_hint": "Un client arrive aujourd’hui dans cette chambre : faites-la en priorité.",
+    "completed_by": "Terminée par {{name}}, {{time}}",
+    "inspected_by": "Contrôlée par {{name}}, {{time}}",
+    "skipped_because": "Non effectuée : {{reason}}",
+    "guest_departed": "le client est parti",
+    "no_tasks": "Aucune tâche",
+    "no_tasks_hint": "Utilisez « Préparer la liste du jour » pour créer les tâches de ménage du jour à partir de l’état des chambres.",
+    "nothing_to_do": "Rien à faire pour le moment",
+    "unassigned_tasks": "Tâches non attribuées que vous pouvez prendre",
+    "finished_today_one": "{{count}} tâche terminée aujourd’hui",
+    "finished_today_other": "{{count}} tâches terminées aujourd’hui",
+    "report_issue": "Signaler un problème",
+    "skip_body": "Pourquoi la chambre {{room}} n’est-elle pas faite ? (p. ex. « Ne pas déranger », service refusé par le client)",
+    "reject_body": "Que faut-il refaire dans la chambre {{room}} ? La tâche est renvoyée à la personne qui l’a effectuée et la chambre repasse à l’état « Sale ».",
+    "types": {
+      "departure": "Nettoyage départ",
+      "stayover": "Recouche",
+      "deep_clean": "Nettoyage approfondi",
+      "touch_up": "Retouche",
+      "inspection": "Contrôle"
+    },
+    "statuses": {
+      "pending": "À faire",
+      "in_progress": "En cours",
+      "done": "Terminée",
+      "inspected": "Contrôlée",
+      "skipped": "Non effectuée"
+    },
+    "actions": {
+      "start": "Commencer",
+      "complete": "Terminer",
+      "skip": "Ne pas faire",
+      "inspect": "Valider",
+      "reject": "À refaire",
+      "reopen": "Rouvrir"
+    },
+    "done_messages": {
+      "start": "Chambre {{room}} : nettoyage commencé",
+      "complete": "La chambre {{room}} est propre",
+      "skip": "Chambre {{room}} : ménage non effectué",
+      "inspect": "Chambre {{room}} contrôlée",
+      "reject": "Chambre {{room}} : nettoyage à refaire",
+      "reopen": "Tâche de la chambre {{room}} rouverte"
+    }
+  },
+  "maintenance": {
+    "description": "Réparations et problèmes techniques : signalez-les, suivez leur traitement et mettez les chambres hors service pendant les travaux.",
+    "report": "Signaler un problème",
+    "send_report": "Envoyer le signalement",
+    "reported_done": "Demande d’intervention {{number}} enregistrée",
+    "request": "Demande",
+    "where": "Lieu",
+    "in_room": "Dans une chambre",
+    "elsewhere": "Ailleurs",
+    "location": "Emplacement",
+    "location_placeholder": "Hall, piscine, cuisine…",
+    "room_label": "Chambre {{number}}",
+    "category": "Type de problème",
+    "priority": "Priorité",
+    "title": "Problème",
+    "title_placeholder": "p. ex. La climatisation ne refroidit pas",
+    "assigned_to": "Technicien",
+    "assigned_to_me": "Attribuées à moi",
+    "reported": "Signalement",
+    "search": "Numéro, problème, chambre ou emplacement",
+    "states": {
+      "open": "Ouvertes",
+      "closed": "Clôturées",
+      "all": "Toutes"
+    },
+    "empty_open": "Aucune demande ouverte",
+    "empty": "Aucune demande",
+    "take_out_of_service": "Mettre la chambre hors service",
+    "take_out_hint": "La chambre ne peut pas être vendue pour ces dates. Impossible si un client occupe la chambre ou si une réservation lui est attribuée.",
+    "out_of_service_dates": "Hors service du – au",
+    "out_until": "Hors service jusqu’au {{date}}",
+    "room_out": "Hors service du {{from}} au {{until}}",
+    "room_in_service": "La chambre est en service.",
+    "change_dates": "Modifier les dates",
+    "back_in_service": "Remettre en service",
+    "back_in_service_done": "La chambre est de nouveau disponible à la vente dès ce soir",
+    "blocked_done": "Chambre mise hors service",
+    "history": "Historique",
+    "comment_placeholder": "Ajouter un commentaire…",
+    "add_comment": "Commenter",
+    "resolution": "Travaux effectués",
+    "cancel_reason": "Motif",
+    "cancel_releases": "La chambre est remise en service dès ce soir.",
+    "release_room": "Remettre la chambre en service dès ce soir",
+    "needs_cleaning": "La chambre doit être nettoyée après les travaux (crée une tâche de ménage)",
+    "completed_done": "Intervention terminée",
+    "cancelled_done": "Demande annulée",
+    "categories": {
+      "plumbing": "Plomberie",
+      "electrical": "Électricité",
+      "air_conditioning": "Climatisation",
+      "furniture": "Mobilier",
+      "appliance": "Électroménager",
+      "building": "Bâtiment",
+      "it_network": "TV / Wi-Fi / Informatique",
+      "pest_control": "Nuisibles",
+      "other": "Autre"
+    },
+    "priorities": {
+      "low": "Basse",
+      "normal": "Normale",
+      "high": "Haute",
+      "urgent": "Urgente"
+    },
+    "statuses": {
+      "reported": "Signalée",
+      "in_progress": "En cours",
+      "on_hold": "En attente",
+      "completed": "Terminée",
+      "cancelled": "Annulée"
+    },
+    "actions": {
+      "reported": "Rouvrir",
+      "in_progress": "Commencer l’intervention",
+      "on_hold": "Mettre en attente",
+      "completed": "Terminer",
+      "cancelled": "Annuler la demande"
+    },
+    "events": {
+      "reported": "Signalée",
+      "status": "{{from}} → {{to}}",
+      "room_released": "chambre remise en service",
+      "cleaning_requested": "ménage demandé",
+      "out_of_service": "Hors service du {{from}} au {{until}}",
+      "assigned": "Attribuée à {{name}}",
+      "unassigned": "Attribution retirée",
+      "edited": "Détails modifiés",
+      "back_in_service": "Chambre remise en service",
+      "comment": "Commentaire"
+    },
+    "details": "Détails"
   }
 }

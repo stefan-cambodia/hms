@@ -742,4 +742,73 @@ export interface RoomBoardRow {
   occupant: StayRow | null;
   arriving: StayRow | null;
   departing: boolean;
+  tasks: { id: UUID; task_type: TaskType; status: TaskStatus; priority: Priority; assigned_to: UUID | null; assigned_to_name: string | null; version: number }[];
+  maintenance: { open: number; priority: Priority } | null;
+}
+
+// --- housekeeping & maintenance (phase 5) -------------------------------------
+
+export type TaskType = 'departure' | 'stayover' | 'deep_clean' | 'touch_up' | 'inspection';
+export type TaskStatus = 'pending' | 'in_progress' | 'done' | 'inspected' | 'skipped';
+export type Priority = 'low' | 'normal' | 'high' | 'urgent';
+
+export interface HousekeepingTask {
+  id: UUID;
+  room_id: UUID;
+  room_number: string;
+  room_type_id: UUID;
+  task_date: string;
+  task_type: TaskType;
+  priority: Priority;
+  status: TaskStatus;
+  source: string;
+  assigned_to: UUID | null;
+  assigned_to_name: string | null;
+  reservation_room_id: UUID | null;
+  notes: string | null;
+  skip_reason: string | null;
+  started_at: string | null;
+  completed_at: string | null;
+  completed_by_name: string | null;
+  inspected_at: string | null;
+  inspected_by_name: string | null;
+  room_status: HousekeepingStatus;
+  arrival_today: boolean;
+  version: number;
+}
+
+export interface StaffMember {
+  id: UUID;
+  full_name: string;
+}
+
+export type MaintenanceCategory = 'plumbing' | 'electrical' | 'air_conditioning' | 'furniture' | 'appliance' | 'building' | 'it_network' | 'pest_control' | 'other';
+export type MaintenanceStatus = 'reported' | 'in_progress' | 'on_hold' | 'completed' | 'cancelled';
+
+export interface MaintenanceRequest {
+  id: UUID;
+  number: string;
+  room_id: UUID | null;
+  room_number: string | null;
+  facility_id: UUID | null;
+  location: string | null;
+  category: MaintenanceCategory;
+  priority: Priority;
+  title: string;
+  description: string | null;
+  status: MaintenanceStatus;
+  assigned_to: UUID | null;
+  assigned_to_name: string | null;
+  reported_by_name: string | null;
+  block: { id: UUID; start_date: string; end_date: string } | null;
+  started_at: string | null;
+  completed_at: string | null;
+  resolution: string | null;
+  created_at: string;
+  updated_at: string;
+  version: number;
+}
+
+export interface MaintenanceDetail extends MaintenanceRequest {
+  updates: { id: number; at: string; user_name: string | null; action: string; comment: string | null; details: Record<string, unknown> }[];
 }

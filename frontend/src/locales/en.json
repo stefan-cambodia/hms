@@ -43,7 +43,9 @@
     "guests": "Guests",
     "pricing": "Pricing & rates",
     "frontdesk": "Front desk",
-    "billing": "Payments & invoices"
+    "billing": "Payments & invoices",
+    "housekeeping": "Housekeeping",
+    "maintenance": "Maintenance"
   },
   "auth": {
     "title": "Hotel Management System",
@@ -472,7 +474,8 @@
       "reservation_manager": "Reservation Manager",
       "housekeeping": "Housekeeping",
       "accountant": "Accountant",
-      "maintenance": "Maintenance Staff"
+      "maintenance": "Maintenance Staff",
+      "housekeeping_supervisor": "Housekeeping supervisor"
     }
   },
   "permissions": {
@@ -827,7 +830,19 @@
     "SERVICE_IN_USE": "This service has been charged to guests and cannot be deleted. Deactivate it instead.",
     "AMOUNT_REQUIRED": "Enter an amount.",
     "FINANCIAL_RECORD_IMMUTABLE": "Financial records cannot be changed or deleted; void them instead.",
-    "card_number_not_allowed": "Card numbers must never be entered here. Use the last 4 digits field only."
+    "card_number_not_allowed": "Card numbers must never be entered here. Use the last 4 digits field only.",
+    "TASK_EXISTS": "This room already has a task of this type for that day.",
+    "TASK_NOT_FOUND": "Task not found.",
+    "TASK_NOT_PENDING": "Only a task that has not started can be deleted.",
+    "TASK_ASSIGNED_TO_SOMEONE_ELSE": "This task is assigned to someone else.",
+    "INVALID_TASK_TRANSITION": "This task has already moved on (someone else may have updated it).",
+    "REASON_REQUIRED": "Please give a reason.",
+    "NOT_HOUSEKEEPING_STAFF": "This person is not housekeeping staff in this hotel.",
+    "NOT_MAINTENANCE_STAFF": "This person is not a maintenance technician in this hotel.",
+    "MAINTENANCE_REQUEST_NOT_FOUND": "Maintenance request not found.",
+    "MAINTENANCE_CLOSED": "This request is closed. Reopen it first.",
+    "NO_ROOM_TO_BLOCK": "This request is not about a room.",
+    "ROOM_NOT_BLOCKED": "The room is not out of service."
   },
   "reservations": {
     "description": "Every booking, whatever its source. Click a reservation to manage it.",
@@ -1342,7 +1357,9 @@
       "occupied": "Occupied",
       "blocked": "Out of service"
     },
-    "due_out": "due out"
+    "due_out": "due out",
+    "maintenance_open_one": "{{count}} repair open",
+    "maintenance_open_other": "{{count}} repairs open"
   },
   "billing": {
     "page_description": "Payments received (with totals per method and currency for the cash-up) and issued invoices.",
@@ -1468,5 +1485,171 @@
     "invoice_search": "Number, reservation, name or company",
     "no_invoices": "No invoices",
     "no_invoices_hint": "Invoices are issued from a reservation's folio."
+  },
+  "housekeeping": {
+    "description": "Today's cleaning tasks: plan and assign them, follow progress room by room, inspect finished rooms.",
+    "prepare": "Prepare today's list",
+    "prepared_one": "{{count}} new task created",
+    "prepared_other": "{{count}} new tasks created",
+    "add_task": "Add task",
+    "task_added": "Task added",
+    "tabs": {
+      "tasks": "Today's tasks",
+      "mine": "My tasks",
+      "rooms": "Rooms"
+    },
+    "filters": {
+      "open": "To do",
+      "finished": "Finished",
+      "all": "All"
+    },
+    "summary": "{{pending}} to do · {{in_progress}} in progress · {{done}} awaiting inspection",
+    "task": "Task",
+    "notes": "Notes",
+    "assigned_to": "Assigned to",
+    "assign_to": "Assign to…",
+    "unassigned": "Not assigned",
+    "select_all": "Select all",
+    "selected_one": "{{count}} task selected",
+    "selected_other": "{{count}} tasks selected",
+    "assigned_done_one": "{{count}} task assigned",
+    "assigned_done_other": "{{count}} tasks assigned",
+    "arrival_today": "Arrival today",
+    "arrival_today_hint": "A guest arrives in this room today: clean it first.",
+    "completed_by": "Done by {{name}}, {{time}}",
+    "inspected_by": "Inspected by {{name}}, {{time}}",
+    "skipped_because": "Skipped: {{reason}}",
+    "guest_departed": "the guest checked out",
+    "no_tasks": "No tasks",
+    "no_tasks_hint": "Use “Prepare today's list” to create the day's cleaning tasks from the rooms' situation.",
+    "nothing_to_do": "Nothing to do right now",
+    "unassigned_tasks": "Unassigned tasks you can take",
+    "finished_today_one": "{{count}} task finished today",
+    "finished_today_other": "{{count}} tasks finished today",
+    "report_issue": "Report a problem",
+    "skip_body": "Why is room {{room}} not being done? (e.g. “Do not disturb”, guest refused service)",
+    "reject_body": "What must be redone in room {{room}}? The task goes back to the housekeeper and the room is marked dirty.",
+    "types": {
+      "departure": "Departure clean",
+      "stayover": "Stayover service",
+      "deep_clean": "Deep clean",
+      "touch_up": "Touch-up",
+      "inspection": "Inspection"
+    },
+    "statuses": {
+      "pending": "To do",
+      "in_progress": "In progress",
+      "done": "Done",
+      "inspected": "Inspected",
+      "skipped": "Skipped"
+    },
+    "actions": {
+      "start": "Start",
+      "complete": "Done",
+      "skip": "Skip",
+      "inspect": "Approve",
+      "reject": "Redo",
+      "reopen": "Reopen"
+    },
+    "done_messages": {
+      "start": "Room {{room}}: cleaning started",
+      "complete": "Room {{room}} is clean",
+      "skip": "Room {{room}} skipped",
+      "inspect": "Room {{room}} inspected",
+      "reject": "Room {{room}} sent back for cleaning",
+      "reopen": "Task for room {{room}} reopened"
+    }
+  },
+  "maintenance": {
+    "description": "Repairs and technical problems: report them, follow them up, and take rooms out of service while they are being fixed.",
+    "report": "Report a problem",
+    "send_report": "Send report",
+    "reported_done": "Request {{number}} recorded",
+    "request": "Request",
+    "where": "Where",
+    "in_room": "In a room",
+    "elsewhere": "Elsewhere",
+    "location": "Location",
+    "location_placeholder": "Lobby, pool, kitchen…",
+    "room_label": "Room {{number}}",
+    "category": "Type of problem",
+    "priority": "Priority",
+    "title": "Problem",
+    "title_placeholder": "e.g. Air conditioning not cooling",
+    "assigned_to": "Technician",
+    "assigned_to_me": "Assigned to me",
+    "reported": "Reported",
+    "search": "Number, problem, room or location",
+    "states": {
+      "open": "Open",
+      "closed": "Closed",
+      "all": "All"
+    },
+    "empty_open": "No open requests",
+    "empty": "No requests",
+    "take_out_of_service": "Take the room out of service",
+    "take_out_hint": "The room cannot be sold for these dates. Refused if a guest is in the room or a booking is assigned to it.",
+    "out_of_service_dates": "Out of service from – until",
+    "out_until": "Out of service until {{date}}",
+    "room_out": "Out of service from {{from}} until {{until}}",
+    "room_in_service": "The room is in service.",
+    "change_dates": "Change dates",
+    "back_in_service": "Back in service",
+    "back_in_service_done": "The room can be sold again from tonight",
+    "blocked_done": "Room out of service",
+    "history": "History",
+    "comment_placeholder": "Add a comment…",
+    "add_comment": "Comment",
+    "resolution": "Work done",
+    "cancel_reason": "Reason",
+    "cancel_releases": "The room goes back in service from tonight.",
+    "release_room": "Put the room back in service from tonight",
+    "needs_cleaning": "The room needs cleaning after the work (sends a task to housekeeping)",
+    "completed_done": "Request completed",
+    "cancelled_done": "Request cancelled",
+    "categories": {
+      "plumbing": "Plumbing",
+      "electrical": "Electrical",
+      "air_conditioning": "Air conditioning",
+      "furniture": "Furniture",
+      "appliance": "Appliance",
+      "building": "Building",
+      "it_network": "TV / Wi-Fi / IT",
+      "pest_control": "Pest control",
+      "other": "Other"
+    },
+    "priorities": {
+      "low": "Low",
+      "normal": "Normal",
+      "high": "High",
+      "urgent": "Urgent"
+    },
+    "statuses": {
+      "reported": "Reported",
+      "in_progress": "In progress",
+      "on_hold": "On hold",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "actions": {
+      "reported": "Reopen",
+      "in_progress": "Start work",
+      "on_hold": "Put on hold",
+      "completed": "Complete",
+      "cancelled": "Cancel request"
+    },
+    "events": {
+      "reported": "Reported",
+      "status": "{{from}} → {{to}}",
+      "room_released": "room back in service",
+      "cleaning_requested": "cleaning requested",
+      "out_of_service": "Out of service from {{from}} until {{until}}",
+      "assigned": "Assigned to {{name}}",
+      "unassigned": "Assignment removed",
+      "edited": "Details changed",
+      "back_in_service": "Room back in service",
+      "comment": "Comment"
+    },
+    "details": "Details"
   }
 }

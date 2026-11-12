@@ -6,6 +6,8 @@ import {
   IconCoin,
   IconDoor,
   IconAddressBook,
+  IconBrush,
+  IconTool,
   IconHotelService,
   IconLayoutDashboard,
   IconReceipt2,
@@ -18,7 +20,7 @@ import {
  * Navigation is generated from this registry. A module appears here only once
  * it is implemented end to end, so the menu never contains dead entries; each
  * entry is shown only to users holding its permission in the current hotel.
- * Planned modules (housekeeping, maintenance, channels, ...) are
+ * Planned modules (channel manager, reports, ...) are
  * added as their phases are delivered (see docs/CHECKLIST.md).
  */
 export interface NavItem {
@@ -33,6 +35,8 @@ export const NAV_ITEMS: NavItem[] = [
   { key: 'frontdesk', path: '/front-desk', icon: IconHotelService, permission: 'reservations.view' },
   { key: 'reservations', path: '/reservations', icon: IconClipboardList, permission: 'reservations.view' },
   { key: 'calendar', path: '/calendar', icon: IconCalendarMonth, permission: 'reservations.view' },
+  { key: 'housekeeping', path: '/housekeeping', icon: IconBrush, permission: 'housekeeping.view' },
+  { key: 'maintenance', path: '/maintenance', icon: IconTool, permission: 'maintenance.view' },
   { key: 'rooms', path: '/rooms', icon: IconDoor, permission: 'rooms.view' },
   { key: 'guests', path: '/guests', icon: IconAddressBook, permission: 'guests.view' },
   { key: 'pricing', path: '/pricing', icon: IconCoin, permission: 'pricing.view' },

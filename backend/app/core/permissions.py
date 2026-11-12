@@ -160,6 +160,15 @@ SYSTEM_ROLES: dict[str, set[P]] = {
     },
     "housekeeping": _OPS_VIEW
     | {P.HOUSEKEEPING_VIEW, P.HOUSEKEEPING_UPDATE, P.MAINTENANCE_VIEW, P.MAINTENANCE_REPORT},
+    "housekeeping_supervisor": _OPS_VIEW
+    | {
+        P.HOUSEKEEPING_VIEW,
+        P.HOUSEKEEPING_UPDATE,
+        P.HOUSEKEEPING_ASSIGN,
+        P.MAINTENANCE_VIEW,
+        P.MAINTENANCE_REPORT,
+        P.RESERVATIONS_VIEW,
+    },
     "accountant": _OPS_VIEW
     | {
         P.RESERVATIONS_VIEW,

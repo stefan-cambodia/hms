@@ -176,19 +176,32 @@ Integrity: a trigger (`hms_guard_financial_row`) on `folio_charges`,
 lock the reservation row (`SELECT … FOR UPDATE`) so concurrent postings from
 several desks keep the totals exact (tested with parallel payments).
 
-### Operations
+### Operations (implemented in phase 5)
 
 | Table | Notes |
 |-------|-------|
-| `housekeeping_tasks` | id, hotel_id, room_id, task_date, task_type, priority, status (`pending` \| `in_progress` \| `done` \| `inspected` \| `skipped`), assigned_to, started_at, completed_at, inspected_by, notes |
-| `room_status_history` | room_id, from_status, to_status, changed_by, changed_at |
-| `maintenance_requests` | id, hotel_id, room_id NULL, facility_id NULL, title, description, priority, status (`reported` \| `pending` \| `in_progress` \| `completed` \| `cancelled`), assigned_to, reported_by, blocks_room, room_block_id, started_at, completed_at, notes |
+| `housekeeping_tasks` | id, hotel_id, room_id, task_date (hotel date), task_type (`departure` \| `stayover` \| `deep_clean` \| `touch_up` \| `inspection`), priority (`low` \| `normal` \| `high` \| `urgent`), status (`pending` \| `in_progress` \| `done` \| `inspected` \| `skipped`), source (`manual` \| `daily` \| `check_out` \| `room_move` \| `maintenance`), assigned_to, reservation_room_id, notes, skip_reason, started_at, completed_at, completed_by, inspected_at, inspected_by, created_by, version. `UNIQUE(room_id, task_date, task_type)`, so the daily preparation and automatic tasks are idempotent. |
+| `room_status_changes` | Append-only history of `rooms.housekeeping_status`: room_id, from_status, to_status, cause (`manual` \| `check_out` \| `room_move` \| `task` \| `inspection` \| `maintenance`), task_id, user_id, at. Written by the single function that changes a room's cleaning status (`housekeeping/status.py:set_room_status`). |
+| `maintenance_requests` | id, hotel_id, number (`MT-000001`, gapless), room_id NULL, facility_id NULL, location NULL (at least one required), category, priority, title, description, status (`reported` \| `in_progress` \| `on_hold` \| `completed` \| `cancelled`), assigned_to, reported_by, room_block_id (the out-of-service block it owns), started_at, completed_at, resolution, version |
+| `maintenance_updates` | History and comments of a request: request_id, at, user_id, action (`reported` \| `status` \| `assigned` \| `edited` \| `out_of_service` \| `back_in_service` \| `comment`), comment, details jsonb |
 
-The housekeeping status shown in the UI combines the stored cleaning state
-(`clean` / `dirty` / `in_progress` / `inspected`) with the derived states
-*occupied* (from the allocation ledger), *out of service* (from blocks), and
-*maintenance required* (from open requests). Those derived states are computed
-from their sources rather than stored again, so they can't drift apart.
+The cleaning state is stored once (`rooms.housekeeping_status`: `clean` /
+`dirty` / `in_progress` / `inspected`). *Occupied*, *arriving*, *out of
+service* and *maintenance open* are derived on the room board from their own
+sources (stays, room blocks, open requests) and never stored again.
+
+Automatic work: check-out and in-house room moves mark the room dirty and
+create a departure clean (high priority when a guest arrives in that room
+today) and drop a pending stayover service; "Prepare today's list" creates
+stayover services for staying guests and departure cleans for leaving guests
+and dirty vacant rooms, skipping rooms out of service; completing a repair
+marks the room dirty with a touch-up task.
+
+Out of service: a maintenance request takes its room out of sale with a
+`room_blocks` row (reason `maintenance`) created through the reservation
+engine, so the allocation ledger refuses it while a guest occupies the room
+and no booking can be placed on it. Releasing it ends the block tonight and
+keeps the past nights as history.
 
 ### Users and security
 

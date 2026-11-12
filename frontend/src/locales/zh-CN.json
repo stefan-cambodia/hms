@@ -43,7 +43,9 @@
     "guests": "宾客",
     "pricing": "价格与房价",
     "frontdesk": "前台",
-    "billing": "收款与发票"
+    "billing": "收款与发票",
+    "housekeeping": "客房部",
+    "maintenance": "维修"
   },
   "auth": {
     "title": "酒店管理系统",
@@ -465,7 +467,8 @@
       "reservation_manager": "预订经理",
       "housekeeping": "客房部",
       "accountant": "会计",
-      "maintenance": "维修人员"
+      "maintenance": "维修人员",
+      "housekeeping_supervisor": "客房部主管"
     }
   },
   "permissions": {
@@ -820,7 +823,19 @@
     "SERVICE_IN_USE": "此服务已向宾客收费，无法删除。请改为停用。",
     "AMOUNT_REQUIRED": "请输入金额。",
     "FINANCIAL_RECORD_IMMUTABLE": "财务记录不可修改或删除，请改为作废。",
-    "card_number_not_allowed": "严禁在此输入银行卡号。只能在“卡号后 4 位”栏中填写卡号的最后 4 位。"
+    "card_number_not_allowed": "严禁在此输入银行卡号。只能在“卡号后 4 位”栏中填写卡号的最后 4 位。",
+    "TASK_EXISTS": "该房间当天已有同类型的任务。",
+    "TASK_NOT_FOUND": "未找到该任务。",
+    "TASK_NOT_PENDING": "只能删除尚未开始的任务。",
+    "TASK_ASSIGNED_TO_SOMEONE_ELSE": "该任务已分配给其他人。",
+    "INVALID_TASK_TRANSITION": "该任务的状态已发生变化（可能已被他人更新）。",
+    "REASON_REQUIRED": "请填写原因。",
+    "NOT_HOUSEKEEPING_STAFF": "此人不是本酒店的客房部员工。",
+    "NOT_MAINTENANCE_STAFF": "此人不是本酒店的维修人员。",
+    "MAINTENANCE_REQUEST_NOT_FOUND": "未找到该维修单。",
+    "MAINTENANCE_CLOSED": "该维修单已关闭，请先重新打开。",
+    "NO_ROOM_TO_BLOCK": "该维修单未关联房间。",
+    "ROOM_NOT_BLOCKED": "该房间未停用。"
   },
   "reservations": {
     "description": "所有来源的全部预订。点击预订即可进行管理。",
@@ -1319,7 +1334,8 @@
       "occupied": "住客房",
       "blocked": "停用"
     },
-    "due_out": "今日预离"
+    "due_out": "今日预离",
+    "maintenance_open_other": "{{count}} 项维修待处理"
   },
   "billing": {
     "page_description": "已收款项（按付款方式和货币汇总，便于交班对账）及已开具的发票。",
@@ -1445,5 +1461,167 @@
     "invoice_search": "编号、预订号、姓名或公司",
     "no_invoices": "暂无发票",
     "no_invoices_hint": "发票需从预订的客人账单中开具。"
+  },
+  "housekeeping": {
+    "description": "今日清扫任务：制定计划并分配任务，逐房跟进进度，对清扫完毕的房间进行查房。",
+    "prepare": "生成今日任务",
+    "prepared_other": "已新建 {{count}} 项任务",
+    "add_task": "添加任务",
+    "task_added": "任务已添加",
+    "tabs": {
+      "tasks": "今日任务",
+      "mine": "我的任务",
+      "rooms": "房态"
+    },
+    "filters": {
+      "open": "未完成",
+      "finished": "已结束",
+      "all": "全部"
+    },
+    "summary": "{{pending}} 项待处理 · {{in_progress}} 项进行中 · {{done}} 项待查房",
+    "task": "任务",
+    "notes": "备注",
+    "assigned_to": "负责人",
+    "assign_to": "分配给…",
+    "unassigned": "未分配",
+    "select_all": "全选",
+    "selected_other": "已选择 {{count}} 项任务",
+    "assigned_done_other": "已分配 {{count}} 项任务",
+    "arrival_today": "今日预抵",
+    "arrival_today_hint": "今天有宾客入住此房间，请优先清扫。",
+    "completed_by": "{{name}} 于 {{time}} 完成",
+    "inspected_by": "{{name}} 于 {{time}} 查房",
+    "skipped_because": "已跳过：{{reason}}",
+    "guest_departed": "宾客已退房",
+    "no_tasks": "暂无任务",
+    "no_tasks_hint": "点击“生成今日任务”，根据各房间的情况创建当天的清扫任务。",
+    "nothing_to_do": "当前没有待办任务",
+    "unassigned_tasks": "可领取的未分配任务",
+    "finished_today_other": "今日已完成 {{count}} 项任务",
+    "report_issue": "报修",
+    "skip_body": "房间 {{room}} 为何不清扫？（例如“请勿打扰”、宾客拒绝服务）",
+    "reject_body": "房间 {{room}} 有哪些地方需要返工？任务将退回给客房服务员，房间将标记为脏房。",
+    "types": {
+      "departure": "退房清扫",
+      "stayover": "续住清扫",
+      "deep_clean": "深度清洁",
+      "touch_up": "简单整理",
+      "inspection": "查房"
+    },
+    "statuses": {
+      "pending": "待处理",
+      "in_progress": "进行中",
+      "done": "已完成",
+      "inspected": "已检查",
+      "skipped": "已跳过"
+    },
+    "actions": {
+      "start": "开始",
+      "complete": "完成",
+      "skip": "跳过",
+      "inspect": "检查通过",
+      "reject": "返工",
+      "reopen": "重新打开"
+    },
+    "done_messages": {
+      "start": "房间 {{room}}：已开始清扫",
+      "complete": "房间 {{room}} 已清扫完毕",
+      "skip": "已跳过房间 {{room}}",
+      "inspect": "房间 {{room}} 已检查",
+      "reject": "房间 {{room}} 已退回重新清扫",
+      "reopen": "房间 {{room}} 的任务已重新打开"
+    }
+  },
+  "maintenance": {
+    "description": "维修与设备故障：报修、跟进处理，维修期间可将房间停用。",
+    "report": "报修",
+    "send_report": "提交报修",
+    "reported_done": "维修单 {{number}} 已登记",
+    "request": "维修单",
+    "where": "地点",
+    "in_room": "客房内",
+    "elsewhere": "其他区域",
+    "location": "具体位置",
+    "location_placeholder": "大堂、泳池、厨房…",
+    "room_label": "房间 {{number}}",
+    "category": "问题类型",
+    "priority": "优先级",
+    "title": "问题",
+    "title_placeholder": "例如：空调不制冷",
+    "assigned_to": "维修人员",
+    "assigned_to_me": "分配给我的",
+    "reported": "报修时间",
+    "search": "单号、问题、房号或位置",
+    "states": {
+      "open": "未关闭",
+      "closed": "已关闭",
+      "all": "全部"
+    },
+    "empty_open": "没有未关闭的维修单",
+    "empty": "暂无维修单",
+    "take_out_of_service": "停用房间",
+    "take_out_hint": "该房间在这些日期内将无法销售。如房间内有在住宾客或已排入预订，则无法停用。",
+    "out_of_service_dates": "停用起止日期",
+    "out_until": "停用至 {{date}}",
+    "room_out": "{{from}} 至 {{until}} 停用",
+    "room_in_service": "该房间正常使用中。",
+    "change_dates": "更改日期",
+    "back_in_service": "恢复使用",
+    "back_in_service_done": "房间自今晚起恢复可售",
+    "blocked_done": "房间已停用",
+    "history": "历史记录",
+    "comment_placeholder": "添加备注…",
+    "add_comment": "备注",
+    "resolution": "处理结果",
+    "cancel_reason": "原因",
+    "cancel_releases": "房间将自今晚起恢复使用。",
+    "release_room": "自今晚起恢复房间使用",
+    "needs_cleaning": "维修后房间需要清扫（将向客房部发送清扫任务）",
+    "completed_done": "维修单已完成",
+    "cancelled_done": "维修单已取消",
+    "categories": {
+      "plumbing": "水暖",
+      "electrical": "电气",
+      "air_conditioning": "空调",
+      "furniture": "家具",
+      "appliance": "电器",
+      "building": "土建",
+      "it_network": "电视 / Wi-Fi / IT",
+      "pest_control": "虫害防治",
+      "other": "其他"
+    },
+    "priorities": {
+      "low": "低",
+      "normal": "普通",
+      "high": "高",
+      "urgent": "紧急"
+    },
+    "statuses": {
+      "reported": "已报修",
+      "in_progress": "处理中",
+      "on_hold": "已暂停",
+      "completed": "已完成",
+      "cancelled": "已取消"
+    },
+    "actions": {
+      "reported": "重新打开",
+      "in_progress": "开始维修",
+      "on_hold": "暂停",
+      "completed": "完成",
+      "cancelled": "取消维修单"
+    },
+    "events": {
+      "reported": "已报修",
+      "status": "{{from}} → {{to}}",
+      "room_released": "房间已恢复使用",
+      "cleaning_requested": "已请求清扫",
+      "out_of_service": "{{from}} 至 {{until}} 停用",
+      "assigned": "已分配给 {{name}}",
+      "unassigned": "已取消分配",
+      "edited": "详情已更改",
+      "back_in_service": "房间已恢复使用",
+      "comment": "备注"
+    },
+    "details": "详细说明"
   }
 }

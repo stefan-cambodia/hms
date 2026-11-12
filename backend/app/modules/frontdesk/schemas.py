@@ -3,11 +3,11 @@ from __future__ import annotations
 import uuid
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Annotated, Literal
+from typing import Annotated
 
 from pydantic import Field, StringConstraints
 
-from app.core.schemas import InputModel, OutputModel, SafeText, UpdateModel
+from app.core.schemas import OutputModel, SafeText, UpdateModel
 
 
 class CheckInIn(UpdateModel):
@@ -35,10 +35,6 @@ class RoomMoveIn(UpdateModel):
     room_id: uuid.UUID
     ignore_room_status: bool = False
     reason: Annotated[SafeText, StringConstraints(max_length=300)] | None = None
-
-
-class HousekeepingStatusIn(InputModel):
-    status: Literal["clean", "dirty", "in_progress", "inspected"]
 
 
 class StayRow(OutputModel):
@@ -82,6 +78,21 @@ class BlockInfo(OutputModel):
     end_date: date
 
 
+class BoardTask(OutputModel):
+    id: uuid.UUID
+    task_type: str
+    status: str
+    priority: str
+    assigned_to: uuid.UUID | None
+    assigned_to_name: str | None
+    version: int
+
+
+class BoardMaintenance(OutputModel):
+    open: int
+    priority: str
+
+
 class RoomBoardRow(OutputModel):
     room_id: uuid.UUID
     number: str
@@ -94,3 +105,5 @@ class RoomBoardRow(OutputModel):
     arriving: StayRow | None
     # Occupant due to leave today (or overdue).
     departing: bool
+    tasks: list[BoardTask]
+    maintenance: BoardMaintenance | None

@@ -22,7 +22,7 @@ from typing import Any
 from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core import audit, crud, events
+from app.core import crud
 from app.core.context import HotelContext
 from app.core.errors import Conflict, Forbidden, NotFound, ValidationFailed
 from app.core.money import ZERO
@@ -31,7 +31,10 @@ from app.modules.billing import folio
 from app.modules.billing.service import hotel_today, load_reservation
 from app.modules.guests.models import Guest
 from app.modules.hotels.models import Hotel
+from app.modules.housekeeping import service as housekeeping
+from app.modules.housekeeping.status import after_departure
 from app.modules.inventory import service as inventory
+from app.modules.maintenance import service as maintenance_service
 from app.modules.reservations.history import event, publish
 from app.modules.reservations.models import (
     OCCUPYING_STATUSES,
@@ -84,32 +87,6 @@ async def _occupant(db: AsyncSession, room_id: uuid.UUID, exclude: uuid.UUID) ->
         )
     ).scalar_one_or_none()
     return row
-
-
-async def _set_room_status(db: AsyncSession, ctx: HotelContext, room: Room, status: str, cause: str) -> None:
-    if room.housekeeping_status == status:
-        return
-    old = room.housekeeping_status
-    room.housekeeping_status = status
-    await db.flush()
-    audit.record(
-        db,
-        ctx.actor,
-        "room.housekeeping_status",
-        "room",
-        room.id,
-        hotel_id=ctx.hotel_id,
-        changes={"housekeeping_status": [old, status], "cause": [None, cause]},
-    )
-    await events.emit(
-        db,
-        hotel_id=ctx.hotel_id,
-        entity="room",
-        action="updated",
-        entity_id=room.id,
-        version=room.version,
-        actor=ctx.actor,
-    )
 
 
 # --- check-in -----------------------------------------------------------------------
@@ -304,7 +281,7 @@ async def check_out(
         r.id: r for r in await db.scalars(select(Room).where(Room.id.in_([rr.room_id for rr in targets])))
     }
     for rr in targets:
-        await _set_room_status(db, ctx, rooms[rr.room_id], "dirty", "check_out")
+        await after_departure(db, ctx, rooms[rr.room_id], today, "check_out", rr.id)
     numbers = sorted(rooms[rr.room_id].number for rr in targets)
     event(
         db,
@@ -412,7 +389,7 @@ async def move_in_house(
     await folio.recompute(db, res)
     await db.flush()
     if old_room:
-        await _set_room_status(db, ctx, old_room, "dirty", "room_move")
+        await after_departure(db, ctx, old_room, today, "room_move", rr.id)
     event(
         db,
         ctx,
@@ -427,18 +404,6 @@ async def move_in_house(
     await publish(db, ctx, res, "updated", {"room": [old_room.number if old_room else None, new_room.number]})
     await db.commit()
     return await load_reservation(db, ctx.hotel_id, res_id)
-
-
-# --- housekeeping status ----------------------------------------------------------------
-
-
-async def set_housekeeping_status(
-    db: AsyncSession, ctx: HotelContext, room_id: uuid.UUID, status: str
-) -> Room:
-    room = await crud.get_scoped(db, Room, ctx.hotel_id, room_id, code="ROOM_NOT_FOUND")
-    await _set_room_status(db, ctx, room, status, "manual")
-    await db.commit()
-    return room
 
 
 # --- daily views ------------------------------------------------------------------------
@@ -578,6 +543,23 @@ async def room_board(db: AsyncSession, ctx: HotelContext) -> list[dict[str, Any]
             Reservation.status.in_(tuple(s for s in OCCUPYING_STATUSES if s != "checked_out")),
         )
     }
+    tasks: dict[uuid.UUID, list[dict[str, Any]]] = {}
+    for t in await housekeeping.list_tasks(db, ctx, day=today):
+        tasks.setdefault(t["room_id"], []).append(
+            {
+                k: t[k]
+                for k in (
+                    "id",
+                    "task_type",
+                    "status",
+                    "priority",
+                    "assigned_to",
+                    "assigned_to_name",
+                    "version",
+                )
+            }
+        )
+    maintenance = await maintenance_service.open_by_room(db, ctx.hotel_id)
     out = []
     for room in rooms:
         occ = occupants.get(room.id)
@@ -601,6 +583,8 @@ async def room_board(db: AsyncSession, ctx: HotelContext) -> list[dict[str, Any]
                 "occupant": occ,
                 "arriving": arriving.get(room.id),
                 "departing": bool(occ and occ["departure"] <= today),
+                "tasks": tasks.get(room.id, []),
+                "maintenance": maintenance.get(room.id),
             }
         )
     return out

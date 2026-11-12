@@ -101,7 +101,7 @@ Last updated: 2026-11-12. Test counts: backend 48 (pytest, real PostgreSQL), fro
 | Dashboard KPIs from reservations (arrivals, departures, occupancy) | ⬜ | Phase 8 (data now available) |
 | Multi-room reservations with different dates per room | 🟡 | Supported by the API; covered by the single-room tests only |
 
-## Phase 5 — Operations 🟡 (front desk ✅, housekeeping & maintenance ⬜)
+## Phase 5 — Operations ✅
 
 ### Front desk and billing ✅
 
@@ -130,9 +130,26 @@ Last updated: 2026-11-12. Test counts: backend 48 (pytest, real PostgreSQL), fro
 | Night audit (automatic no-show, daily room revenue posting) | ⬜ | Accommodation is billed from fixed nightly prices |
 | Payment terminal / online payment gateway integration | ⬜ | Card payments are recorded, not processed |
 
-### Housekeeping and maintenance ⬜
+### Housekeeping and maintenance ✅
 
-Housekeeping tasks, assignments, inspection, maintenance requests with room blocks.
+| Item | Status | Notes |
+|------|--------|-------|
+| Cleaning tasks: departure, stayover, deep clean, touch-up, inspection; priorities; notes | ✅ | test_housekeeping.py |
+| Daily preparation from the rooms' situation (idempotent; out-of-service rooms skipped; urgent when a guest arrives today) | ✅ | |
+| Automatic departure clean on check-out and room move; pending stayover dropped when the guest leaves | ✅ | |
+| Workflow: start → done → inspected, reject (redo, reason), skip (reason), reopen; room cleaning status follows | ✅ | |
+| Permissions: housekeepers act on their own or unassigned tasks; supervisors plan, assign, inspect | ✅ | New system role "Housekeeping supervisor" |
+| Assignment (single and bulk) only to housekeeping staff of the hotel | ✅ | |
+| Room cleaning-status history (who, when, why) | ✅ | |
+| Housekeeping page: today's tasks (filters, bulk assign), "My tasks" (tablet-friendly, report a problem), room board | ✅ | E2E (3 devices) |
+| Maintenance requests: room / facility / location, category, priority, numbering, assignment to technicians, comments, history | ✅ | |
+| Workflow: reported → in progress ⇄ on hold → completed / cancelled, reopen | ✅ | |
+| Out of service through room blocks (refused if a guest occupies the room), change dates, back in service keeping past nights | ✅ | |
+| Completion releases the room from tonight and sends housekeeping (touch-up task) | ✅ | E2E |
+| Room board: open repairs and today's task per room (front desk and housekeeping) | ✅ | |
+| Photos on maintenance requests | ⬜ | Needs the file upload module |
+| Recurring / preventive maintenance schedules, spare parts | ⬜ | |
+| Lost & found, minibar counts by housekeeping | ⬜ | Minibar can be charged from the folio |
 
 ## Phase 6 — Multi-user ✅ (largely delivered early) / ⬜ (remaining)
 

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Badge, Card, Group, Loader, Menu, SegmentedControl, SimpleGrid, Stack, Text, UnstyledButton } from '@mantine/core';
+import { IconTool } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 
 import { api } from '@/api/client';
@@ -132,6 +133,27 @@ export function RoomBoard() {
                   </Text>
                 )}
                 {room.block && <Text size="xs" c="dimmed">{t(`calendar.block_reasons.${room.block.reason}`)}</Text>}
+                {(() => {
+                  const task = room.tasks.find((x) => x.status === 'pending' || x.status === 'in_progress') ?? room.tasks[0];
+                  return task ? (
+                    <Text size="xs" c="dimmed" truncate data-board-task={task.status}>
+                      {t(`housekeeping.types.${task.task_type}`)} · {t(`housekeeping.statuses.${task.status}`)}
+                      {task.assigned_to_name ? ` · ${task.assigned_to_name}` : ''}
+                    </Text>
+                  ) : null;
+                })()}
+                {room.maintenance && (
+                  <Badge
+                    size="xs"
+                    mt={4}
+                    color={room.maintenance.priority === 'urgent' ? 'red' : room.maintenance.priority === 'high' ? 'orange' : 'gray'}
+                    variant="light"
+                    leftSection={<IconTool size={10} />}
+                    data-board-maintenance
+                  >
+                    {t('frontdesk.maintenance_open', { count: room.maintenance.open })}
+                  </Badge>
+                )}
               </Card>
             );
           })}

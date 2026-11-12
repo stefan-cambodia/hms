@@ -12,7 +12,6 @@ from app.modules.frontdesk.schemas import (
     CheckInIn,
     CheckOutIn,
     FrontDeskOut,
-    HousekeepingStatusIn,
     RoomBoardRow,
     RoomMoveIn,
     UndoCheckInIn,
@@ -26,7 +25,6 @@ View = hotel_ctx(P.RESERVATIONS_VIEW)
 RoomsView = hotel_ctx(P.ROOMS_VIEW)
 CheckIn = hotel_ctx(P.FRONTDESK_CHECKIN)
 CheckOut = hotel_ctx(P.FRONTDESK_CHECKOUT)
-Housekeeping = hotel_ctx(P.HOUSEKEEPING_UPDATE)
 
 
 @router.get("/front-desk", response_model=FrontDeskOut)
@@ -87,9 +85,3 @@ async def room_move(res_id: uuid.UUID, rr_id: uuid.UUID, body: RoomMoveIn, ctx: 
         reason=body.reason,
     )
     return await reservations.reservation_out(db, res)
-
-
-@router.post("/rooms/{room_id}/housekeeping-status")
-async def housekeeping_status(room_id: uuid.UUID, body: HousekeepingStatusIn, ctx: Housekeeping, db: DB):
-    room = await service.set_housekeeping_status(db, ctx, room_id, body.status)
-    return {"room_id": room.id, "housekeeping_status": room.housekeeping_status, "version": room.version}

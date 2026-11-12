@@ -958,28 +958,32 @@ async def availability_out(
 # --- room blocks -------------------------------------------------------------
 
 
-async def create_block(db: AsyncSession, ctx: HotelContext, data: RoomBlockIn) -> RoomBlock:
-    room = (await _load_rooms(db, ctx.hotel_id, [data.room_id]))[data.room_id]
+async def add_block(
+    db: AsyncSession,
+    ctx: HotelContext,
+    room_id: uuid.UUID,
+    start_date: date,
+    end_date: date,
+    reason: str,
+    notes: str | None = None,
+) -> RoomBlock:
+    """Take a room out of sale inside the caller's transaction. The exclusion
+    constraint refuses overlaps with stays or other blocks; the category check
+    refuses blocks that would oversell already-sold (unassigned) bookings."""
+    room = (await _load_rooms(db, ctx.hotel_id, [room_id]))[room_id]
     await inventory.lock_room_types(db, ctx.hotel_id, [room.room_type_id])
     block = RoomBlock(
         hotel_id=ctx.hotel_id,
         room_id=room.id,
-        start_date=data.start_date,
-        end_date=data.end_date,
-        reason=data.reason,
-        notes=data.notes,
+        start_date=start_date,
+        end_date=end_date,
+        reason=reason,
+        notes=notes,
         created_by=ctx.actor.user_id,
     )
     db.add(block)
     await db.flush()  # exclusion constraint vs. stays and other blocks
-    short = await inventory.oversold_nights(
-        db, ctx.hotel_id, [room.room_type_id], data.start_date, data.end_date
-    )
-    if short:
-        raise Conflict(
-            "NO_AVAILABILITY",
-            params={"night": short[0].night.isoformat(), "room_type_id": str(room.room_type_id)},
-        )
+    await _check_block_oversell(db, ctx, room, start_date, end_date)
     audit.record(
         db,
         ctx.actor,
@@ -988,12 +992,83 @@ async def create_block(db: AsyncSession, ctx: HotelContext, data: RoomBlockIn) -
         block.id,
         hotel_id=ctx.hotel_id,
         changes=audit.diff(
-            None, {"room": room.number, "start": data.start_date, "end": data.end_date, "reason": data.reason}
+            None, {"room": room.number, "start": start_date, "end": end_date, "reason": reason}
         ),
     )
     await events.emit(
         db, hotel_id=ctx.hotel_id, entity="room_block", action="created", entity_id=block.id, actor=ctx.actor
     )
+    return block
+
+
+async def _check_block_oversell(
+    db: AsyncSession, ctx: HotelContext, room: Room, start_date: date, end_date: date
+) -> None:
+    short = await inventory.oversold_nights(db, ctx.hotel_id, [room.room_type_id], start_date, end_date)
+    if short:
+        raise Conflict(
+            "NO_AVAILABILITY",
+            params={"night": short[0].night.isoformat(), "room_type_id": str(room.room_type_id)},
+        )
+
+
+async def change_block_dates(
+    db: AsyncSession, ctx: HotelContext, block: RoomBlock, start_date: date, end_date: date
+) -> None:
+    """Move/extend/shorten a block inside the caller's transaction."""
+    if end_date <= start_date:
+        raise ValidationFailed("INVALID_DATES", fields=[field_error("end_date", "INVALID_DATES")])
+    room = await db.get(Room, block.room_id)
+    assert room is not None
+    await inventory.lock_room_types(db, ctx.hotel_id, [room.room_type_id])
+    old = (block.start_date, block.end_date)
+    block.start_date, block.end_date = start_date, end_date
+    await db.flush()
+    await _check_block_oversell(db, ctx, room, start_date, end_date)
+    audit.record(
+        db,
+        ctx.actor,
+        "room_block.update",
+        "room_block",
+        block.id,
+        hotel_id=ctx.hotel_id,
+        changes={"dates": [list(old), [start_date, end_date]]},
+    )
+    await events.emit(
+        db, hotel_id=ctx.hotel_id, entity="room_block", action="updated", entity_id=block.id, actor=ctx.actor
+    )
+
+
+async def release_block(db: AsyncSession, ctx: HotelContext, block: RoomBlock, today: date) -> None:
+    """Put a room back in service from tonight, keeping the past part of the
+    block as history (a block that has not started yet is removed)."""
+    if block.start_date >= today:
+        await db.delete(block)
+        audit.record(db, ctx.actor, "room_block.delete", "room_block", block.id, hotel_id=ctx.hotel_id)
+        action = "deleted"
+    elif block.end_date > today:
+        old_end = block.end_date
+        block.end_date = today
+        audit.record(
+            db,
+            ctx.actor,
+            "room_block.update",
+            "room_block",
+            block.id,
+            hotel_id=ctx.hotel_id,
+            changes={"end_date": [old_end, today]},
+        )
+        action = "updated"
+    else:
+        return
+    await db.flush()
+    await events.emit(
+        db, hotel_id=ctx.hotel_id, entity="room_block", action=action, entity_id=block.id, actor=ctx.actor
+    )
+
+
+async def create_block(db: AsyncSession, ctx: HotelContext, data: RoomBlockIn) -> RoomBlock:
+    block = await add_block(db, ctx, data.room_id, data.start_date, data.end_date, data.reason, data.notes)
     await db.commit()
     return block
 
