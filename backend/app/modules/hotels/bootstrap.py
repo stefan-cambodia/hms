@@ -18,6 +18,7 @@ from app.core.security import hash_password
 from app.modules.auth.models import Role, RolePermission, User, UserHotelRole
 from app.modules.auth.service import check_password_policy
 from app.modules.hotels.models import Hotel, Organization
+from app.modules.pricing.models import CancellationPolicy, RatePlan
 from app.modules.rooms.models import Amenity
 
 # Default in-room amenities, translated in all supported languages. Hotels can
@@ -146,7 +147,85 @@ async def sync_system_roles(db: AsyncSession, organization_id: uuid.UUID) -> dic
     return roles
 
 
+DEFAULT_POLICIES = [
+    (
+        "FLEX",
+        1,
+        "nights",
+        1,
+        {
+            "en": "Flexible",
+            "fr": "Flexible",
+            "zh-CN": "灵活取消",
+            "ru": "Гибкие условия",
+            "km": "អាចបោះបង់បាន",
+        },
+    ),
+    (
+        "NONREF",
+        None,
+        "percent",
+        100,
+        {
+            "en": "Non-refundable",
+            "fr": "Non remboursable",
+            "zh-CN": "不可退款",
+            "ru": "Невозвратный",
+            "km": "មិនអាចសងប្រាក់វិញ",
+        },
+    ),
+]
+DEFAULT_PLAN_NAME = {
+    "en": "Best available rate",
+    "fr": "Meilleur tarif disponible",
+    "zh-CN": "最优价",
+    "ru": "Лучший доступный тариф",
+    "km": "តម្លៃល្អបំផុត",
+}
+
+
+async def seed_pricing_defaults(db: AsyncSession, hotel: Hotel) -> None:
+    """Cancellation policies and the default rate plan every hotel needs."""
+    policies = {
+        p.code: p
+        for p in await db.scalars(select(CancellationPolicy).where(CancellationPolicy.hotel_id == hotel.id))
+    }
+    for code, free_days, kind, value, name in DEFAULT_POLICIES:
+        if code not in policies:
+            policies[code] = CancellationPolicy(
+                hotel_id=hotel.id,
+                code=code,
+                name=name,
+                free_until_days=free_days,
+                penalty_kind=kind,
+                penalty_value=value,
+                no_show_nights=1,
+                version=1,
+            )
+            db.add(policies[code])
+    await db.flush()
+    has_default = await db.scalar(
+        select(RatePlan.id).where(RatePlan.hotel_id == hotel.id, RatePlan.is_default)
+    )
+    if has_default is None:
+        db.add(
+            RatePlan(
+                hotel_id=hotel.id,
+                code="BAR",
+                name=DEFAULT_PLAN_NAME,
+                meal_plan="room_only",
+                is_refundable=True,
+                cancellation_policy_id=policies["FLEX"].id,
+                is_default=True,
+                sort_order=0,
+                version=1,
+            )
+        )
+        await db.flush()
+
+
 async def seed_hotel_defaults(db: AsyncSession, hotel: Hotel) -> None:
+    await seed_pricing_defaults(db, hotel)
     present = set(await db.scalars(select(Amenity.code).where(Amenity.hotel_id == hotel.id)))
     for i, (code, icon, name) in enumerate(DEFAULT_AMENITIES):
         if code not in present:

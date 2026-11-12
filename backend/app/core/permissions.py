@@ -25,6 +25,7 @@ class P(StrEnum):
     RESERVATIONS_EDIT = "reservations.edit"
     RESERVATIONS_CANCEL = "reservations.cancel"
     RESERVATIONS_OVERBOOK = "reservations.overbook"
+    RESERVATIONS_OVERRIDE = "reservations.override_restrictions"
     # Guests
     GUESTS_VIEW = "guests.view"
     GUESTS_EDIT = "guests.edit"
@@ -79,6 +80,7 @@ PERMISSION_GROUPS: dict[str, list[P]] = {
         P.RESERVATIONS_EDIT,
         P.RESERVATIONS_CANCEL,
         P.RESERVATIONS_OVERBOOK,
+        P.RESERVATIONS_OVERRIDE,
     ],
     "guests": [P.GUESTS_VIEW, P.GUESTS_EDIT, P.GUESTS_VIEW_SENSITIVE, P.GUESTS_EXPORT, P.GUESTS_MERGE],
     "frontdesk": [P.FRONTDESK_CHECKIN, P.FRONTDESK_CHECKOUT],

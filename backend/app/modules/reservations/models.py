@@ -121,6 +121,7 @@ class ReservationRoom(UUIDPk, Base):
     )
     room_type_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True))
     room_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    rate_plan_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
     arrival: Mapped[date] = mapped_column(Date)
     departure: Mapped[date] = mapped_column(Date)
     stay: Mapped[Any] = mapped_column(
@@ -145,6 +146,9 @@ class ReservationRoom(UUIDPk, Base):
             ondelete="RESTRICT",
         ),
         ForeignKeyConstraint(["hotel_id", "room_id"], ["rooms.hotel_id", "rooms.id"], ondelete="RESTRICT"),
+        ForeignKeyConstraint(
+            ["hotel_id", "rate_plan_id"], ["rate_plans.hotel_id", "rate_plans.id"], ondelete="RESTRICT"
+        ),
         CheckConstraint("departure > arrival", name="dates"),
         CheckConstraint("adults >= 1 AND children >= 0", name="occupancy"),
         Index("ix_reservation_rooms_type_stay", "room_type_id", "stay", postgresql_using="gist"),
@@ -164,6 +168,7 @@ class ReservationNight(Base):
     hotel_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), index=True)
     price: Mapped[Decimal] = mapped_column(Numeric(14, 2))
     price_source: Mapped[str] = mapped_column(String(30))
+    rate_plan_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
 
     __table_args__ = (PrimaryKeyConstraint("reservation_room_id", "night"),)
 

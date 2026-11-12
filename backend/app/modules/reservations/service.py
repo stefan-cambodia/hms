@@ -37,6 +37,7 @@ from app.modules.guests import service as guests
 from app.modules.guests.models import Guest
 from app.modules.hotels.models import Hotel
 from app.modules.inventory import service as inventory
+from app.modules.pricing import engine as pricing_engine
 from app.modules.pricing import service as pricing
 from app.modules.reservations.models import (
     OCCUPYING_STATUSES,
@@ -277,7 +278,7 @@ async def reload(db: AsyncSession, res: Reservation) -> Reservation:
 
 async def _stay_requests(
     db: AsyncSession, hotel_id: uuid.UUID, arrival: date, departure: date, stays: list[StayIn]
-) -> list[pricing.StayRequest]:
+) -> list[pricing_engine.Stay]:
     types = await _load_types(db, hotel_id, [s.room_type_id for s in stays])
     rooms = await _load_rooms(db, hotel_id, [s.room_id for s in stays])
     requests = []
@@ -288,25 +289,50 @@ async def _stay_requests(
         room = rooms.get(s.room_id) if s.room_id else None
         _check_occupancy(rt, room, s.adults, s.children)
         requests.append(
-            pricing.StayRequest(
+            pricing_engine.Stay(
                 room_type=rt,
                 room=room,
                 arrival=s.arrival or arrival,
                 departure=s.departure or departure,
                 adults=s.adults,
                 children=s.children,
+                rate_plan_id=s.rate_plan_id,
             )
         )
     return requests
 
 
+def _check_plans(pctx: pricing_engine.PricingContext, stays: list[pricing_engine.Stay]) -> None:
+    for s in stays:
+        if s.rate_plan_id and s.rate_plan_id not in pctx.plans:
+            raise ValidationFailed(
+                "RATE_PLAN_NOT_FOUND", fields=[field_error("rooms", "RATE_PLAN_NOT_FOUND")]
+            )
+
+
+def _enforce_restrictions(ctx: HotelContext, q: pricing.Quote, override: bool) -> list[str]:
+    """Stay restrictions (stop sell, min/max stay, CTA/CTD, plan conditions)
+    block a booking unless explicitly overridden by an authorised user."""
+    issues = [i for stay in q.stays for i in stay.issues]
+    if not issues:
+        return []
+    if not override:
+        first = issues[0]
+        raise Conflict(first["code"], first["code"], params={k: v for k, v in first.items() if k != "code"})
+    if not ctx.has(P.RESERVATIONS_OVERRIDE):
+        raise Forbidden("PERMISSION_DENIED", params={"permission": P.RESERVATIONS_OVERRIDE})
+    return sorted({i["code"] for i in issues})
+
+
 async def quote(
     db: AsyncSession, ctx: HotelContext, arrival: date, departure: date, stays: list[StayIn]
 ) -> pricing.Quote:
-    hotel = await db.get(Hotel, ctx.hotel_id)
-    assert hotel is not None
     requests = await _stay_requests(db, ctx.hotel_id, arrival, departure, stays)
-    return await pricing.quote(db, ctx.hotel_id, hotel.currency_code, requests)
+    pctx = await pricing.load_context(
+        db, ctx.hotel_id, min(r.arrival for r in requests), max(r.departure for r in requests)
+    )
+    _check_plans(pctx, requests)
+    return await pricing.quote(db, ctx.hotel_id, requests, pctx)
 
 
 # --- create ------------------------------------------------------------------
@@ -372,8 +398,11 @@ async def create_reservation(
         assert data.guest is not None
         guest = await guests.create_guest(db, ctx, data.guest, commit=False)
 
+    pctx = await pricing.load_context(db, ctx.hotel_id, start, end)
+    _check_plans(pctx, requests)
+    q = await pricing.quote(db, ctx.hotel_id, requests, pctx)
+    overridden = _enforce_restrictions(ctx, q, data.override_restrictions)
     await inventory.lock_room_types(db, ctx.hotel_id, affected_types)
-    q = await pricing.quote(db, ctx.hotel_id, hotel.currency_code, requests)
 
     res = Reservation(
         id=uuid.uuid4(),
@@ -400,6 +429,7 @@ async def create_reservation(
             hotel_id=ctx.hotel_id,
             room_type_id=r.room_type.id,
             room_id=r.room.id if r.room else None,
+            rate_plan_id=sq.rate_plan_id,
             arrival=r.arrival,
             departure=r.departure,
             adults=r.adults,
@@ -408,7 +438,13 @@ async def create_reservation(
             accommodation_total=sq.accommodation_total,
         )
         rr.nights = [
-            ReservationNight(night=n.night, hotel_id=ctx.hotel_id, price=n.price, price_source=n.source)
+            ReservationNight(
+                night=n.night,
+                hotel_id=ctx.hotel_id,
+                price=n.price,
+                price_source=n.source,
+                rate_plan_id=n.rate_plan_id,
+            )
             for n in sq.nights
         ]
         res.rooms.append(rr)
@@ -440,6 +476,7 @@ async def create_reservation(
         source=res.source,
         rooms=len(res.rooms),
         overbooked=res.is_overbooked,
+        restrictions_overridden=overridden,
     )
     await _publish(
         db,
@@ -541,15 +578,24 @@ async def move_stay(
     old_dates = (rr.arrival, rr.departure)
     if dates_changed:
         kept = {n.night: n for n in rr.nights}
-        request = pricing.StayRequest(rt, new_room, new_arrival, new_departure, rr.adults, rr.children)
+        pctx = await pricing.load_context(db, ctx.hotel_id, new_arrival, new_departure)
+        stay = pricing_engine.Stay(
+            rt, new_room, new_arrival, new_departure, rr.adults, rr.children, rr.rate_plan_id
+        )
         nights = []
-        for night in pricing.nights_between(new_arrival, new_departure):
+        for night in pricing_engine.nights_between(new_arrival, new_departure):
             if night in kept:
                 nights.append(kept[night])
             else:
-                p = pricing.nightly_price(request, night, hotel.currency_code)
+                p = pricing_engine.night_price(pctx, stay, night)
                 nights.append(
-                    ReservationNight(night=night, hotel_id=ctx.hotel_id, price=p.price, price_source=p.source)
+                    ReservationNight(
+                        night=night,
+                        hotel_id=ctx.hotel_id,
+                        price=p.price,
+                        price_source=p.source,
+                        rate_plan_id=p.rate_plan_id,
+                    )
                 )
         rr.nights = nights
         rr.arrival, rr.departure = new_arrival, new_departure
@@ -583,6 +629,73 @@ async def move_stay(
         )
         changes["dates"] = [list(old_dates), [new_arrival, new_departure]]
     await _publish(db, ctx, res, "updated", changes)
+    await db.commit()
+    return await reload(db, res)
+
+
+async def change_rate_plan(
+    db: AsyncSession,
+    ctx: HotelContext,
+    res_id: uuid.UUID,
+    rr_id: uuid.UUID,
+    *,
+    version: int,
+    rate_plan_id: uuid.UUID,
+    override_restrictions: bool = False,
+) -> Reservation:
+    """Switch a stay to another rate plan (e.g. the guest adds breakfast).
+    Every night is repriced at the new plan's current rates."""
+    res = await get_reservation(db, ctx.hotel_id, res_id)
+    crud.check_version(res, version)
+    if res.status in CLOSED:
+        raise Conflict("RESERVATION_CLOSED", params={"status": res.status})
+    rr = _find_room(res, rr_id)
+    if rr.rate_plan_id == rate_plan_id:
+        return res
+    rt = await db.get(RoomType, rr.room_type_id)
+    room = await db.get(Room, rr.room_id) if rr.room_id else None
+    assert rt is not None
+    pctx = await pricing.load_context(db, ctx.hotel_id, rr.arrival, rr.departure)
+    if rate_plan_id not in pctx.plans:
+        raise ValidationFailed(
+            "RATE_PLAN_NOT_FOUND", fields=[field_error("rate_plan_id", "RATE_PLAN_NOT_FOUND")]
+        )
+    stay = pricing_engine.Stay(rt, room, rr.arrival, rr.departure, rr.adults, rr.children, rate_plan_id)
+    issues = pricing_engine.restriction_issues(pctx, stay)
+    overridden = _enforce_restrictions(
+        ctx,
+        pricing.Quote(
+            currency=res.currency,
+            stays=[pricing.StayQuote([], ZERO, rate_plan_id, issues)],
+            accommodation_total=ZERO,
+        ),
+        override_restrictions,
+    )
+    old_plan, old_total = rr.rate_plan_id, rr.accommodation_total
+    prices = [pricing_engine.night_price(pctx, stay, n.night) for n in rr.nights]
+    by_night = {p.night: p for p in prices}
+    for n in rr.nights:
+        p = by_night[n.night]
+        n.price, n.price_source, n.rate_plan_id = p.price, p.source, p.rate_plan_id
+    rr.rate_plan_id = rate_plan_id
+    rr.accommodation_total = sum((p.price for p in prices), ZERO)
+    await _recompute(db, res)
+    _touch(res)
+    await db.flush()
+    names = {pid: pctx.plans[pid].code for pid in (old_plan, rate_plan_id) if pid in pctx.plans}
+    _event(
+        db,
+        ctx,
+        res,
+        "rate_plan_changed",
+        reservation_room_id=rr.id,
+        old=names.get(old_plan),
+        new=names.get(rate_plan_id),
+        old_total=old_total,
+        new_total=rr.accommodation_total,
+        restrictions_overridden=overridden,
+    )
+    await _publish(db, ctx, res, "updated", {"rate_plan": [names.get(old_plan), names.get(rate_plan_id)]})
     await db.commit()
     return await reload(db, res)
 

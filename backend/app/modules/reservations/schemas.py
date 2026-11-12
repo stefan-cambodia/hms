@@ -22,6 +22,7 @@ class StayIn(InputModel):
     departure: date | None = None
     adults: int = Field(1, ge=1, le=50)
     children: int = Field(0, ge=0, le=50)
+    rate_plan_id: uuid.UUID | None = None  # default plan when omitted
 
 
 def _check_dates(arrival: date, departure: date) -> None:
@@ -53,6 +54,7 @@ class ReservationIn(QuoteIn):
     special_requests: Notes | None = None
     internal_notes: Notes | None = None
     allow_overbooking: bool = False
+    override_restrictions: bool = False
 
     @model_validator(mode="after")
     def _guest(self) -> ReservationIn:
@@ -95,6 +97,11 @@ class MoveStayIn(UpdateModel):
         return self
 
 
+class ChangeRatePlanIn(UpdateModel):
+    rate_plan_id: uuid.UUID
+    override_restrictions: bool = False
+
+
 class CancelIn(UpdateModel):
     reason: str = Field(min_length=1, max_length=500)
 
@@ -113,6 +120,7 @@ class ReservationRoomOut(OutputModel):
     id: uuid.UUID
     room_type_id: uuid.UUID
     room_id: uuid.UUID | None
+    rate_plan_id: uuid.UUID | None
     arrival: date
     departure: date
     adults: int
@@ -201,8 +209,14 @@ class ReservationEventOut(OutputModel):
     details: dict[str, Any]
 
 
+class QuoteStayOut(OutputModel):
+    rate_plan_id: uuid.UUID
+    issues: list[dict[str, Any]]
+
+
 class QuoteOut(OutputModel):
     currency: str
+    stays: list[QuoteStayOut] = Field(default_factory=list)
     accommodation_total: Decimal
     tax_total: Decimal
     grand_total: Decimal

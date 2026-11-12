@@ -18,10 +18,12 @@ from app.modules.reservations.schemas import (
     CalendarOut,
     CancelIn,
     ChangeDatesIn,
+    ChangeRatePlanIn,
     MoveStayIn,
     NightOut,
     QuoteIn,
     QuoteOut,
+    QuoteStayOut,
     ReservationEventOut,
     ReservationIn,
     ReservationListItem,
@@ -55,6 +57,7 @@ async def quote(body: QuoteIn, ctx: View, db: DB):
         rooms=[
             [NightOut(night=n.night, price=n.price, price_source=n.source) for n in s.nights] for s in q.stays
         ],
+        stays=[QuoteStayOut(rate_plan_id=s.rate_plan_id, issues=s.issues) for s in q.stays],
     )
 
 
@@ -163,6 +166,22 @@ async def available_rooms(
         room_type_id=room_type_id,
         ignore_reservation_room=ignore_reservation_room,
     )
+
+
+@router.post("/reservations/{reservation_id}/rooms/{rr_id}/rate-plan", response_model=ReservationOut)
+async def change_rate_plan(
+    reservation_id: uuid.UUID, rr_id: uuid.UUID, body: ChangeRatePlanIn, ctx: Edit, db: DB
+):
+    res = await service.change_rate_plan(
+        db,
+        ctx,
+        reservation_id,
+        rr_id,
+        version=body.version,
+        rate_plan_id=body.rate_plan_id,
+        override_restrictions=body.override_restrictions,
+    )
+    return await service.reservation_out(db, res)
 
 
 @router.post("/reservations/{reservation_id}/confirm", response_model=ReservationOut)

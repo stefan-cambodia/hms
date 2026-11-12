@@ -12,6 +12,7 @@ from app.modules.auth.models import (  # noqa: F401
 from app.modules.facilities.models import Facility, Service, TaxRate  # noqa: F401
 from app.modules.guests.models import Guest  # noqa: F401
 from app.modules.hotels.models import Building, Floor, Hotel, Organization  # noqa: F401
+from app.modules.pricing.models import CancellationPolicy, DailyRate, PricingRule, RatePlan  # noqa: F401
 from app.modules.reservations.models import (  # noqa: F401
     DocumentSequence,
     IdempotencyKey,
