@@ -41,7 +41,14 @@ export async function freeRoom(s: RoomContext, nights = 1, spare = 1): Promise<F
   const pick = async () => {
     const availability = await get<{ room_type_id: string; nights: { available: number }[] }[]>(s, `/availability?start=${start}&end=${end}`);
     const left = new Map(availability.map((a) => [a.room_type_id, Math.min(...a.nights.map((n) => n.available))]));
-    const free = (await get<FreeRoom[]>(s, `/available-rooms?start=${start}&end=${end}`)).filter((r) => (left.get(r.room_type_id) ?? 0) >= spare);
+    // A room free tonight can still hold a guest who has not checked out yet
+    // (an overdue departure left by an earlier run): check-in would be refused.
+    const occupied = new Set(
+      (await get<{ room_id: string; occupant: unknown }[]>(s, '/room-board')).filter((r) => r.occupant).map((r) => r.room_id),
+    );
+    const free = (await get<FreeRoom[]>(s, `/available-rooms?start=${start}&end=${end}`)).filter(
+      (r) => (left.get(r.room_type_id) ?? 0) >= spare && !occupied.has(r.id),
+    );
     return { availability, free };
   };
   let { availability, free } = await pick();
