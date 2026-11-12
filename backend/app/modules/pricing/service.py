@@ -211,7 +211,14 @@ async def offers(
             total = sum((n.price for n in nights), ZERO)
             issues = engine.restriction_issues(ctx, stay)
             if not fits:
-                issues.append({"code": "OCCUPANCY_EXCEEDED"})
+                issues.append(
+                    {
+                        "code": "OCCUPANCY_EXCEEDED",
+                        "max_adults": rt.max_adults,
+                        "max_children": rt.max_children,
+                        "max_occupancy": rt.max_occupancy,
+                    }
+                )
             out.append(
                 {
                     "room_type_id": rt.id,

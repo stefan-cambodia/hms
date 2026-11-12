@@ -13,6 +13,7 @@ const ReservationsPage = lazy(() => import('@/modules/reservations/ReservationsP
 const ReservationDetailPage = lazy(() => import('@/modules/reservations/ReservationDetailPage'));
 const CalendarPage = lazy(() => import('@/modules/calendar/CalendarPage'));
 const GuestsPage = lazy(() => import('@/modules/guests/GuestsPage'));
+const PricingPage = lazy(() => import('@/modules/pricing/PricingPage'));
 const ServicesPage = lazy(() => import('@/modules/services/ServicesPage'));
 const UsersPage = lazy(() => import('@/modules/users/UsersPage'));
 const SettingsPage = lazy(() => import('@/modules/settings/SettingsPage'));
@@ -58,6 +59,7 @@ const router = createBrowserRouter([
       { path: 'calendar', element: <CalendarPage /> },
       { path: 'rooms', element: <RoomsPage /> },
       { path: 'guests', element: <GuestsPage /> },
+      { path: 'pricing/*', element: <PricingPage /> },
       { path: 'services', element: <ServicesPage /> },
       { path: 'users/*', element: <UsersPage /> },
       { path: 'settings/*', element: <SettingsPage /> },

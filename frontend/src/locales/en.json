@@ -39,7 +39,8 @@
     "my_account": "My account",
     "reservations": "Reservations",
     "calendar": "Calendar",
-    "guests": "Guests"
+    "guests": "Guests",
+    "pricing": "Pricing & rates"
   },
   "auth": {
     "title": "Hotel Management System",
@@ -514,7 +515,8 @@
       "roles_manage": "Manage roles",
       "sessions_manage": "View and revoke sessions",
       "audit_view": "View the audit log",
-      "backups_manage": "Manage backups"
+      "backups_manage": "Manage backups",
+      "reservations_override_restrictions": "Override stay restrictions"
     }
   },
   "sessions": {
@@ -568,7 +570,11 @@
       "organization": "Organisation",
       "reservation": "Reservation",
       "guest": "Guest",
-      "room_block": "Room out of service"
+      "room_block": "Room out of service",
+      "rate_plan": "Rate plan",
+      "pricing_rule": "Pricing rule",
+      "cancellation_policy": "Cancellation policy",
+      "rate": "Rates"
     },
     "actions": {
       "create": "Created",
@@ -587,7 +593,8 @@
       "bootstrap": "System installed",
       "created": "Created",
       "updated": "Updated",
-      "view_sensitive": "Identity viewed"
+      "view_sensitive": "Identity viewed",
+      "bulk_update": "Rates updated"
     }
   },
   "account": {
@@ -738,7 +745,34 @@
     "SENSITIVE_FIELDS_FORBIDDEN": "You are not allowed to edit identity documents",
     "INVALID_RANGE": "Invalid date range",
     "INVALID_DATES": "Departure must be after arrival",
-    "ROOM_BLOCK_NOT_FOUND": "Out-of-service period not found"
+    "ROOM_BLOCK_NOT_FOUND": "Out-of-service period not found",
+    "RATE_PLAN_NOT_FOUND": "Rate plan not found",
+    "RATE_PLAN_CODE_EXISTS": "This rate plan code is already used",
+    "RATE_PLAN_HAS_CHILDREN": "Other rate plans are based on this one. Change them first.",
+    "RATE_PLAN_IN_USE": "This rate plan is used by reservations and cannot be deleted. Deactivate it instead.",
+    "RATE_PLAN_CYCLE": "A rate plan cannot be based on itself (directly or indirectly)",
+    "DERIVATION_REQUIRED": "Choose how this plan differs from the plan it is based on",
+    "DEFAULT_PLAN_REQUIRED": "The hotel needs a default rate plan: choose another default first",
+    "DEFAULT_PLAN_MUST_BE_ACTIVE": "The default rate plan must be active",
+    "NO_DEFAULT_RATE_PLAN": "No default rate plan is configured",
+    "POLICY_NOT_FOUND": "Cancellation policy not found",
+    "POLICY_CODE_EXISTS": "This policy code is already used",
+    "POLICY_IN_USE": "This policy is used by a rate plan",
+    "PRICING_RULE_NOT_FOUND": "Rule not found",
+    "RULE_CONDITION_REQUIRED": "Enter the condition for this rule",
+    "SEASON_DATES_REQUIRED": "A season needs a start and an end date",
+    "WEEKDAYS_REQUIRED": "Choose at least one day of the week",
+    "DISCOUNT_TOO_LARGE": "A reduction must be smaller than 100 %",
+    "MAX_STAY_BELOW_MIN": "The maximum stay cannot be shorter than the minimum stay",
+    "RATE_PLAN_INACTIVE": "This rate is not available for sale",
+    "RATE_PLAN_NOT_FOR_ROOM_TYPE": "This rate is not offered for this room category",
+    "RATE_PLAN_NOT_VALID_FOR_DATES": "This rate is not valid for these dates",
+    "RATE_PLAN_BOOKING_WINDOW": "This rate cannot be booked this close to (or this far from) arrival",
+    "STOP_SELL": "Closed for sale on {{night}}",
+    "MIN_STAY_NOT_MET": "Minimum stay for this arrival: {{min_stay}} nights",
+    "MAX_STAY_EXCEEDED": "Maximum stay for this arrival: {{max_stay}} nights",
+    "CLOSED_TO_ARRIVAL": "No arrivals on {{date}}",
+    "CLOSED_TO_DEPARTURE": "No departures on {{date}}"
   },
   "reservations": {
     "description": "Every booking, whatever its source. Click a reservation to manage it.",
@@ -830,7 +864,8 @@
       "status_changed": "Status: {{from}} → {{to}}",
       "room_assigned": "Room: {{from}} → {{to}}",
       "dates_changed": "Dates: {{from}} ⇒ {{to}}",
-      "details_updated": "Details updated"
+      "details_updated": "Details updated",
+      "rate_plan_changed": "Rate: {{from}} → {{to}}"
     },
     "form": {
       "dates": "Arrival – departure",
@@ -854,8 +889,17 @@
       "create_pending": "Create pending reservation",
       "overbook_title": "No room available",
       "overbook_body": "This category is fully booked on {{night}}. You can still accept the booking as an overbooking; it will be flagged until a room is found.",
-      "overbook_confirm": "Overbook anyway"
-    }
+      "overbook_confirm": "Overbook anyway",
+      "restricted_title": "Booking restrictions apply",
+      "restricted_body": "These dates do not meet the rate's restrictions. Choose other dates or another rate, or ask a manager.",
+      "override_restrictions": "Override the restrictions for this booking"
+    },
+    "rate": "Rate",
+    "rate_saved": "Rate changed and stay repriced",
+    "change_rate_title": "Change the rate?",
+    "change_rate_body": "Switch to “{{plan}}”. Every night is repriced at today's rates: {{old}} → {{new}}.",
+    "free_cancellation_until": "Free cancellation until {{date}}",
+    "current_restrictions": "Restrictions on this rate today"
   },
   "calendar": {
     "today": "Today",
@@ -940,6 +984,215 @@
       "same_email": "same email",
       "same_phone": "same phone",
       "similar_name": "similar name"
+    }
+  },
+  "pricing": {
+    "description": "Rate plans, seasons, discounts and the daily rate calendar. One pricing engine is used everywhere.",
+    "tabs": {
+      "calendar": "Rate calendar",
+      "plans": "Rate plans",
+      "rules": "Seasons & discounts",
+      "policies": "Cancellation policies"
+    },
+    "weekday_short": {
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat",
+      "sun": "Sun"
+    },
+    "meal_plans": {
+      "room_only": "Room only",
+      "breakfast": "Bed & breakfast",
+      "half_board": "Half board",
+      "full_board": "Full board",
+      "all_inclusive": "All inclusive"
+    },
+    "grid": {
+      "rate_plan": "Rate plan",
+      "edit_rates": "Edit rates",
+      "base": "Base {{price}}",
+      "no_categories": "This rate plan applies to no active room category.",
+      "derived_hint": "Prices follow “{{parent}}” automatically. Set a price here only to override it.",
+      "closed": "Closed",
+      "left_one": "{{count}} left",
+      "left_other": "{{count}} left",
+      "available_one": "{{count}} room available",
+      "available_other": "{{count}} rooms available",
+      "cta": "CTA",
+      "ctd": "CTD",
+      "cta_long": "Closed to arrival",
+      "ctd_long": "Closed to departure",
+      "min_stay_one": "Minimum {{count}} night",
+      "min_stay_other": "Minimum {{count}} nights",
+      "max_stay_one": "Maximum {{count}} night",
+      "max_stay_other": "Maximum {{count}} nights",
+      "inherited": "Restrictions inherited from the parent plan",
+      "legend_explicit": "set manually",
+      "legend_computed": "calculated from base price and rules",
+      "legend_restrictions": "≥ minimum stay · ≤ maximum stay · CTA/CTD closed to arrival/departure",
+      "source": {
+        "daily_rate": "Price set manually",
+        "derived": "Derived from the parent plan",
+        "base": "Base price with seasons and rules"
+      }
+    },
+    "bulk": {
+      "rate_plans": "Rate plans",
+      "room_types": "Room categories",
+      "dates": "From – to (inclusive)",
+      "days_one": "{{count}} day",
+      "days_other": "{{count}} days",
+      "weekdays": "Only on",
+      "weekdays_hint": "Leave all unselected to apply to every day.",
+      "price": "Price",
+      "restrictions": "Restrictions",
+      "no_change": "No change",
+      "set": "Set",
+      "remove": "Remove",
+      "price_modes": {
+        "none": "No change",
+        "set": "Set price",
+        "percent": "± %",
+        "amount": "± amount",
+        "clear": "Back to automatic"
+      },
+      "value_set": "New price per night",
+      "value_percent": "Change in %",
+      "value_amount": "Change per night",
+      "percent_hint": "Use a negative value to lower prices (e.g. −10)",
+      "amount_hint": "In {{currency}}; negative to lower prices",
+      "clear_hint": "Removes manual prices: the dates go back to the base price, seasons and rules.",
+      "min_stay": "Minimum stay (nights)",
+      "max_stay": "Maximum stay (nights)",
+      "stop_sell": "Stop sell",
+      "close": "Close",
+      "open": "Open",
+      "yes": "Yes",
+      "no": "No",
+      "existing_bookings_hint": "Existing reservations keep their price; changes apply to new bookings.",
+      "apply": "Apply",
+      "done_one": "{{count}} rate updated",
+      "done_other": "{{count}} rates updated"
+    },
+    "plans": {
+      "hint": "A rate plan is what you sell: meal plan, cancellation terms and price. Derived plans follow another plan automatically (e.g. non-refundable = best rate −10 %).",
+      "add": "Add rate plan",
+      "edit": "Edit rate plan",
+      "delete": "Delete rate plan “{{name}}”?",
+      "default": "Default",
+      "is_default": "Default rate plan (used when none is chosen)",
+      "meal_plan": "Meals",
+      "price": "Price",
+      "own_rates": "Own rates",
+      "based_on": "Based on",
+      "based_on_hint": "Leave empty for a plan with its own rates",
+      "adjustment": "Adjustment",
+      "adjustment_value": "Value",
+      "derive_modes": {
+        "percent": "Percentage",
+        "amount": "Amount per night",
+        "amount_per_person": "Amount per person per night"
+      },
+      "derived_per_person": "{{parent}} {{amount}} per person",
+      "cancellation": "Cancellation",
+      "refundable": "Refundable",
+      "non_refundable": "Non-refundable",
+      "policy": "Cancellation policy",
+      "availability": "When it can be sold",
+      "categories": "Room categories",
+      "all_categories": "All categories",
+      "categories_hint": "Leave empty for all categories",
+      "valid_from": "Stays from",
+      "valid_to": "Stays until",
+      "min_advance": "Book at least … days ahead",
+      "min_advance_hint": "e.g. 30 for an early-booking rate",
+      "max_advance": "Book at most … days ahead",
+      "max_advance_hint": "e.g. 3 for a last-minute rate"
+    },
+    "rules": {
+      "hint": "Seasons, weekends and demand adjust the calculated price. Long-stay, last-minute and early-bird discounts apply on top of any price. Rules apply in priority order.",
+      "add": "Add a rule…",
+      "delete": "Delete rule “{{name}}”?",
+      "empty": "No seasons or discounts yet",
+      "empty_hint": "Add a high season, a weekend price or a long-stay discount.",
+      "when": "When",
+      "adjustment": "Adjustment",
+      "applies_to": "Applies to",
+      "priority": "Priority",
+      "priority_hint": "Lower numbers apply first",
+      "value": "Value",
+      "date_from": "Nights from",
+      "date_to": "Nights until",
+      "any_date": "Any date",
+      "every_day": "Every day",
+      "everything": "All categories and plans",
+      "weekdays_hint": "The night of the selected days (Friday = Friday night). Leave empty for every day.",
+      "room_types": "Room categories",
+      "rate_plans": "Rate plans",
+      "all_plans": "All rate plans",
+      "kinds": {
+        "season": "Season or event",
+        "weekday": "Weekday / weekend",
+        "occupancy": "High demand",
+        "long_stay": "Long-stay discount",
+        "last_minute": "Last-minute offer",
+        "early_bird": "Early booking"
+      },
+      "kind_hints": {
+        "season": "Adjusts prices for nights within a period: high or low season, festivals, events.",
+        "weekday": "Adjusts prices on chosen days of the week, e.g. Friday and Saturday nights.",
+        "occupancy": "Raises (or lowers) prices when the category is filling up.",
+        "long_stay": "Discount for stays of at least a number of nights.",
+        "last_minute": "Discount for bookings made shortly before arrival.",
+        "early_bird": "Discount for bookings made well in advance."
+      },
+      "adjustments": {
+        "percent": "Percentage",
+        "amount": "Amount per night",
+        "set": "Fixed price"
+      },
+      "condition": {
+        "min_nights": "Minimum nights",
+        "max_days_before": "At most … days before arrival",
+        "min_days_before": "At least … days before arrival",
+        "min_occupancy": "When occupancy is at least (%)"
+      },
+      "cond_min_nights_one": "from {{count}} night",
+      "cond_min_nights_other": "from {{count}} nights",
+      "cond_max_days_before_one": "≤ {{count}} day before arrival",
+      "cond_max_days_before_other": "≤ {{count}} days before arrival",
+      "cond_min_days_before_one": "≥ {{count}} day before arrival",
+      "cond_min_days_before_other": "≥ {{count}} days before arrival",
+      "cond_min_occupancy": "occupancy ≥ {{value}} %"
+    },
+    "policies": {
+      "hint": "Cancellation terms attached to rate plans and shown on reservations.",
+      "add": "Add policy",
+      "edit": "Edit policy",
+      "delete": "Delete policy “{{name}}”?",
+      "free_cancellation": "Free cancellation",
+      "penalty": "Penalty",
+      "no_show": "No-show",
+      "none": "No cancellation policy",
+      "non_refundable_summary": "Non-refundable",
+      "free_until_one": "Free until {{count}} day before arrival",
+      "free_until_other": "Free until {{count}} days before arrival",
+      "penalty_percent": "{{value}} % of the stay",
+      "penalty_nights_one": "{{count}} night",
+      "penalty_nights_other": "{{count}} nights",
+      "penalty_kind_nights": "Nights charged",
+      "penalty_kind_percent": "% of the stay",
+      "penalty_value": "Value",
+      "allows_free": "Free cancellation is possible",
+      "free_until_days": "Free until … days before arrival",
+      "free_until_days_hint": "0 = until the arrival day",
+      "no_show_nights": "Nights charged for a no-show",
+      "guest_text": "Text for guests",
+      "guest_text_hint": "Shown on confirmations and invoices",
+      "fees_later": "Cancellation fees will be charged automatically once payments and folios are available (front desk module)."
     }
   }
 }

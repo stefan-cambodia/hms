@@ -39,7 +39,8 @@
     "my_account": "Mon compte",
     "reservations": "Réservations",
     "calendar": "Planning",
-    "guests": "Clients"
+    "guests": "Clients",
+    "pricing": "Tarifs"
   },
   "auth": {
     "title": "Système de gestion hôtelière",
@@ -521,7 +522,8 @@
       "roles_manage": "Gérer les rôles",
       "sessions_manage": "Consulter et révoquer les sessions",
       "audit_view": "Consulter le journal d’audit",
-      "backups_manage": "Gérer les sauvegardes"
+      "backups_manage": "Gérer les sauvegardes",
+      "reservations_override_restrictions": "Déroger aux restrictions de séjour"
     }
   },
   "sessions": {
@@ -575,7 +577,11 @@
       "organization": "Organisation",
       "reservation": "Réservation",
       "guest": "Client",
-      "room_block": "Chambre hors service"
+      "room_block": "Chambre hors service",
+      "rate_plan": "Plan tarifaire",
+      "pricing_rule": "Règle tarifaire",
+      "cancellation_policy": "Politique d’annulation",
+      "rate": "Tarifs"
     },
     "actions": {
       "create": "Création",
@@ -594,7 +600,8 @@
       "bootstrap": "Installation du système",
       "created": "Création",
       "updated": "Modification",
-      "view_sensitive": "Consultation de la pièce d’identité"
+      "view_sensitive": "Consultation de la pièce d’identité",
+      "bulk_update": "Mise à jour des tarifs"
     }
   },
   "account": {
@@ -745,7 +752,34 @@
     "SENSITIVE_FIELDS_FORBIDDEN": "Vous n’êtes pas autorisé à modifier les pièces d’identité",
     "INVALID_RANGE": "Période non valide",
     "INVALID_DATES": "Le départ doit être postérieur à l’arrivée",
-    "ROOM_BLOCK_NOT_FOUND": "Période hors service introuvable"
+    "ROOM_BLOCK_NOT_FOUND": "Période hors service introuvable",
+    "RATE_PLAN_NOT_FOUND": "Plan tarifaire introuvable",
+    "RATE_PLAN_CODE_EXISTS": "Ce code de plan tarifaire est déjà utilisé",
+    "RATE_PLAN_HAS_CHILDREN": "D’autres plans tarifaires sont basés sur celui-ci. Modifiez-les d’abord.",
+    "RATE_PLAN_IN_USE": "Ce plan tarifaire est utilisé par des réservations et ne peut pas être supprimé. Désactivez-le plutôt.",
+    "RATE_PLAN_CYCLE": "Un plan tarifaire ne peut pas être basé sur lui-même (directement ou indirectement)",
+    "DERIVATION_REQUIRED": "Indiquez en quoi ce plan diffère du plan sur lequel il est basé",
+    "DEFAULT_PLAN_REQUIRED": "L’hôtel doit avoir un plan tarifaire par défaut : choisissez d’abord un autre plan par défaut",
+    "DEFAULT_PLAN_MUST_BE_ACTIVE": "Le plan tarifaire par défaut doit être actif",
+    "NO_DEFAULT_RATE_PLAN": "Aucun plan tarifaire par défaut n’est configuré",
+    "POLICY_NOT_FOUND": "Politique d’annulation introuvable",
+    "POLICY_CODE_EXISTS": "Ce code de politique est déjà utilisé",
+    "POLICY_IN_USE": "Cette politique est utilisée par un plan tarifaire",
+    "PRICING_RULE_NOT_FOUND": "Règle introuvable",
+    "RULE_CONDITION_REQUIRED": "Saisissez la condition de cette règle",
+    "SEASON_DATES_REQUIRED": "Une saison nécessite une date de début et une date de fin",
+    "WEEKDAYS_REQUIRED": "Choisissez au moins un jour de la semaine",
+    "DISCOUNT_TOO_LARGE": "Une réduction doit être inférieure à 100 %",
+    "MAX_STAY_BELOW_MIN": "La durée maximale de séjour ne peut pas être inférieure à la durée minimale de séjour",
+    "RATE_PLAN_INACTIVE": "Ce tarif n’est pas disponible à la vente",
+    "RATE_PLAN_NOT_FOR_ROOM_TYPE": "Ce tarif n’est pas proposé pour cette catégorie de chambre",
+    "RATE_PLAN_NOT_VALID_FOR_DATES": "Ce tarif n’est pas valable pour ces dates",
+    "RATE_PLAN_BOOKING_WINDOW": "Ce tarif ne peut pas être réservé si près (ou si loin) de la date d’arrivée",
+    "STOP_SELL": "Fermé à la vente pour la nuit du {{night}}",
+    "MIN_STAY_NOT_MET": "Durée minimale de séjour pour cette arrivée : {{min_stay}} nuit(s)",
+    "MAX_STAY_EXCEEDED": "Durée maximale de séjour pour cette arrivée : {{max_stay}} nuit(s)",
+    "CLOSED_TO_ARRIVAL": "Aucune arrivée possible le {{date}}",
+    "CLOSED_TO_DEPARTURE": "Aucun départ possible le {{date}}"
   },
   "reservations": {
     "description": "Toutes les réservations, quelle que soit leur origine. Cliquez sur une réservation pour la gérer.",
@@ -839,7 +873,8 @@
       "status_changed": "Statut : {{from}} → {{to}}",
       "room_assigned": "Chambre : {{from}} → {{to}}",
       "dates_changed": "Dates : {{from}} ⇒ {{to}}",
-      "details_updated": "Détails mis à jour"
+      "details_updated": "Détails mis à jour",
+      "rate_plan_changed": "Tarif : {{from}} → {{to}}"
     },
     "form": {
       "dates": "Arrivée – départ",
@@ -864,8 +899,17 @@
       "create_pending": "Créer une réservation en attente",
       "overbook_title": "Aucune chambre disponible",
       "overbook_body": "Cette catégorie est complète pour la nuit du {{night}}. Vous pouvez tout de même accepter la réservation en surréservation ; elle restera signalée jusqu’à ce qu’une chambre soit trouvée.",
-      "overbook_confirm": "Accepter en surréservation"
-    }
+      "overbook_confirm": "Accepter en surréservation",
+      "restricted_title": "Des restrictions de réservation s’appliquent",
+      "restricted_body": "Ces dates ne respectent pas les restrictions du tarif. Choisissez d’autres dates ou un autre tarif, ou adressez-vous à un responsable.",
+      "override_restrictions": "Déroger aux restrictions pour cette réservation"
+    },
+    "rate": "Tarif",
+    "rate_saved": "Tarif modifié et séjour recalculé",
+    "change_rate_title": "Changer de tarif ?",
+    "change_rate_body": "Passer au tarif « {{plan}} ». Chaque nuit est recalculée aux tarifs actuels : {{old}} → {{new}}.",
+    "free_cancellation_until": "Annulation gratuite jusqu’au {{date}}",
+    "current_restrictions": "Restrictions de ce tarif aujourd’hui"
   },
   "calendar": {
     "today": "Aujourd’hui",
@@ -951,6 +995,226 @@
       "same_email": "même e-mail",
       "same_phone": "même téléphone",
       "similar_name": "nom similaire"
+    }
+  },
+  "pricing": {
+    "description": "Plans tarifaires, saisons, réductions et calendrier des tarifs journaliers. Un seul moteur de tarification est utilisé partout.",
+    "tabs": {
+      "calendar": "Calendrier des tarifs",
+      "plans": "Plans tarifaires",
+      "rules": "Saisons et réductions",
+      "policies": "Politiques d’annulation"
+    },
+    "weekday_short": {
+      "mon": "Lun",
+      "tue": "Mar",
+      "wed": "Mer",
+      "thu": "Jeu",
+      "fri": "Ven",
+      "sat": "Sam",
+      "sun": "Dim"
+    },
+    "meal_plans": {
+      "room_only": "Chambre seule",
+      "breakfast": "Petit-déjeuner inclus",
+      "half_board": "Demi-pension",
+      "full_board": "Pension complète",
+      "all_inclusive": "Tout compris"
+    },
+    "grid": {
+      "rate_plan": "Plan tarifaire",
+      "edit_rates": "Modifier les tarifs",
+      "base": "Base {{price}}",
+      "no_categories": "Ce plan tarifaire ne s’applique à aucune catégorie de chambre active.",
+      "derived_hint": "Les prix suivent automatiquement « {{parent}} ». Ne saisissez un prix ici que pour le remplacer.",
+      "closed": "Fermé",
+      "left_one": "{{count}} libre",
+      "left_many": "{{count}} libres",
+      "left_other": "{{count}} libres",
+      "available_one": "{{count}} chambre disponible",
+      "available_many": "{{count}} chambres disponibles",
+      "available_other": "{{count}} chambres disponibles",
+      "cta": "FA",
+      "ctd": "FD",
+      "cta_long": "Fermé à l’arrivée",
+      "ctd_long": "Fermé au départ",
+      "min_stay_one": "Séjour minimum : {{count}} nuit",
+      "min_stay_many": "Séjour minimum : {{count}} nuits",
+      "min_stay_other": "Séjour minimum : {{count}} nuits",
+      "max_stay_one": "Séjour maximum : {{count}} nuit",
+      "max_stay_many": "Séjour maximum : {{count}} nuits",
+      "max_stay_other": "Séjour maximum : {{count}} nuits",
+      "inherited": "Restrictions héritées du plan parent",
+      "legend_explicit": "saisi manuellement",
+      "legend_computed": "calculé à partir du prix de base et des règles",
+      "legend_restrictions": "≥ durée minimale de séjour · ≤ durée maximale de séjour · FA/FD fermé à l’arrivée/au départ",
+      "source": {
+        "daily_rate": "Prix saisi manuellement",
+        "derived": "Dérivé du plan parent",
+        "base": "Prix de base avec saisons et règles"
+      }
+    },
+    "bulk": {
+      "rate_plans": "Plans tarifaires",
+      "room_types": "Catégories de chambres",
+      "dates": "Du – au (inclus)",
+      "days_one": "{{count}} jour",
+      "days_many": "{{count}} jours",
+      "days_other": "{{count}} jours",
+      "weekdays": "Uniquement certains jours",
+      "weekdays_hint": "Ne sélectionnez aucun jour pour appliquer la modification à tous les jours.",
+      "price": "Prix",
+      "restrictions": "Restrictions",
+      "no_change": "Inchangé",
+      "set": "Définir",
+      "remove": "Retirer",
+      "price_modes": {
+        "none": "Inchangé",
+        "set": "Fixer le prix",
+        "percent": "± %",
+        "amount": "± montant",
+        "clear": "Revenir à l’automatique"
+      },
+      "value_set": "Nouveau prix par nuit",
+      "value_percent": "Variation en %",
+      "value_amount": "Variation par nuit",
+      "percent_hint": "Saisissez une valeur négative pour baisser les prix (p. ex. −10)",
+      "amount_hint": "En {{currency}} ; valeur négative pour baisser les prix",
+      "clear_hint": "Supprime les prix saisis manuellement : ces dates reviennent au prix de base, aux saisons et aux règles.",
+      "min_stay": "Durée minimale de séjour (nuits)",
+      "max_stay": "Durée maximale de séjour (nuits)",
+      "stop_sell": "Fermeture à la vente",
+      "close": "Fermer",
+      "open": "Ouvrir",
+      "yes": "Oui",
+      "no": "Non",
+      "existing_bookings_hint": "Les réservations existantes conservent leur prix ; les modifications s’appliquent aux nouvelles réservations.",
+      "apply": "Appliquer",
+      "done_one": "{{count}} tarif mis à jour",
+      "done_many": "{{count}} tarifs mis à jour",
+      "done_other": "{{count}} tarifs mis à jour"
+    },
+    "plans": {
+      "hint": "Un plan tarifaire correspond à ce que vous vendez : formule de repas, conditions d’annulation et prix. Les plans dérivés suivent automatiquement un autre plan (p. ex. non remboursable = meilleur tarif disponible −10 %).",
+      "add": "Ajouter un plan tarifaire",
+      "edit": "Modifier le plan tarifaire",
+      "delete": "Supprimer le plan tarifaire « {{name}} » ?",
+      "default": "Par défaut",
+      "is_default": "Plan tarifaire par défaut (utilisé si aucun n’est choisi)",
+      "meal_plan": "Repas",
+      "price": "Prix",
+      "own_rates": "Tarifs propres",
+      "based_on": "Basé sur",
+      "based_on_hint": "Laissez vide pour un plan avec ses propres tarifs",
+      "adjustment": "Ajustement",
+      "adjustment_value": "Valeur",
+      "derive_modes": {
+        "percent": "Pourcentage",
+        "amount": "Montant par nuit",
+        "amount_per_person": "Montant par personne et par nuit"
+      },
+      "derived_per_person": "{{parent}} {{amount}} par personne",
+      "cancellation": "Annulation",
+      "refundable": "Remboursable",
+      "non_refundable": "Non remboursable",
+      "policy": "Politique d’annulation",
+      "availability": "Conditions de vente",
+      "categories": "Catégories de chambres",
+      "all_categories": "Toutes les catégories",
+      "categories_hint": "Laissez vide pour toutes les catégories",
+      "valid_from": "Séjours à partir du",
+      "valid_to": "Séjours jusqu’au",
+      "min_advance": "Réserver au moins … jours à l’avance",
+      "min_advance_hint": "p. ex. 30 pour un tarif réservation anticipée",
+      "max_advance": "Réserver au plus … jours à l’avance",
+      "max_advance_hint": "p. ex. 3 pour un tarif dernière minute"
+    },
+    "rules": {
+      "hint": "Les saisons, les week-ends et la demande ajustent le prix calculé. Les réductions long séjour, dernière minute et réservation anticipée s’appliquent en plus de tout prix. Les règles s’appliquent par ordre de priorité.",
+      "add": "Ajouter une règle…",
+      "delete": "Supprimer la règle « {{name}} » ?",
+      "empty": "Aucune saison ni réduction pour le moment",
+      "empty_hint": "Ajoutez une haute saison, un prix week-end ou une réduction long séjour.",
+      "when": "Quand",
+      "adjustment": "Ajustement",
+      "applies_to": "S’applique à",
+      "priority": "Priorité",
+      "priority_hint": "Les numéros les plus bas s’appliquent en premier",
+      "value": "Valeur",
+      "date_from": "Nuits à partir du",
+      "date_to": "Nuits jusqu’au",
+      "any_date": "Toutes les dates",
+      "every_day": "Tous les jours",
+      "everything": "Toutes les catégories et tous les plans",
+      "weekdays_hint": "La nuit des jours sélectionnés (vendredi = nuit du vendredi). Laissez vide pour tous les jours.",
+      "room_types": "Catégories de chambres",
+      "rate_plans": "Plans tarifaires",
+      "all_plans": "Tous les plans tarifaires",
+      "kinds": {
+        "season": "Saison ou événement",
+        "weekday": "Semaine / week-end",
+        "occupancy": "Forte demande",
+        "long_stay": "Réduction long séjour",
+        "last_minute": "Offre dernière minute",
+        "early_bird": "Réservation anticipée"
+      },
+      "kind_hints": {
+        "season": "Ajuste les prix des nuits comprises dans une période : haute ou basse saison, festivals, événements.",
+        "weekday": "Ajuste les prix certains jours de la semaine, p. ex. les nuits du vendredi et du samedi.",
+        "occupancy": "Augmente (ou baisse) les prix lorsque la catégorie se remplit.",
+        "long_stay": "Réduction pour les séjours d’au moins un certain nombre de nuits.",
+        "last_minute": "Réduction pour les réservations effectuées peu avant l’arrivée.",
+        "early_bird": "Réduction pour les réservations effectuées longtemps à l’avance."
+      },
+      "adjustments": {
+        "percent": "Pourcentage",
+        "amount": "Montant par nuit",
+        "set": "Prix fixe"
+      },
+      "condition": {
+        "min_nights": "Nombre minimal de nuits",
+        "max_days_before": "Au plus … jours avant l’arrivée",
+        "min_days_before": "Au moins … jours avant l’arrivée",
+        "min_occupancy": "Lorsque le taux d’occupation atteint au moins (%)"
+      },
+      "cond_min_nights_one": "à partir de {{count}} nuit",
+      "cond_min_nights_many": "à partir de {{count}} nuits",
+      "cond_min_nights_other": "à partir de {{count}} nuits",
+      "cond_max_days_before_one": "≤ {{count}} jour avant l’arrivée",
+      "cond_max_days_before_many": "≤ {{count}} jours avant l’arrivée",
+      "cond_max_days_before_other": "≤ {{count}} jours avant l’arrivée",
+      "cond_min_days_before_one": "≥ {{count}} jour avant l’arrivée",
+      "cond_min_days_before_many": "≥ {{count}} jours avant l’arrivée",
+      "cond_min_days_before_other": "≥ {{count}} jours avant l’arrivée",
+      "cond_min_occupancy": "occupation ≥ {{value}} %"
+    },
+    "policies": {
+      "hint": "Conditions d’annulation associées aux plans tarifaires et affichées sur les réservations.",
+      "add": "Ajouter une politique",
+      "edit": "Modifier la politique",
+      "delete": "Supprimer la politique « {{name}} » ?",
+      "free_cancellation": "Annulation gratuite",
+      "penalty": "Pénalité",
+      "no_show": "Non-présentation",
+      "none": "Aucune politique d’annulation",
+      "non_refundable_summary": "Non remboursable",
+      "free_until_one": "Gratuite jusqu’à {{count}} jour avant l’arrivée",
+      "free_until_many": "Gratuite jusqu’à {{count}} jours avant l’arrivée",
+      "free_until_other": "Gratuite jusqu’à {{count}} jours avant l’arrivée",
+      "penalty_percent": "{{value}} % du séjour",
+      "penalty_nights_one": "{{count}} nuit",
+      "penalty_nights_many": "{{count}} nuits",
+      "penalty_nights_other": "{{count}} nuits",
+      "penalty_kind_nights": "Nuits facturées",
+      "penalty_kind_percent": "% du séjour",
+      "penalty_value": "Valeur",
+      "allows_free": "Annulation gratuite possible",
+      "free_until_days": "Gratuite jusqu’à … jours avant l’arrivée",
+      "free_until_days_hint": "0 = jusqu’au jour de l’arrivée",
+      "no_show_nights": "Nuits facturées en cas de non-présentation",
+      "guest_text": "Texte destiné aux clients",
+      "guest_text_hint": "Affiché sur les confirmations et les factures",
+      "fees_later": "Les frais d’annulation seront facturés automatiquement dès que les paiements et les folios seront disponibles (module réception)."
     }
   }
 }

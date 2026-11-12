@@ -32,6 +32,7 @@ import {
   IconCirclePlus,
   IconEdit,
   IconPencil,
+  IconCurrencyDollar,
   IconStatusChange,
   IconX,
 } from '@tabler/icons-react';
@@ -39,14 +40,17 @@ import { useTranslation } from 'react-i18next';
 
 import { api } from '@/api/client';
 import { useHotelMutation, useHotelQuery } from '@/api/hooks';
-import type { AvailableRoom, Reservation, ReservationEvent, ReservationRoom, ReservationSource } from '@/api/types';
+import { ApiError } from '@/api/client';
+import type { AvailableRoom, Offer, Reservation, ReservationEvent, ReservationRoom, ReservationSource } from '@/api/types';
 import { PageLoader } from '@/app/AppLayout';
 import { useAuth, useHotel } from '@/auth/AuthProvider';
 import { EmptyState, SubmitButton } from '@/components/ui';
 import { daysBetween } from '@/lib/dates';
-import { notifyError, notifySuccess } from '@/lib/errors';
+import { errorMessage, notifyError, notifySuccess } from '@/lib/errors';
 import { countryName, formatDate, formatDateTime, formatMoney } from '@/lib/format';
 import { pickLocalized } from '@/lib/localized';
+import { issueLabel, policySummary, usePricingLookups } from '@/modules/pricing/shared';
+import { addDays } from '@/lib/dates';
 import { FlagBadges, SOURCES, StatusBadge, useHotelToday, useInventory } from './shared';
 
 const INVALIDATES = ['reservation', 'calendar'];
@@ -265,6 +269,52 @@ function StayCard({ reservation: r, stay, index, editable }: { reservation: Rese
     { start: stay.arrival, end: stay.departure, room_type_id: stay.room_type_id, ignore_reservation_room: stay.id },
     editable && live && !stay.checked_in_at,
   );
+  const { can } = useAuth();
+  const hotelDay = useHotelToday();
+  const pricing = usePricingLookups();
+  const plan = stay.rate_plan_id ? pricing.planById.get(stay.rate_plan_id) : pricing.defaultPlan;
+  const policy = plan?.cancellation_policy_id ? pricing.policyById.get(plan.cancellation_policy_id) : undefined;
+  const freeUntil = plan?.is_refundable && policy?.free_until_days !== null && policy?.free_until_days !== undefined ? addDays(stay.arrival, -policy.free_until_days) : null;
+  const offers = useHotelQuery<Offer[]>(
+    'rate',
+    '/rates/offers',
+    { arrival: stay.arrival, departure: stay.departure, adults: stay.adults, children: stay.children, room_type_id: stay.room_type_id },
+    editable && live,
+  );
+  const changeRate = useHotelMutation<{ planId: string; override: boolean }, Reservation>(
+    (h, { planId, override }) =>
+      api.post<Reservation>(h(`/reservations/${r.id}/rooms/${stay.id}/rate-plan`), { version: r.version, rate_plan_id: planId, override_restrictions: override }),
+    INVALIDATES,
+  );
+  const onRateChange = (planId: string | null) => {
+    if (!planId || planId === stay.rate_plan_id) return;
+    const offer = offers.data?.find((o) => o.rate_plan_id === planId);
+    const confirmChange = (override: boolean) =>
+      changeRate.mutateAsync({ planId, override }).then(() => notifySuccess(t('reservations.rate_saved')), (err) => {
+        if (err instanceof ApiError && err.status === 409 && !override && can('reservations.override_restrictions') && !['VERSION_CONFLICT', 'RESERVATION_CLOSED'].includes(err.code)) {
+          modals.openConfirmModal({
+            title: t('reservations.form.restricted_title'),
+            children: <Text size="sm">{errorMessage(err)}</Text>,
+            labels: { confirm: t('reservations.form.override_restrictions'), cancel: t('common.cancel') },
+            onConfirm: () => void confirmChange(true),
+          });
+        } else notifyError(err);
+      });
+    modals.openConfirmModal({
+      title: t('reservations.change_rate_title'),
+      children: (
+        <Text size="sm">
+          {t('reservations.change_rate_body', {
+            plan: pricing.planName(planId),
+            old: formatMoney(stay.accommodation_total, r.currency, i18n.language),
+            new: offer ? formatMoney(offer.total, r.currency, i18n.language) : '—',
+          })}
+        </Text>
+      ),
+      labels: { confirm: t('common.save'), cancel: t('common.cancel') },
+      onConfirm: () => void confirmChange(false),
+    });
+  };
   const assign = useHotelMutation<string | null, Reservation>(
     (h, roomId) => api.post<Reservation>(h(`/reservations/${r.id}/rooms/${stay.id}/assign`), { version: r.version, room_id: roomId }),
     INVALIDATES,
@@ -314,6 +364,45 @@ function StayCard({ reservation: r, stay, index, editable }: { reservation: Rese
           )}
         </Group>
       </Group>
+      <Group mt="sm" gap="sm" wrap="wrap" align="flex-end">
+        {editable && live && !stay.checked_out_at ? (
+          <Select
+            label={t('reservations.rate')}
+            w={300}
+            data={(offers.data ?? []).map((o) => ({
+              value: o.rate_plan_id,
+              label: `${pricing.planName(o.rate_plan_id)} · ${formatMoney(o.total, r.currency, i18n.language)}`,
+            }))}
+            value={stay.rate_plan_id}
+            onChange={onRateChange}
+            allowDeselect={false}
+            disabled={changeRate.isPending}
+          />
+        ) : (
+          <Text size="sm">
+            {t('reservations.rate')}: <b>{pricing.planName(stay.rate_plan_id)}</b>
+          </Text>
+        )}
+        <div>
+          <Text size="xs" c="dimmed">
+            {plan ? t(`pricing.meal_plans.${plan.meal_plan}`) : ''} ·{' '}
+            {plan && !plan.is_refundable ? t('pricing.plans.non_refundable') : policySummary(policy, t)}
+          </Text>
+          {freeUntil && (
+            <Text size="xs" c={freeUntil < hotelDay ? 'dimmed' : 'teal.7'}>
+              {t('reservations.free_cancellation_until', { date: formatDate(freeUntil, i18n.language) })}
+            </Text>
+          )}
+        </div>
+      </Group>
+      {offers.data && (() => {
+        const current = offers.data.find((o) => o.rate_plan_id === stay.rate_plan_id);
+        return current && current.issues.length > 0 && editable ? (
+          <Text size="xs" c="dimmed" mt={4}>
+            {t('reservations.current_restrictions')}: {current.issues.map((x) => issueLabel(x, t, i18n.language)).join(' · ')}
+          </Text>
+        ) : null;
+      })()}
       <UnstyledButton mt="sm" onClick={() => setShowNights((s) => !s)}>
         <Group gap={4}>
           <Text size="sm" c="lagoon">
@@ -467,6 +556,7 @@ const EVENT_ICONS: Record<string, typeof IconCheck> = {
   created: IconCirclePlus,
   status_changed: IconStatusChange,
   room_assigned: IconBed,
+  rate_plan_changed: IconCurrencyDollar,
   dates_changed: IconCalendarEvent,
   details_updated: IconPencil,
 };
@@ -491,6 +581,8 @@ function HistoryTimeline({ events }: { events: ReservationEvent[] }) {
       }
       case 'details_updated':
         return t('reservations.events.details_updated');
+      case 'rate_plan_changed':
+        return t('reservations.events.rate_plan_changed', { from: d.old ?? '—', to: d.new ?? '—' });
       default:
         return e.action;
     }

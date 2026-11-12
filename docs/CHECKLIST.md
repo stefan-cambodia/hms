@@ -60,7 +60,7 @@ Last updated: 2026-11-12. Test counts: backend 48 (pytest, real PostgreSQL), fro
 | Additional currencies and exchange rates | ⬜ | Phase 5 (with payments) |
 | Multi-property: create additional hotels (super admin), hotel switcher | ✅ | |
 
-## Phase 4 — Core hotel management (reservations, calendar, guests delivered; rate plans pending)
+## Phase 4 — Core hotel management ✅
 
 | Item | Status | Notes |
 |------|--------|-------|
@@ -77,7 +77,16 @@ Last updated: 2026-11-12. Test counts: backend 48 (pytest, real PostgreSQL), fro
 | Idempotency-Key on creation (sequential and concurrent retries) | ✅ | |
 | Occupancy limits per category/room | ✅ | |
 | Price quote: base price, occupancy supplements, taxes (percent / per night / per person-night, inclusive/exclusive) | ✅ | |
-| Rate plans, daily rates, restrictions, seasonal/weekend/long-stay rules, pricing calendar | ⬜ | Extends `pricing.nightly_price()`; callers unchanged |
+| Rate plans: meal plans, refundable/non-refundable, cancellation policy, categories, validity, booking window, default plan | ✅ | test_pricing.py |
+| Derived plans (percent, amount, amount per person) with restriction inheritance | ✅ | |
+| Seasons/special events, weekday/weekend, occupancy-based pricing | ✅ | |
+| Long-stay, last-minute, early-bird discounts | ✅ | |
+| Restrictions: min/max stay, stop sell, closed to arrival/departure, enforced with audited override permission | ✅ | |
+| Rate calendar (plan × category × day) with bulk edit: set/±%/±amount/back to automatic, weekdays, restrictions | ✅ | API tests + E2E |
+| Offers: every applicable plan with stay total and restriction warnings (reservation form, reservation page) | ✅ | |
+| Change a stay's rate plan (reprices), date changes price new nights with the stay's plan | ✅ | |
+| Cancellation policies (free-cancellation deadline shown on reservations) | ✅ | Fee charging comes with folios (phase 5) |
+| Channel-specific rate mapping | ⬜ | Phase 7 (channel manager) |
 | Guests: CRUD, fuzzy search (pg_trgm), duplicate detection, encrypted ID documents (audited reads) | ✅ | Guest merge ⬜ |
 | Calendar data endpoint (stays, blocks, unassigned, availability) | ✅ | |
 | Reservations list: quick filters (arrivals/departures today, in house, pending), search, status filter | ✅ | E2E |

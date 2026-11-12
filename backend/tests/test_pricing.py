@@ -376,6 +376,8 @@ async def test_offers_list_every_bookable_plan(admin: Api, setup):
     nrf_offer = next(o for o in offers if o["rate_plan_id"] == nrf["id"])
     codes = {i["code"] for i in nrf_offer["issues"]}
     assert codes == {"RATE_PLAN_BOOKING_WINDOW", "OCCUPANCY_EXCEEDED"} and not nrf_offer["bookable"]
+    occ = next(i for i in nrf_offer["issues"] if i["code"] == "OCCUPANCY_EXCEEDED")
+    assert occ["max_adults"] == 3
 
 
 async def test_changing_a_stays_rate_plan_reprices_it(admin: Api, setup):

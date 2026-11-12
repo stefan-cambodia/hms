@@ -5,6 +5,7 @@ import {
   Badge,
   Button,
   Card,
+  Checkbox,
   Divider,
   Drawer,
   Grid,
@@ -21,20 +22,21 @@ import {
 import { DatePickerInput } from '@mantine/dates';
 import { useDebouncedValue } from '@mantine/hooks';
 import { modals } from '@mantine/modals';
-import { IconPlus, IconTrash } from '@tabler/icons-react';
+import { IconAlertTriangle, IconPlus, IconTrash } from '@tabler/icons-react';
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
 import { api, ApiError } from '@/api/client';
 import { useHotelQuery } from '@/api/hooks';
 import { hotelKey } from '@/api/realtime';
-import type { Availability, AvailableRoom, Quote, Reservation, ReservationSource } from '@/api/types';
+import type { Availability, AvailableRoom, Offer, Quote, Reservation, ReservationSource, RestrictionIssue } from '@/api/types';
 import { useAuth, useHotel } from '@/auth/AuthProvider';
 import { SubmitButton } from '@/components/ui';
 import { addDays, daysBetween } from '@/lib/dates';
 import { errorMessage, fieldMessage, notifySuccess } from '@/lib/errors';
 import { formatDate, formatMoney } from '@/lib/format';
 import { pickLocalized } from '@/lib/localized';
+import { issueLabel, usePricingLookups } from '@/modules/pricing/shared';
 import { EMPTY_GUEST, type GuestChoice, GuestPicker } from './GuestPicker';
 import { newIdempotencyKey, SOURCES, useHotelToday, useInventory } from './shared';
 
@@ -49,6 +51,7 @@ interface Line {
   key: string;
   room_type_id: string | null;
   room_id: string | null;
+  rate_plan_id: string | null;
   adults: number;
   children: number;
 }
@@ -84,7 +87,7 @@ function ReservationForm({ draft, onDone, onCancel }: { draft?: ReservationDraft
   const [dates, setDates] = useState<[string | null, string | null]>([draft?.arrival ?? today, draft?.departure ?? addDays(draft?.arrival ?? today, 1)]);
   const [guest, setGuest] = useState<GuestChoice>({ mode: 'new', data: EMPTY_GUEST });
   const [lines, setLines] = useState<Line[]>([
-    { key: 'l0', room_type_id: draft?.room_type_id ?? null, room_id: draft?.room_id ?? null, adults: 2, children: 0 },
+    { key: 'l0', room_type_id: draft?.room_type_id ?? null, room_id: draft?.room_id ?? null, rate_plan_id: null, adults: 2, children: 0 },
   ]);
   const [source, setSource] = useState<ReservationSource>('direct');
   const [status, setStatus] = useState<'confirmed' | 'pending'>('confirmed');
@@ -94,6 +97,7 @@ function ReservationForm({ draft, onDone, onCancel }: { draft?: ReservationDraft
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [override, setOverride] = useState(false);
 
   const [arrival, departure] = dates;
   const validDates = !!arrival && !!departure && departure > arrival;
@@ -110,7 +114,7 @@ function ReservationForm({ draft, onDone, onCancel }: { draft?: ReservationDraft
   const quotePayload = useMemo(
     () =>
       validDates && lines.every((l) => l.room_type_id)
-        ? { arrival, departure, rooms: lines.map((l) => ({ room_type_id: l.room_type_id, room_id: l.room_id || null, adults: l.adults, children: l.children })) }
+        ? { arrival, departure, rooms: lines.map((l) => ({ room_type_id: l.room_type_id, room_id: l.room_id || null, rate_plan_id: l.rate_plan_id, adults: l.adults, children: l.children })) }
         : null,
     [validDates, arrival, departure, lines],
   );
@@ -140,13 +144,14 @@ function ReservationForm({ draft, onDone, onCancel }: { draft?: ReservationDraft
             preferred_language: guest.data.preferred_language,
           },
         }),
-    rooms: lines.map((l) => ({ room_type_id: l.room_type_id, room_id: l.room_id || null, adults: l.adults, children: l.children })),
+    rooms: lines.map((l) => ({ room_type_id: l.room_type_id, room_id: l.room_id || null, rate_plan_id: l.rate_plan_id, adults: l.adults, children: l.children })),
     status,
     source,
     external_ref: externalRef.trim() || null,
     special_requests: requests.trim() || null,
     internal_notes: notes.trim() || null,
     allow_overbooking: allowOverbooking,
+    override_restrictions: override,
   });
 
   const submit = async (allowOverbooking = false) => {
@@ -185,7 +190,10 @@ function ReservationForm({ draft, onDone, onCancel }: { draft?: ReservationDraft
   };
 
   const guestReady = guest.mode === 'existing' ? !!guest.guest : !!(guest.data.first_name.trim() && guest.data.last_name.trim());
-  const canSubmit = validDates && guestReady && lines.every((l) => l.room_type_id);
+  const issues: RestrictionIssue[][] = lines.map((_, i) => (quote.data && !quote.isPlaceholderData ? (quote.data.stays[i]?.issues ?? []) : []));
+  const restricted = issues.some((x) => x.length > 0);
+  const canOverride = can('reservations.override_restrictions');
+  const canSubmit = validDates && guestReady && lines.every((l) => l.room_type_id) && (!restricted || (canOverride && override));
   const typeOptions = inv.types
     .filter((rt) => rt.is_active)
     .map((rt) => {
@@ -247,6 +255,7 @@ function ReservationForm({ draft, onDone, onCancel }: { draft?: ReservationDraft
                     end={validDates ? departure : null}
                     typeOptions={typeOptions}
                     minAvailable={line.room_type_id ? minAvailable.get(line.room_type_id) : undefined}
+                    issues={issues[i]}
                     errors={errors}
                     onChange={(patch) => updateLine(line.key, patch)}
                     onRemove={lines.length > 1 ? () => setLines((ls) => ls.filter((l) => l.key !== line.key)) : undefined}
@@ -257,7 +266,7 @@ function ReservationForm({ draft, onDone, onCancel }: { draft?: ReservationDraft
                     variant="light"
                     size="xs"
                     leftSection={<IconPlus size={14} />}
-                    onClick={() => setLines((ls) => [...ls, { key: `l${Date.now()}`, room_type_id: null, room_id: null, adults: 2, children: 0 }])}
+                    onClick={() => setLines((ls) => [...ls, { key: `l${Date.now()}`, room_type_id: null, room_id: null, rate_plan_id: null, adults: 2, children: 0 }])}
                   >
                     {t('reservations.form.add_room')}
                   </Button>
@@ -339,6 +348,15 @@ function ReservationForm({ draft, onDone, onCancel }: { draft?: ReservationDraft
                 {errorMessage(quote.error)}
               </Text>
             )}
+            {restricted && (
+              <Alert color="yellow" variant="light" mt="md" icon={<IconAlertTriangle size={16} />} title={t('reservations.form.restricted_title')}>
+                {canOverride ? (
+                  <Checkbox label={t('reservations.form.override_restrictions')} checked={override} onChange={(e) => setOverride(e.currentTarget.checked)} />
+                ) : (
+                  <Text size="sm">{t('reservations.form.restricted_body')}</Text>
+                )}
+              </Alert>
+            )}
             <Stack mt="lg" gap="xs">
               <SubmitButton size="md" fullWidth loading={busy} disabled={!canSubmit}>
                 {status === 'pending' ? t('reservations.form.create_pending') : t('reservations.form.create')}
@@ -361,6 +379,7 @@ function RoomLineEditor({
   end,
   typeOptions,
   minAvailable,
+  issues,
   errors,
   onChange,
   onRemove,
@@ -371,13 +390,26 @@ function RoomLineEditor({
   end: string | null;
   typeOptions: { value: string; label: string }[];
   minAvailable: number | undefined;
+  issues: RestrictionIssue[];
   errors: Record<string, string>;
   onChange: (patch: Partial<Line>) => void;
   onRemove?: () => void;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const hotel = useHotel();
   const inv = useInventory();
+  const pricing = usePricingLookups();
   const rt = line.room_type_id ? inv.typeById.get(line.room_type_id) : undefined;
+  const offers = useHotelQuery<Offer[]>(
+    'rate',
+    '/rates/offers',
+    { arrival: start, departure: end, adults: line.adults, children: line.children, room_type_id: line.room_type_id },
+    !!start && !!end && !!line.room_type_id,
+  );
+  const rateOptions = (offers.data ?? []).map((o) => ({
+    value: o.rate_plan_id,
+    label: `${pricing.planName(o.rate_plan_id)} · ${formatMoney(o.total, hotel.currency_code, i18n.language)}${o.bookable ? '' : ' ⚠'}`,
+  }));
   const free = useHotelQuery<AvailableRoom[]>(
     'calendar',
     '/available-rooms',
@@ -421,6 +453,20 @@ function RoomLineEditor({
           </Grid.Col>
         )}
       </Grid>
+      <Select
+        mt="xs"
+        label={t('reservations.rate')}
+        data={rateOptions}
+        value={line.rate_plan_id ?? pricing.defaultPlan?.id ?? null}
+        onChange={(v) => onChange({ rate_plan_id: v })}
+        allowDeselect={false}
+        disabled={!line.room_type_id || !start}
+      />
+      {issues.length > 0 && (
+        <Text size="xs" c="orange.8" mt={4}>
+          {issues.map((x) => issueLabel(x, t, i18n.language)).join(' · ')}
+        </Text>
+      )}
       {minAvailable !== undefined && minAvailable <= 0 && (
         <Badge color="red" variant="light" mt="xs" radius="sm">
           {t('reservations.form.sold_out')}

@@ -39,7 +39,8 @@
     "my_account": "我的账户",
     "reservations": "预订",
     "calendar": "房态日历",
-    "guests": "宾客"
+    "guests": "宾客",
+    "pricing": "价格与房价"
   },
   "auth": {
     "title": "酒店管理系统",
@@ -507,7 +508,8 @@
       "roles_manage": "管理角色",
       "sessions_manage": "查看和撤销会话",
       "audit_view": "查看审计日志",
-      "backups_manage": "管理备份"
+      "backups_manage": "管理备份",
+      "reservations_override_restrictions": "忽略入住限制"
     }
   },
   "sessions": {
@@ -561,7 +563,11 @@
       "organization": "组织",
       "reservation": "预订",
       "guest": "宾客",
-      "room_block": "房间停用"
+      "room_block": "房间停用",
+      "rate_plan": "价格计划",
+      "pricing_rule": "定价规则",
+      "cancellation_policy": "取消政策",
+      "rate": "房价"
     },
     "actions": {
       "create": "创建",
@@ -580,7 +586,8 @@
       "bootstrap": "系统安装",
       "created": "创建",
       "updated": "更新",
-      "view_sensitive": "查看身份证件"
+      "view_sensitive": "查看身份证件",
+      "bulk_update": "批量更新房价"
     }
   },
   "account": {
@@ -731,7 +738,34 @@
     "SENSITIVE_FIELDS_FORBIDDEN": "您无权编辑身份证件信息",
     "INVALID_RANGE": "日期范围无效",
     "INVALID_DATES": "离店日期必须晚于到店日期",
-    "ROOM_BLOCK_NOT_FOUND": "未找到停用时段"
+    "ROOM_BLOCK_NOT_FOUND": "未找到停用时段",
+    "RATE_PLAN_NOT_FOUND": "未找到价格计划",
+    "RATE_PLAN_CODE_EXISTS": "此价格计划代码已被使用",
+    "RATE_PLAN_HAS_CHILDREN": "有其他价格计划基于此计划。请先修改这些计划。",
+    "RATE_PLAN_IN_USE": "此价格计划已被预订使用，无法删除。请改为停用。",
+    "RATE_PLAN_CYCLE": "价格计划不能（直接或间接）基于自身",
+    "DERIVATION_REQUIRED": "请设置此计划相对于其基础计划的调整方式",
+    "DEFAULT_PLAN_REQUIRED": "酒店必须有一个默认价格计划：请先选择其他默认计划",
+    "DEFAULT_PLAN_MUST_BE_ACTIVE": "默认价格计划必须处于启用状态",
+    "NO_DEFAULT_RATE_PLAN": "尚未配置默认价格计划",
+    "POLICY_NOT_FOUND": "未找到取消政策",
+    "POLICY_CODE_EXISTS": "此政策代码已被使用",
+    "POLICY_IN_USE": "此政策正被某个价格计划使用",
+    "PRICING_RULE_NOT_FOUND": "未找到规则",
+    "RULE_CONDITION_REQUIRED": "请输入此规则的条件",
+    "SEASON_DATES_REQUIRED": "季节必须设置开始日期和结束日期",
+    "WEEKDAYS_REQUIRED": "请至少选择一周中的一天",
+    "DISCOUNT_TOO_LARGE": "降价幅度必须小于 100 %",
+    "MAX_STAY_BELOW_MIN": "最多入住晚数不能少于最少入住晚数",
+    "RATE_PLAN_INACTIVE": "此价格计划当前不可销售",
+    "RATE_PLAN_NOT_FOR_ROOM_TYPE": "此价格计划不适用于该房型",
+    "RATE_PLAN_NOT_VALID_FOR_DATES": "此价格计划在所选日期无效",
+    "RATE_PLAN_BOOKING_WINDOW": "距到店日期过近（或过远），无法预订此价格计划",
+    "STOP_SELL": "{{night}} 已停售",
+    "MIN_STAY_NOT_MET": "此到店日期的最少入住晚数：{{min_stay}} 晚",
+    "MAX_STAY_EXCEEDED": "此到店日期的最多入住晚数：{{max_stay}} 晚",
+    "CLOSED_TO_ARRIVAL": "{{date}} 不可到店",
+    "CLOSED_TO_DEPARTURE": "{{date}} 不可离店"
   },
   "reservations": {
     "description": "所有来源的全部预订。点击预订即可进行管理。",
@@ -821,7 +855,8 @@
       "status_changed": "状态：{{from}} → {{to}}",
       "room_assigned": "房间：{{from}} → {{to}}",
       "dates_changed": "日期：{{from}} ⇒ {{to}}",
-      "details_updated": "详情已更新"
+      "details_updated": "详情已更新",
+      "rate_plan_changed": "价格计划：{{from}} → {{to}}"
     },
     "form": {
       "dates": "到店 – 离店",
@@ -844,8 +879,17 @@
       "create_pending": "创建待确认预订",
       "overbook_title": "无可用房间",
       "overbook_body": "该房型在 {{night}} 已满房。您仍可以超订方式接受此预订；在找到房间之前，该预订将一直被标记。",
-      "overbook_confirm": "仍然超订"
-    }
+      "overbook_confirm": "仍然超订",
+      "restricted_title": "存在预订限制",
+      "restricted_body": "所选日期不符合该价格计划的限制条件。请选择其他日期或其他价格计划，或联系经理。",
+      "override_restrictions": "为此预订忽略限制条件"
+    },
+    "rate": "价格计划",
+    "rate_saved": "价格计划已更改，房费已重新计价",
+    "change_rate_title": "更改价格计划？",
+    "change_rate_body": "切换为“{{plan}}”。每晚均按当前房价重新计价：{{old}} → {{new}}。",
+    "free_cancellation_until": "{{date}} 前可免费取消",
+    "current_restrictions": "此价格计划今日的限制"
   },
   "calendar": {
     "today": "今天",
@@ -929,6 +973,204 @@
       "same_email": "邮箱相同",
       "same_phone": "电话相同",
       "similar_name": "姓名相似"
+    }
+  },
+  "pricing": {
+    "description": "价格计划、季节、折扣和每日房价日历。全系统使用同一套定价引擎。",
+    "tabs": {
+      "calendar": "房价日历",
+      "plans": "价格计划",
+      "rules": "季节与折扣",
+      "policies": "取消政策"
+    },
+    "weekday_short": {
+      "mon": "周一",
+      "tue": "周二",
+      "wed": "周三",
+      "thu": "周四",
+      "fri": "周五",
+      "sat": "周六",
+      "sun": "周日"
+    },
+    "meal_plans": {
+      "room_only": "不含餐",
+      "breakfast": "含早餐",
+      "half_board": "半膳",
+      "full_board": "全膳",
+      "all_inclusive": "全包"
+    },
+    "grid": {
+      "rate_plan": "价格计划",
+      "edit_rates": "编辑房价",
+      "base": "基础价格 {{price}}",
+      "no_categories": "此价格计划不适用于任何启用的房型。",
+      "derived_hint": "价格自动跟随“{{parent}}”。仅在需要覆盖时才在此设置价格。",
+      "closed": "停售",
+      "left_other": "剩余 {{count}} 间",
+      "available_other": "{{count}} 间可售",
+      "cta": "CTA",
+      "ctd": "CTD",
+      "cta_long": "不可到店",
+      "ctd_long": "不可离店",
+      "min_stay_other": "最少入住 {{count}} 晚",
+      "max_stay_other": "最多入住 {{count}} 晚",
+      "inherited": "限制条件继承自基础计划",
+      "legend_explicit": "手动设置",
+      "legend_computed": "根据基础价格和规则计算",
+      "legend_restrictions": "≥ 最少入住晚数 · ≤ 最多入住晚数 · CTA/CTD 不可到店/不可离店",
+      "source": {
+        "daily_rate": "手动设置的价格",
+        "derived": "由基础计划派生",
+        "base": "基础价格（按季节和规则调整）"
+      }
+    },
+    "bulk": {
+      "rate_plans": "价格计划",
+      "room_types": "房型",
+      "dates": "起止日期（含首尾）",
+      "days_other": "{{count}} 天",
+      "weekdays": "仅适用于",
+      "weekdays_hint": "全部不选则适用于每一天。",
+      "price": "价格",
+      "restrictions": "限制条件",
+      "no_change": "不变",
+      "set": "设置",
+      "remove": "移除",
+      "price_modes": {
+        "none": "不变",
+        "set": "设定价格",
+        "percent": "± %",
+        "amount": "± 金额",
+        "clear": "恢复自动计算"
+      },
+      "value_set": "每晚新价格",
+      "value_percent": "调整幅度（%）",
+      "value_amount": "每晚调整金额",
+      "percent_hint": "输入负值可降价（例如 −10）",
+      "amount_hint": "单位：{{currency}}；输入负值可降价",
+      "clear_hint": "移除手动设置的价格：这些日期将恢复为按基础价格、季节和规则计算。",
+      "min_stay": "最少入住晚数",
+      "max_stay": "最多入住晚数",
+      "stop_sell": "停售",
+      "close": "关闭",
+      "open": "开放",
+      "yes": "是",
+      "no": "否",
+      "existing_bookings_hint": "现有预订保持原价；更改仅适用于新预订。",
+      "apply": "应用",
+      "done_other": "已更新 {{count}} 条房价"
+    },
+    "plans": {
+      "hint": "价格计划是您销售的产品：包括餐食、取消条款和价格。派生计划会自动跟随另一个计划（例如：不可退款 = 最优价 −10 %）。",
+      "add": "添加价格计划",
+      "edit": "编辑价格计划",
+      "delete": "删除价格计划“{{name}}”？",
+      "default": "默认",
+      "is_default": "默认价格计划（未选择时使用）",
+      "meal_plan": "餐食",
+      "price": "价格",
+      "own_rates": "独立房价",
+      "based_on": "基于",
+      "based_on_hint": "留空则为使用独立房价的计划",
+      "adjustment": "调整方式",
+      "adjustment_value": "数值",
+      "derive_modes": {
+        "percent": "百分比",
+        "amount": "每晚金额",
+        "amount_per_person": "每人每晚金额"
+      },
+      "derived_per_person": "{{parent}} 每人 {{amount}}",
+      "cancellation": "取消",
+      "refundable": "可退款",
+      "non_refundable": "不可退款",
+      "policy": "取消政策",
+      "availability": "可售条件",
+      "categories": "房型",
+      "all_categories": "所有房型",
+      "categories_hint": "留空则适用于所有房型",
+      "valid_from": "入住日期自",
+      "valid_to": "入住日期至",
+      "min_advance": "至少提前 … 天预订",
+      "min_advance_hint": "例如：提前预订优惠价设为 30",
+      "max_advance": "最多提前 … 天预订",
+      "max_advance_hint": "例如：最后一分钟优惠价设为 3"
+    },
+    "rules": {
+      "hint": "季节、周末和需求会调整计算出的价格。连住优惠、最后一分钟优惠和提前预订优惠可叠加在任何价格之上。规则按优先级顺序应用。",
+      "add": "添加规则…",
+      "delete": "删除规则“{{name}}”？",
+      "empty": "暂无季节或折扣",
+      "empty_hint": "添加旺季、周末价格或连住优惠。",
+      "when": "适用时间",
+      "adjustment": "调整",
+      "applies_to": "适用于",
+      "priority": "优先级",
+      "priority_hint": "数字越小越先应用",
+      "value": "数值",
+      "date_from": "起始日期",
+      "date_to": "截止日期",
+      "any_date": "任意日期",
+      "every_day": "每天",
+      "everything": "所有房型和价格计划",
+      "weekdays_hint": "所选日期当晚（周五 = 周五晚上）。留空则适用于每一天。",
+      "room_types": "房型",
+      "rate_plans": "价格计划",
+      "all_plans": "所有价格计划",
+      "kinds": {
+        "season": "季节或活动",
+        "weekday": "平日 / 周末",
+        "occupancy": "高需求",
+        "long_stay": "连住优惠",
+        "last_minute": "最后一分钟优惠",
+        "early_bird": "提前预订优惠"
+      },
+      "kind_hints": {
+        "season": "调整某一时段内各晚的价格：旺季或淡季、节假日、活动。",
+        "weekday": "调整一周中指定日期的价格，例如周五和周六晚。",
+        "occupancy": "当房型即将满房时上调（或下调）价格。",
+        "long_stay": "入住达到一定晚数时享受的折扣。",
+        "last_minute": "临近到店日期预订时享受的折扣。",
+        "early_bird": "提前较长时间预订时享受的折扣。"
+      },
+      "adjustments": {
+        "percent": "百分比",
+        "amount": "每晚金额",
+        "set": "固定价格"
+      },
+      "condition": {
+        "min_nights": "最少晚数",
+        "max_days_before": "距到店最多 … 天",
+        "min_days_before": "距到店至少 … 天",
+        "min_occupancy": "出租率至少达到（%）"
+      },
+      "cond_min_nights_other": "{{count}} 晚起",
+      "cond_max_days_before_other": "到店前 ≤ {{count}} 天",
+      "cond_min_days_before_other": "到店前 ≥ {{count}} 天",
+      "cond_min_occupancy": "出租率 ≥ {{value}} %"
+    },
+    "policies": {
+      "hint": "附加于价格计划并显示在预订上的取消条款。",
+      "add": "添加政策",
+      "edit": "编辑政策",
+      "delete": "删除政策“{{name}}”？",
+      "free_cancellation": "免费取消",
+      "penalty": "违约金",
+      "no_show": "未到店",
+      "none": "无取消政策",
+      "non_refundable_summary": "不可退款",
+      "free_until_other": "到店前 {{count}} 天可免费取消",
+      "penalty_percent": "住宿费用的 {{value}} %",
+      "penalty_nights_other": "{{count}} 晚",
+      "penalty_kind_nights": "收取晚数",
+      "penalty_kind_percent": "住宿费用的 %",
+      "penalty_value": "数值",
+      "allows_free": "可免费取消",
+      "free_until_days": "到店前 … 天可免费取消",
+      "free_until_days_hint": "0 = 到店当天之前均可",
+      "no_show_nights": "未到店收取晚数",
+      "guest_text": "面向宾客的说明",
+      "guest_text_hint": "显示在确认函和发票上",
+      "fees_later": "收款和账单功能（前台模块）上线后，将自动收取取消费用。"
     }
   }
 }

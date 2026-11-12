@@ -330,6 +330,7 @@ export interface ReservationRoom {
   id: UUID;
   room_type_id: UUID;
   room_id: UUID | null;
+  rate_plan_id: UUID | null;
   arrival: string;
   departure: string;
   adults: number;
@@ -410,6 +411,7 @@ export interface ReservationEvent {
 
 export interface Quote {
   currency: string;
+  stays: { rate_plan_id: UUID; issues: RestrictionIssue[] }[];
   accommodation_total: string;
   tax_total: string;
   grand_total: string;
@@ -467,4 +469,100 @@ export interface RoomBlock {
   end_date: string;
   reason: 'maintenance' | 'out_of_service' | 'owner_use' | 'other';
   notes: string | null;
+}
+
+// --- Pricing ------------------------------------------------------------------------
+
+export type MealPlan = 'room_only' | 'breakfast' | 'half_board' | 'full_board' | 'all_inclusive';
+export type RuleKind = 'season' | 'weekday' | 'occupancy' | 'long_stay' | 'last_minute' | 'early_bird';
+
+export interface RatePlan {
+  id: UUID;
+  code: string;
+  name: LocalizedText;
+  description: LocalizedText;
+  meal_plan: MealPlan;
+  is_refundable: boolean;
+  cancellation_policy_id: UUID | null;
+  parent_rate_plan_id: UUID | null;
+  derive_mode: 'percent' | 'amount' | 'amount_per_person' | null;
+  derive_value: string | null;
+  room_type_ids: UUID[];
+  valid_from: string | null;
+  valid_to: string | null;
+  min_advance_days: number | null;
+  max_advance_days: number | null;
+  is_default: boolean;
+  sort_order: number;
+  is_active: boolean;
+  version: number;
+}
+
+export interface PricingRule {
+  id: UUID;
+  name: LocalizedText;
+  kind: RuleKind;
+  priority: number;
+  date_from: string | null;
+  date_to: string | null;
+  weekdays: number[];
+  room_type_ids: UUID[];
+  rate_plan_ids: UUID[];
+  adjustment: 'percent' | 'amount' | 'set';
+  value: string;
+  conditions: { min_nights?: number; max_days_before?: number; min_days_before?: number; min_occupancy?: number };
+  is_active: boolean;
+  version: number;
+}
+
+export interface CancellationPolicy {
+  id: UUID;
+  code: string;
+  name: LocalizedText;
+  description: LocalizedText;
+  free_until_days: number | null;
+  penalty_kind: 'percent' | 'nights';
+  penalty_value: string;
+  no_show_nights: number;
+  is_active: boolean;
+  version: number;
+}
+
+export interface GridCell {
+  room_type_id: UUID;
+  date: string;
+  price: string;
+  source: 'daily_rate' | 'derived' | 'base';
+  explicit: boolean;
+  min_stay: number | null;
+  max_stay: number | null;
+  closed: boolean;
+  closed_to_arrival: boolean;
+  closed_to_departure: boolean;
+  restrictions_inherited: boolean;
+  available: number;
+}
+
+export interface RateGrid {
+  rate_plan_id: UUID;
+  start: string;
+  end: string;
+  room_type_ids: UUID[];
+  cells: GridCell[];
+}
+
+export interface RestrictionIssue {
+  code: string;
+  [key: string]: unknown;
+}
+
+export interface Offer {
+  room_type_id: UUID;
+  rate_plan_id: UUID;
+  total: string;
+  average_night: string;
+  nights: { night: string; price: string; price_source: string }[];
+  available: number;
+  issues: RestrictionIssue[];
+  bookable: boolean;
 }

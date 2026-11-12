@@ -112,21 +112,40 @@ available(T, n) = |active rooms of type T not in room_allocations covering n|
                 − |reservation_rooms of type T, unassigned, occupying, covering n|
 ```
 
-### Pricing
+### Pricing (implemented in phase 4)
 
 | Table | Notes |
 |-------|-------|
-| `rate_plans` | id, hotel_id, code, name, meal_plan (`room_only` \| `breakfast` \| `half_board` \| `full_board` \| `all_inclusive`), cancellation_policy_id, is_refundable, parent_rate_plan_id, derive_mode (`percent` \| `amount`), derive_value, is_active |
-| `daily_rates` | (rate_plan_id, room_type_id, date) PK, hotel_id, price NULL, min_stay, max_stay, closed, closed_to_arrival, closed_to_departure. The ARI grid edited by the pricing calendar. |
-| `pricing_rules` | id, hotel_id, kind (`season` \| `weekday` \| `long_stay` \| `last_minute` \| `early_bird` \| `occupancy`), priority, date_from, date_to, weekdays smallint[], room_type_ids, rate_plan_ids, adjustment (`percent` \| `amount` \| `set`), value, conditions jsonb, is_active |
-| `cancellation_policies` | id, hotel_id, name, rules jsonb `[{"days_before": 7, "penalty": "percent", "value": 50}]`, no_show_penalty |
+| `cancellation_policies` | id, hotel_id, code, name/description (LocalizedText), free_until_days (NULL = non-refundable), penalty_kind (`percent` \| `nights`), penalty_value, no_show_nights, is_active. FLEX and NONREF seeded. |
+| `rate_plans` | id, hotel_id, code, name/description, meal_plan (`room_only` \| `breakfast` \| `half_board` \| `full_board` \| `all_inclusive`), is_refundable, cancellation_policy_id, parent_rate_plan_id + derive_mode (`percent` \| `amount` \| `amount_per_person`) + derive_value, room_type_ids[] (empty = all), valid_from/valid_to (stay dates), min/max_advance_days (booking window), is_default (exactly one per hotel, partial unique index), sort_order, is_active. A CHECK constraint keeps derivation fields consistent; cycles are refused by the service. |
+| `daily_rates` | (rate_plan_id, room_type_id, date) PK, hotel_id, price NULL, min_stay, max_stay, closed (stop sell), closed_to_arrival, closed_to_departure. Rows exist only where something is set; clearing everything deletes the row. |
+| `pricing_rules` | id, hotel_id, name, kind (`season` \| `weekday` \| `occupancy` \| `long_stay` \| `last_minute` \| `early_bird`), priority, date_from/date_to (nights), weekdays[] (0 = Monday), room_type_ids[], rate_plan_ids[], adjustment (`percent` \| `amount` \| `set`), value, conditions jsonb (`min_nights`, `max_days_before`, `min_days_before`, `min_occupancy`), is_active |
+| `reservation_rooms.rate_plan_id`, `reservation_nights.rate_plan_id` | The plan that priced each stay and night. |
 
-**Price resolution** for (room type, rate plan, night):
-`daily_rates.price` if set → otherwise the room type's `base_price` (or the
-parent plan's price for derived plans) → then the applicable `pricing_rules`
-in priority order → then occupancy supplements (extra adult/child). Discounts
-and taxes are applied by `pricing.quote()`, the **only** price calculator in
-the system; reservations, the front desk and channel pushes all call it.
+**Price resolution** (`app/modules/pricing/engine.py`, the only price calculator)
+for plan *P*, category *T*, night *N*:
+
+1. **Base rate.** An explicit `daily_rates.price` for (P, T, N) wins. Otherwise,
+   if P derives from a parent plan, the parent's base rate is adjusted (percent,
+   amount, or amount × guests, e.g. breakfast). Otherwise the room's or the
+   category's base price is adjusted by the **rate rules** (season, weekday,
+   occupancy) in priority order.
+2. **Occupancy supplements** for guests above the standard occupancy.
+3. **Discount rules** (long stay, last minute, early bird) on top of any price.
+4. Rounded half-up to the currency's minor unit; never negative.
+
+**Restrictions** come from the plan's grid row, or from the nearest parent's
+row if the plan has none. Min/max stay and closed-to-arrival are read on the
+arrival date, closed-to-departure on the departure date, and stop sell on every
+night. Plan conditions (active, categories, validity, booking window) are also
+checked. A booking that violates any of them is refused (`409`), unless a user
+holding `reservations.override_restrictions` explicitly overrides it, which is
+recorded in the reservation history. Staff date changes on existing bookings
+are not blocked by restrictions; inventory checks still apply.
+
+Nightly prices are fixed when booked: later rate, rule or plan changes never
+reprice an existing night. Changing a stay's rate plan deliberately reprices
+all its nights at current rates.
 
 ### Billing
 
