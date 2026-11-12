@@ -14,9 +14,11 @@ from app.core.db import dispose_engine, sessionmaker
 from app.core.errors import install_error_handlers
 from app.modules.auth.router import router as auth_router
 from app.modules.facilities.router import router as facilities_router
+from app.modules.guests.router import router as guests_router
 from app.modules.hotels.router import router as hotels_router
 from app.modules.realtime.hub import hub
 from app.modules.realtime.router import router as realtime_router
+from app.modules.reservations.router import router as reservations_router
 from app.modules.rooms.router import router as rooms_router
 from app.modules.users.router import router as users_router
 
@@ -69,6 +71,8 @@ def create_app() -> FastAPI:
     api.include_router(rooms_router)
     api.include_router(facilities_router)
     api.include_router(users_router)
+    api.include_router(guests_router)
+    api.include_router(reservations_router)
     api.include_router(realtime_router)
     app.include_router(api)
     return app

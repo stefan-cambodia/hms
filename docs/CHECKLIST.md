@@ -2,7 +2,7 @@
 
 Legend: ✅ implemented **and** covered by automated tests · 🟡 implemented, partially tested or with a known limitation · ⬜ not started
 
-Last updated: 2026-11-12. Test counts: backend 31 (pytest, real PostgreSQL), frontend unit 12 (Vitest), end-to-end 15 (Playwright on desktop, iPad landscape and Android tablet viewports; 4 are desktop-only by design).
+Last updated: 2026-11-12. Test counts: backend 45 (pytest, real PostgreSQL), frontend unit 12 (Vitest), end-to-end 15 (Playwright on desktop, iPad landscape and Android tablet viewports; 4 are desktop-only by design).
 
 ## Phase 1 — Architecture ✅
 
@@ -60,9 +60,28 @@ Last updated: 2026-11-12. Test counts: backend 31 (pytest, real PostgreSQL), fro
 | Additional currencies and exchange rates | ⬜ | Phase 5 (with payments) |
 | Multi-property: create additional hotels (super admin), hotel switcher | ✅ | |
 
-## Phase 4 — Core hotel management ⬜
+## Phase 4 — Core hotel management (backend core delivered; UI pending)
 
-Guests/CRM, room allocation ledger (exclusion constraint), availability engine, rate plans and daily rates, pricing rules, `quote()`, reservations (create/modify/cancel/history), timeline calendar.
+| Item | Status | Notes |
+|------|--------|-------|
+| Room allocation ledger maintained by triggers, with a deferrable exclusion constraint | ✅ | Overlap rejected even by raw SQL (test) |
+| No double allocation under concurrency (10 parallel bookings of one room → exactly 1) | ✅ | test_reservations.py |
+| No category oversell under concurrency (advisory locks + post-check) | ✅ | 6 racing bookings for 2 rooms → 2 succeed |
+| Explicit, flagged overbooking (`reservations.overbook` permission only) | ✅ | |
+| Availability per category and night (`/availability`) | ✅ | |
+| Room blocks (out of service) removing rooms from sale | ✅ | Conflicts with stays and overselling refused |
+| Reservations: create (new or existing guest), quote, list/search, detail | ✅ | |
+| Modify: details, room assignment/reassignment, date changes (booked nights keep their price) | ✅ | |
+| Status state machine: confirm, cancel (releases inventory), no-show (not before arrival) | ✅ | Check-in/out endpoints come in phase 5 |
+| Reservation history (events) and `is_modified` badge | ✅ | |
+| Idempotency-Key on creation (sequential and concurrent retries) | ✅ | |
+| Occupancy limits per category/room | ✅ | |
+| Price quote: base price, occupancy supplements, taxes (percent / per night / per person-night, inclusive/exclusive) | ✅ | |
+| Rate plans, daily rates, restrictions, seasonal/weekend/long-stay rules, pricing calendar | ⬜ | Extends `pricing.nightly_price()`; callers unchanged |
+| Guests: CRUD, fuzzy search (pg_trgm), duplicate detection, encrypted ID documents (audited reads) | ✅ | Guest merge ⬜ |
+| Calendar data endpoint (stays, blocks, unassigned, availability) | ✅ | |
+| **Frontend**: reservations list/form, timeline calendar (drag & drop), guests screens | ⬜ | Not in navigation until built |
+| Multi-room reservations with different dates per room | 🟡 | Supported by the API; covered by the single-room tests only |
 
 ## Phase 5 — Operations ⬜
 

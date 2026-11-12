@@ -5,8 +5,10 @@ One server and one PostgreSQL database are shared by every device in the
 hotel: Linux and Windows desktops, Android tablets and iPads.
 
 **Status: phases 1–3 of 10 delivered** (architecture, foundation, hotel
-configuration). Reservations, front desk, housekeeping, billing, channel
-manager and the desktop installers are not built yet. See
+configuration), plus the **backend core of phase 4** (guests, reservation
+engine, inventory integrity, availability). The reservation UI and calendar,
+front desk, housekeeping, billing, channel manager and the desktop installers
+are not built yet. See
 [docs/CHECKLIST.md](docs/CHECKLIST.md) for the exact, tested state of every
 feature.
 
@@ -52,7 +54,7 @@ cd frontend && npm ci && npm run dev
 ## Tests
 
 ```bash
-cd backend  && .venv/bin/pytest            # 31 tests against real PostgreSQL (incl. live WebSocket tests)
+cd backend  && .venv/bin/pytest            # 45 tests against real PostgreSQL (incl. live WebSocket and concurrency tests)
 cd frontend && npm test                    # unit tests
 cd frontend && npm run i18n:check          # translation completeness in all 5 languages
 cd frontend && npm run e2e                 # Playwright: desktop, iPad, Android tablet (needs running stack)
