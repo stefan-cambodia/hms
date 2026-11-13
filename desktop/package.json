@@ -1,0 +1,15 @@
+{
+  "name": "hms-desktop",
+  "private": true,
+  "version": "0.1.0",
+  "description": "HMS desktop shell (Tauri 2): Linux AppImage/DEB, Windows installer and portable executable",
+  "scripts": {
+    "tauri": "tauri",
+    "icons": "tauri icon ../frontend/public/icon.svg -o src-tauri/icons",
+    "build": "tauri build",
+    "dev": "tauri dev"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "2.12.4"
+  }
+}

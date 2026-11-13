@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "main",
+  "description": "The bundled connection screen of the main window. No remote URL is listed: pages served by the hotel server get no access to the shell's commands.",
+  "windows": ["main"],
+  "permissions": ["core:default"]
+}

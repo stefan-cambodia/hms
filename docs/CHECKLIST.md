@@ -230,14 +230,18 @@ Definitions: [`docs/guides/reports.md`](guides/reports.md). The formulas live in
 | Historic room count (rooms taken out of service permanently) | 🟡 | Rooms count from their creation; deactivation history is not kept, so a deactivated room disappears from past periods too |
 | PDF reports, scheduled e-mail reports, night audit | ⬜ | |
 
-## Phase 9 — Cross-platform
+## Phase 9 — Cross-platform ✅ (installers built in CI; physical devices to try)
 
 | Item | Status | Notes |
 |------|--------|-------|
-| Responsive layout: desktop, iPad landscape, Android tablet portrait | ✅ | Playwright viewports (Chrome engine) |
-| PWA manifest and icon (add to home screen) | 🟡 | Manifest present; no offline service worker (by design, see §1.6) |
-| Real Safari/WebKit validation on iPad | ⬜ | Needs a WebKit run or a physical device |
-| Tauri desktop shell (AppImage, DEB, EXE, portable) | ⬜ | WebKitGTK 4.1 is not installed on the dev machine; to be built in CI |
+| Responsive layout: desktop, iPad landscape, Android tablet portrait | ✅ | Playwright viewports |
+| iPad with Safari's engine (WebKit) | ✅ | Playwright WebKit project, run in the E2E workflow on Ubuntu (this distribution lacks WebKit's system libraries) |
+| End-to-end tests in CI on a fresh installation (`hms seed-demo` demo hotel) | ✅ | `.github/workflows/e2e.yml`: desktop, iPad, Android tablet, iPad Safari |
+| PWA: manifest, PNG and maskable icons, apple-touch-icon, standalone mode | ✅ | E2E `pwa.spec.ts`; no offline service worker (by design, §1.6) |
+| Desktop shell (Tauri 2): connection screen (5 languages), certificate diagnosis, navigation limited to the hotel server, documents in their own window, PDFs saved and opened, single instance, menu | ✅ | Logic unit-tested (`desktop/core`), clippy clean, compiled against the Windows target locally |
+| Installers: AppImage, DEB (Ubuntu 22.04 build), NSIS installer and portable EXE | 🟡 | Built by `.github/workflows/desktop.yml`; to be tried on real Linux and Windows computers |
+| Physical iPad and Android tablet check | ⬜ | Manual |
+| Code signing, shell auto-update | ⬜ | Needs a code-signing certificate |
 
 ## Phase 10 — Final QA / operations
 

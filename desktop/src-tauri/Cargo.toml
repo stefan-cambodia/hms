@@ -1,0 +1,26 @@
+[package]
+name = "hms-desktop"
+description = "HMS desktop shell (connects to the hotel server)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[lib]
+name = "hms_desktop_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "=2.7.4", features = [] }
+
+[dependencies]
+hms-desktop-core = { path = "../core" }
+tauri = { version = "=2.12.5", features = [] }
+tauri-plugin-opener = "=2.7.2"
+tauri-plugin-single-instance = "=2.5.5"
+# Native TLS (SChannel on Windows, OpenSSL on Linux): the same certificate
+# store as the system webview, so the certificate diagnosis matches the window.
+reqwest = { version = "=0.12.24", default-features = false, features = ["native-tls"] }
+serde = { version = "1", features = ["derive"] }
+sys-locale = "0.3"
+url = "2"

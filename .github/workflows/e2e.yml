@@ -1,0 +1,75 @@
+name: E2E
+
+# End-to-end tests on a fresh installation: PostgreSQL, the API, the built
+# web app served behind the same proxy as in production, and the demo hotel
+# (`hms seed-demo`). Devices: desktop, iPad and Android tablet (Chrome) and
+# iPad with Safari's engine (WebKit).
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  e2e:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: hms
+          POSTGRES_PASSWORD: hms_dev_password
+          POSTGRES_DB: hms
+        ports: ["54329:5432"]
+        options: >-
+          --health-cmd "pg_isready -U hms" --health-interval 2s --health-timeout 3s --health-retries 30
+    env:
+      HMS_COOKIE_SECURE: "false"
+      HMS_ADMIN_PASSWORD: Demo-Admin-2026
+      E2E_EMAIL: admin@demo.local
+      E2E_PASSWORD: Demo-Admin-2026
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: PDF rendering libraries and fonts (Khmer, Chinese)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libpango-1.0-0 libpangoft2-1.0-0 fonts-noto-core fonts-noto-cjk
+      - name: API, database and demo hotel
+        working-directory: backend
+        run: |
+          pip install -e .
+          alembic upgrade head
+          python -m app.cli bootstrap --org "Lotus Group" --hotel "Lotus Riverside Hotel" --code LOTUS \
+            --admin-email admin@demo.local --admin-name "Sokha Chan" --timezone Asia/Phnom_Penh --currency USD
+          python -m app.cli seed-demo --admin-email admin@demo.local
+          nohup uvicorn app.main:app --host 127.0.0.1 --port 8000 > ../api.log 2>&1 &
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Web app (production build behind the API proxy)
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+          nohup npx vite preview --port 5173 --strictPort > ../web.log 2>&1 &
+          npx playwright install --with-deps webkit
+          for i in $(seq 1 60); do curl -sf http://127.0.0.1:8000/api/v1/health && curl -sf http://localhost:5173/ > /dev/null && break; sleep 1; done
+      - name: Playwright (desktop, iPad, Android tablet, iPad Safari/WebKit)
+        working-directory: frontend
+        run: npx playwright test
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-results
+          path: |
+            frontend/e2e-results
+            api.log
+            web.log
+          retention-days: 14

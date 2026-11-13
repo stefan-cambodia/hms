@@ -79,7 +79,8 @@ def create_app() -> FastAPI:
     async def health() -> dict:
         async with sessionmaker()() as db:
             await db.execute(text("SELECT 1"))
-        return {"status": "ok", "realtime": hub.listening.is_set()}
+        # "service" lets clients (the desktop shell) recognise an HMS server.
+        return {"status": "ok", "service": "hms", "version": app.version, "realtime": hub.listening.is_set()}
 
     api.include_router(auth_router)
     api.include_router(hotels_router)

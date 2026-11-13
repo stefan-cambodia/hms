@@ -184,3 +184,10 @@ async def test_staff_accounts_may_use_internal_domains(admin: Api):
         admin.h("/users"), {"email": "no-at-sign", "full_name": "X", "password": "Str0ng-Passw0rd"}
     )
     assert r.status_code == 422
+
+
+async def test_health_identifies_the_server(installation):
+    """The desktop shell recognises an HMS server by this answer."""
+    async with new_client() as client:
+        body = (await client.get("/api/v1/health")).json()
+    assert body["status"] == "ok" and body["service"] == "hms" and body["version"]

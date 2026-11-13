@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>HMS</title>
+    <link rel="stylesheet" href="style.css" />
+    <script type="module" src="app.js"></script>
+  </head>
+  <body>
+    <main class="card" aria-live="polite">
+      <header>
+        <img src="icon.svg" alt="" width="48" height="48" />
+        <div>
+          <h1 data-t="title">Connect to the hotel server</h1>
+          <p class="muted" data-t="intro"></p>
+        </div>
+      </header>
+
+      <form id="form" novalidate>
+        <label for="url" data-t="label">Server address</label>
+        <input id="url" name="url" type="text" inputmode="url" autocomplete="url" spellcheck="false" autocapitalize="off" required />
+        <div class="actions">
+          <button type="button" id="test" class="secondary" data-t="test">Test</button>
+          <button type="submit" id="connect" data-t="connect">Connect</button>
+        </div>
+      </form>
+
+      <section id="status" hidden>
+        <p id="message"></p>
+        <p id="countdown" class="muted" hidden></p>
+        <details id="details" hidden>
+          <summary data-t="details">Technical details</summary>
+          <pre id="detail-text"></pre>
+        </details>
+        <div class="actions" id="retry-actions" hidden>
+          <button type="button" id="change" class="secondary" data-t="change">Change server</button>
+          <button type="button" id="retry" data-t="retry_now">Retry now</button>
+        </div>
+      </section>
+
+      <footer>
+        <label for="language" class="muted" data-t="language">Language</label>
+        <select id="language"></select>
+        <p class="muted small" data-t="footer"></p>
+      </footer>
+    </main>
+  </body>
+</html>

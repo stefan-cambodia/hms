@@ -68,7 +68,8 @@ docker compose cp web:/data/caddy/pki/authorities/local/root.crt ./hms-root-ca.c
 
 ## 4. Connect staff devices
 
-* **Desktop (Linux/Windows):** open the address in Chrome, Edge or Firefox. The Tauri desktop installers are planned (phase 9); until then, use the browser's "Install app" menu entry to get a dedicated window and shortcut.
+* **Desktop application (Linux/Windows):** install *HMS* — `.deb` (Ubuntu, Debian, Mint), `.AppImage` (any recent Linux, no installation), Windows installer, or the portable `.exe` (Windows 10 21H2+ and 11). At first start, enter the server address and press *Connect*: the address is remembered, and the hotel's interface opens. *Server › Change server…* chooses another one. If the computer does not trust the server's certificate, the screen says so: install the certificate first (section 3). The application stores nothing else on the computer. See `desktop/README.md`.
+* **Desktop in a browser:** the address also works in Chrome, Edge or Firefox.
 * **Android tablet:** Chrome › menu › *Add to home screen*.
 * **iPad:** Safari › Share › *Add to Home Screen*.
 

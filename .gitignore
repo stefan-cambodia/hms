@@ -30,3 +30,9 @@ deploy/backups/
 .vscode/
 *.swp
 e2e-results/
+
+# Desktop shell (Tauri)
+desktop/target/
+desktop/node_modules/
+desktop/src-tauri/gen/
+desktop/dist/

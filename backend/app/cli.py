@@ -50,6 +50,18 @@ async def _bootstrap(args: argparse.Namespace) -> int:
     return 0
 
 
+async def _seed_demo(args: argparse.Namespace) -> int:
+    from app.demo import SeedError, seed_demo
+
+    password = os.environ.get("HMS_ADMIN_PASSWORD") or getpass.getpass("Admin password: ")
+    try:
+        print(await seed_demo(args.admin_email, password))
+    except SeedError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+    return 0
+
+
 async def _sync_roles(_: argparse.Namespace) -> int:
     async with sessionmaker()() as db:
         for org_id in await db.scalars(select(Organization.id)):
@@ -72,8 +84,10 @@ def main() -> int:
     b.add_argument("--currency", default="USD")
     b.add_argument("--language", default="en", choices=["en", "fr", "zh-CN", "ru", "km"])
     sub.add_parser("sync-roles", help="re-apply system role permission sets")
+    d = sub.add_parser("seed-demo", help="fill an empty hotel with the demo content (training, tests)")
+    d.add_argument("--admin-email", required=True)
     args = parser.parse_args()
-    handler = {"bootstrap": _bootstrap, "sync-roles": _sync_roles}[args.cmd]
+    handler = {"bootstrap": _bootstrap, "sync-roles": _sync_roles, "seed-demo": _seed_demo}[args.cmd]
 
     async def run() -> int:
         try:
