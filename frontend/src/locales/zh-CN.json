@@ -999,7 +999,8 @@
     "MEDIA_ORDER_MISMATCH": "照片已被他人修改，请重试。",
     "RECOVERY_CODE_INVALID": "此恢复码错误或已被使用。",
     "TWO_FACTOR_SETUP_REQUIRED": "请先设置双因素认证。",
-    "TWO_FACTOR_REQUIRED_BY_ROLE": "您的角色要求使用双因素认证，无法停用。"
+    "TWO_FACTOR_REQUIRED_BY_ROLE": "您的角色要求使用双因素认证，无法停用。",
+    "ROOM_HAS_STAYS": "今晚或之后有客人入住此房间（{{count}}）：请先将他们换到其他房间。"
   },
   "reservations": {
     "description": "所有来源的全部预订。点击预订即可进行管理。",

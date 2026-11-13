@@ -346,10 +346,39 @@ async def bulk_create_rooms(db: AsyncSession, ctx: HotelContext, data: RoomBulkI
     return [room_out(r) for r in rooms]
 
 
+async def _stays_from_tonight(db: AsyncSession, hotel_id: uuid.UUID, room_id: uuid.UUID) -> int:
+    """Stays in the room tonight or later (a room taken out of service must be free)."""
+    from app.modules.hotels.models import Hotel
+    from app.modules.reservations.models import RoomAllocation
+    from app.modules.reservations.service import hotel_today
+
+    hotel = await db.get(Hotel, hotel_id)
+    assert hotel is not None
+    tonight = hotel_today(hotel)
+    return int(
+        await db.scalar(
+            select(func.count())
+            .select_from(RoomAllocation)
+            .where(
+                RoomAllocation.room_id == room_id,
+                RoomAllocation.room_block_id.is_(None),
+                func.upper(RoomAllocation.period) > tonight,
+            )
+        )
+        or 0
+    )
+
+
 async def update_room(db: AsyncSession, ctx: HotelContext, room_id: uuid.UUID, data: RoomUpdate) -> RoomOut:
     obj = await crud.get_scoped(db, Room, ctx.hotel_id, room_id, code="ROOM_NOT_FOUND")
     changes = data.model_dump(exclude_unset=True, exclude={"version", "amenity_ids"})
     _reject_nulls(changes, ("room_type_id", "number", "has_balcony", "sort_order", "is_active"))
+    # Taking a room out of service (its history is kept, see RoomServicePeriod):
+    # guests in it tonight or booked into it later are moved first.
+    if changes.get("is_active") is False and obj.is_active:
+        stays = await _stays_from_tonight(db, ctx.hotel_id, obj.id)
+        if stays:
+            raise Conflict("ROOM_HAS_STAYS", "Room has stays from tonight on", params={"count": stays})
     building_id = changes.get("building_id", obj.building_id)
     floor_id = changes.get("floor_id", obj.floor_id)
     if {"room_type_id", "building_id", "floor_id"} & changes.keys():

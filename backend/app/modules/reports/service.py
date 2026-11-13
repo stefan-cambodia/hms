@@ -2,8 +2,10 @@
 
 This module is the single place where the indicators are defined.
 
-* **Rooms in the hotel** (per night): rooms in service on that night (created
-  on or before it, still in service today; deactivation history is not kept).
+* **Rooms in the hotel** (per night): rooms in service on that night
+  (`room_service_periods`, kept when rooms are created, deactivated or
+  reactivated, so a room taken out of service still counts in the periods it
+  was there), and any room sold that night (history entered later).
 * **Out of service**: room-nights blocked (maintenance, out of order, owner use).
 * **Available** = rooms − out of service.
 * **Sold** (room-nights): nights of stays that occupy inventory — pending,
@@ -94,8 +96,9 @@ _SUPPLY = text(
            count(r.id) AS rooms,
            count(b.room_id) AS blocked
     FROM nights nt
-    JOIN rooms r ON r.hotel_id = :hotel AND r.is_active
-                AND ((r.created_at AT TIME ZONE :tz)::date <= nt.night
+    JOIN rooms r ON r.hotel_id = :hotel
+                AND (EXISTS (SELECT 1 FROM room_service_periods p
+                             WHERE p.room_id = r.id AND p.period @> nt.night)
                      -- A room sold that night existed, whatever its record's
                      -- date (history entered after the rooms were set up).
                      OR EXISTS (SELECT 1 FROM room_allocations s

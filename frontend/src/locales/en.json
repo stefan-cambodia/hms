@@ -1006,7 +1006,8 @@
     "MEDIA_ORDER_MISMATCH": "The photos were changed meanwhile. Try again.",
     "RECOVERY_CODE_INVALID": "This recovery code is wrong or has already been used.",
     "TWO_FACTOR_SETUP_REQUIRED": "Set up two-factor authentication first.",
-    "TWO_FACTOR_REQUIRED_BY_ROLE": "Your role requires two-factor authentication: it cannot be turned off."
+    "TWO_FACTOR_REQUIRED_BY_ROLE": "Your role requires two-factor authentication: it cannot be turned off.",
+    "ROOM_HAS_STAYS": "Guests are in this room tonight or booked into it later ({{count}}): move them to another room first."
   },
   "reservations": {
     "description": "Every booking, whatever its source. Click a reservation to manage it.",

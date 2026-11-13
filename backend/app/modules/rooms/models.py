@@ -18,7 +18,7 @@ from sqlalchemy import (
     UniqueConstraint,
     text,
 )
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.dialects.postgresql import DATERANGE, JSONB, UUID, ExcludeConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.models import Base, Timestamps, UUIDPk, Versioned
@@ -154,4 +154,24 @@ class Room(UUIDPk, Timestamps, Versioned, Base):
         ),
         CheckConstraint("max_occupancy IS NULL OR max_occupancy >= 1", name="max_occupancy_min"),
         CheckConstraint("base_price IS NULL OR base_price >= 0", name="base_price_positive"),
+    )
+
+
+class RoomServicePeriod(UUIDPk, Base):
+    """When a room was part of the hotel (in service), night by night:
+    [first night, first night no longer counted). Kept by a database trigger
+    on rooms (creation, deactivation, reactivation), so the reports count a
+    room that was later taken out of service in the periods it was there."""
+
+    __tablename__ = "room_service_periods"
+
+    hotel_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("hotels.id", ondelete="CASCADE"))
+    room_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("rooms.id", ondelete="CASCADE"))
+    period: Mapped[Any] = mapped_column(DATERANGE)
+
+    __table_args__ = (
+        CheckConstraint("NOT isempty(period)", name="non_empty"),
+        ExcludeConstraint(
+            ("room_id", "="), ("period", "&&"), name="ex_room_service_periods_no_overlap", using="gist"
+        ),
     )

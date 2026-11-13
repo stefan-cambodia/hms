@@ -43,6 +43,11 @@ decimals with a comma (French, Russian), columns are separated by semicolons,
 as these spreadsheets expect. Amounts are plain numbers in the hotel currency,
 given in the column title.
 
-**Known limit.** Rooms count from their creation. Because deactivation history is
-not kept, a room taken out of service permanently disappears from past periods
-too. To keep it in history, block it instead of deactivating it.
+**Rooms taken out of service.** A room counts on the nights it was part of the
+hotel: from the night it was created, until the night it was deactivated, and
+again from the night it is reactivated. Deactivating a room therefore changes
+the figures from tonight on, never those of past periods. A room cannot be
+deactivated while guests are in it tonight or booked into it later: move them
+first. For works of a few days or weeks, take the room out of service from a
+maintenance request instead: it stays in the hotel and counts as *out of
+service*.

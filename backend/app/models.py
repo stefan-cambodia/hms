@@ -50,5 +50,5 @@ from app.modules.restaurant.models import (  # noqa: F401
     OrderPayment,
     Outlet,
 )
-from app.modules.rooms.models import Amenity, Room, RoomType  # noqa: F401
+from app.modules.rooms.models import Amenity, Room, RoomServicePeriod, RoomType  # noqa: F401
 from app.modules.vehicles.models import Rental, RentalPayment, Vehicle  # noqa: F401

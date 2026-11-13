@@ -1013,7 +1013,8 @@
     "MEDIA_ORDER_MISMATCH": "Les photos ont été modifiées entre-temps. Réessayez.",
     "RECOVERY_CODE_INVALID": "Ce code de secours est erroné ou a déjà servi.",
     "TWO_FACTOR_SETUP_REQUIRED": "Activez d’abord la double authentification.",
-    "TWO_FACTOR_REQUIRED_BY_ROLE": "Votre rôle exige la double authentification : elle ne peut pas être désactivée."
+    "TWO_FACTOR_REQUIRED_BY_ROLE": "Votre rôle exige la double authentification : elle ne peut pas être désactivée.",
+    "ROOM_HAS_STAYS": "Des clients occupent cette chambre ce soir ou y sont attendus plus tard ({{count}}) : déplacez-les d’abord dans une autre chambre."
   },
   "reservations": {
     "description": "Toutes les réservations, quelle que soit leur origine. Cliquez sur une réservation pour la gérer.",

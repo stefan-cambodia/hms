@@ -228,7 +228,7 @@ Definitions: [`docs/guides/reports.md`](guides/reports.md). The formulas live in
 | Revenue figures only with `reports.financial`; ratios null (not 0) when there is nothing to divide | ✅ | |
 | CSV exports readable by Excel in every language (BOM, `;` and decimal comma where the locale uses them, formula injection neutralised) | ✅ | Unit tests |
 | Charts: one axis, accessible (keyboard, table view, legend), colours checked for colour blindness in light and dark mode | ✅ | |
-| Historic room count (rooms taken out of service permanently) | 🟡 | Rooms count from their creation (or from an earlier night on which they were sold); deactivation history is not kept, so a deactivated room disappears from past periods too |
+| Historic room count (rooms taken out of service permanently) | ✅ | `room_service_periods` kept by a trigger on rooms (creation, deactivation, reactivation; same-day reversal leaves no trace), rebuilt from the audit trail for existing rooms; a room with stays from tonight on cannot be deactivated. `test_room_history.py` |
 | PDF reports, scheduled e-mail reports | 🟡 | End-of-day report as PDF (night audit); performance reports export CSV only; no e-mail |
 
 ## Phase 9 — Cross-platform ✅ (installers built in CI; physical devices to try)
