@@ -91,6 +91,9 @@ class UserSession(UUIDPk, Base):
 
 class LoginEvent(Base):
     __tablename__ = "login_events"
+    # Inserted without RETURNING: attempts against unknown addresses belong to
+    # no organisation, and row-level security does not let the API read them.
+    __table_args__ = {"implicit_returning": False}
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

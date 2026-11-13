@@ -20,7 +20,7 @@ import httpx
 import pytest
 from sqlalchemy import func, select
 
-from app.core.db import sessionmaker
+from app.core.db import owner_sessionmaker
 from app.modules.channels import adapters as registry
 from app.modules.channels.adapters.base import (
     Capability,
@@ -185,14 +185,14 @@ async def book(admin: Api, rt: str, arrival: date, departure: date, **extra) -> 
 
 
 async def status_of(conn_id: str) -> ChannelSyncStatus:
-    async with sessionmaker()() as db:
+    async with owner_sessionmaker()() as db:
         status = await db.get(ChannelSyncStatus, conn_id)
         assert status is not None
         return status
 
 
 async def dirty_count(conn_id: str) -> int:
-    async with sessionmaker()() as db:
+    async with owner_sessionmaker()() as db:
         return await db.scalar(
             select(func.count())
             .select_from(ChannelDirtyRange)
@@ -290,7 +290,7 @@ async def test_first_sync_sends_the_horizon_then_only_what_changes(
     assert fake.inventory == [InventoryUpdate("STD", d(20), d(21), 2)]
 
     # The exchange log was kept (redacted bodies).
-    async with sessionmaker()() as db:
+    async with owner_sessionmaker()() as db:
         assert await db.scalar(select(func.count()).select_from(ChannelMessage)) >= 6
 
 
@@ -437,7 +437,7 @@ async def test_booking_modification_and_cancellation_from_the_channel(
     fake.queue.append(channel_booking("m1", "book", d(10), d(12), at=t0))
     await run_once(later(5))
     assert len(fake.confirmed) == 1 and fake.confirmed[0].ok
-    async with sessionmaker()() as db:
+    async with owner_sessionmaker()() as db:
         row = (await db.scalars(select(ChannelBooking))).one()
         assert row.import_status == "imported" and row.card_last4 == "1111"
         assert "1111" not in json.dumps(row.data)  # card data is never in the stored booking
@@ -460,7 +460,7 @@ async def test_booking_modification_and_cancellation_from_the_channel(
     # The same revision delivered again: not imported twice.
     fake.queue.append(channel_booking("m1", "book", d(10), d(12), at=t0))
     await run_once(later(10))
-    async with sessionmaker()() as db:
+    async with owner_sessionmaker()() as db:
         assert await db.scalar(select(func.count()).select_from(ChannelBooking)) == 1
     assert (await admin.get(admin.h("/reservations"))).json()["total"] == 1
 
@@ -495,7 +495,7 @@ async def test_messages_out_of_order(admin: Api, hotel: dict, fake: FakeAdapter)
     # A cancellation of a booking never received: ignored, acknowledged.
     fake.queue.append(channel_booking("x1", "cancel", d(5), d(7), external_id="SM-9999"))
     await run_once(later(10))
-    async with sessionmaker()() as db:
+    async with owner_sessionmaker()() as db:
         rows = {r.revision: r for r in await db.scalars(select(ChannelBooking))}
     assert rows["m2"].import_status == "imported"
     assert (rows["m1"].import_status, rows["m1"].error_code) == ("ignored", "OLDER_REVISION")
@@ -513,7 +513,7 @@ async def test_channel_booking_is_never_refused_but_overbooking_is_flagged(
         await book(admin, hotel["rt"], d(15), d(16))  # the category is now sold out
     fake.queue.append(channel_booking("m1", "book", d(15), d(16)))
     await run_once(later(5))
-    async with sessionmaker()() as db:
+    async with owner_sessionmaker()() as db:
         row = (await db.scalars(select(ChannelBooking))).one()
     assert row.import_status == "imported" and row.overbooked
     assert (await reservation(admin, str(row.reservation_id)))["is_overbooked"] is True
@@ -569,7 +569,7 @@ async def test_connection_api_rules(admin: Api, hotel: dict, fake: FakeAdapter, 
     )
     from app.core.audit import AuditLog
 
-    async with sessionmaker()() as db:
+    async with owner_sessionmaker()() as db:
         logs = list(await db.scalars(select(AuditLog).where(AuditLog.entity_type == "channel_connection")))
     assert logs and all("Passw0rd" not in json.dumps(log.changes or {}) for log in logs)
     # Provider rules: no XML special characters in credentials; production needs its endpoint.
@@ -809,7 +809,7 @@ async def test_siteminder_pull_end_to_end_over_http(admin: Api, hotel: dict, mon
     )
     assert r.status_code == 200, r.text
     await run_once()
-    async with sessionmaker()() as db:
+    async with owner_sessionmaker()() as db:
         row = (await db.scalars(select(ChannelBooking))).one()
         messages = list(await db.scalars(select(ChannelMessage)))
     assert row.import_status == "imported", (row.error_code, row.error_detail)

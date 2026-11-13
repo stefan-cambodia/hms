@@ -278,4 +278,47 @@ restaurant (`billing/pos.py`).
 | `jobs` | id, hotel_id, queue, kind, payload jsonb, dedupe_key, status (`pending` \| `running` \| `succeeded` \| `failed` \| `dead`), attempts, max_attempts, run_after, locked_by, locked_until, last_error, created_at, finished_at. Partial unique index on `dedupe_key WHERE status = 'pending'`; workers claim jobs with `FOR UPDATE SKIP LOCKED`. (The channel worker does not need it: its queue is `channel_dirty_ranges` and one leader process runs it, see 03-channel-manager.md.) |
 | `notifications` | id, hotel_id, user_id, type, payload, read_at |
 | `notification_preferences` | (scope role/user, type, channel), enabled |
-| `backup_runs` | id, kind, status, started_at, finished_at, file, size, sha256, verified_at, verify_result, error |
+| ~~`backup_runs`~~ | Not a table: the backup history must survive a restore of the database, so the backup service keeps it in files (`status/runs.jsonl`, `status/backups.json`, one `.json` per backup) that the API reads (section 4.5 of the security document). |
+
+## 2.3 Database roles and row-level security (migration 0010)
+
+| Role | Login | Used by | Can |
+|------|-------|---------|-----|
+| `hms` (schema owner; superuser in the Docker image) | yes | `migrate` service, `backup` service, `hms db-roles` / `sync-roles` | everything |
+| `hms_app` | no | group role holding the application's privileges | SELECT/INSERT/UPDATE/DELETE on tables, sequences; **no** DDL, TRUNCATE, REFERENCES, TRIGGER; no UPDATE/DELETE on `audit_logs` and `login_events`; no DELETE on `folio_charges`, `payments`, `invoices`, `restaurant_payments`, `vehicle_rental_payments`; read-only `alembic_version` |
+| `hms_api` (name from `HMS_DATABASE_URL`) | yes | the API | member of `hms_app`, created/updated by `hms db-roles`, never superuser or BYPASSRLS |
+
+Tables created by later migrations get the `hms_app` grants automatically
+(default privileges); row-level security must be enabled explicitly, and
+`test_tenancy.py` fails for any table left without it.
+
+**Tenant context.** Each transaction of the API declares its tenant with
+`set_config('hms.org_id', …, true)` and `set_config('hms.hotel_ids', …, true)`
+(transaction-local, so nothing leaks through the connection pool). Helper
+functions: `hms_org()`, `hms_hotel_scope()` (NULL = every hotel of the
+organisation) and `hms_hotels()` (the organisation's hotels, narrowed to the
+scope; a hotel of another organisation named in the scope is ignored).
+
+**Policies** (`USING` and `WITH CHECK` alike):
+
+| Tables | Rows visible and writable |
+|--------|---------------------------|
+| the 47 tables with `hotel_id` | `hotel_id = ANY ((SELECT hms_hotels())::uuid[])`: an init-plan computed once per statement, compatible with the `hotel_id` indexes |
+| `users`, `roles` | `organization_id = (SELECT hms_org())` |
+| `organizations` | `id = (SELECT hms_org())` |
+| `hotels` | the organisation's, narrowed to the hotel scope |
+| `user_sessions`, `role_permissions`, `room_amenities`, `room_type_amenities`, `channel_dirty_ranges`, `channel_inventory_state`, `channel_rate_state` | rows whose parent (user, role, room, room type, channel connection) is visible |
+| `audit_logs` | read and insert only: the organisation's entries, organisation-wide or for a visible hotel |
+| `login_events` | read: the organisation's users' attempts (attempts against unknown addresses only on a single-organisation server); insert: anyone (an attempt may precede any session) |
+| `rate_limit_buckets`, `alembic_version` | no row-level security (no tenant data) |
+
+**Cross-tenant lookups** are `SECURITY DEFINER` functions owned by the schema
+owner, with a fixed `search_path`, executable only by `hms_app`:
+`hms_login_org(email)`, `hms_session_org(token_hash)`,
+`hms_installation_initialized()`, `hms_single_organization()`,
+`hms_channel_connections(id)`. They return identifiers or booleans, never rows
+of tenant data.
+
+Constraints are not affected: the exclusion constraint that forbids two
+allocations of a room, unique keys and foreign keys see every row, whatever
+the tenant.

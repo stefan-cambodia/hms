@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { ActionIcon, Badge, Button, Group, Menu, Modal, MultiSelect, PasswordInput, Select, Stack, Switch, Table, Text, TextInput } from '@mantine/core';
+import { modals } from '@mantine/modals';
 import { useForm } from '@mantine/form';
-import { IconDots, IconEdit, IconKey, IconLockOpen, IconPlus } from '@tabler/icons-react';
+import { IconDots, IconEdit, IconKey, IconLockOpen, IconPlus, IconShieldOff } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 
 import { api } from '@/api/client';
@@ -25,6 +26,15 @@ export default function UsersTab() {
   const [editing, setEditing] = useState<AdminUser | 'new' | null>(null);
   const [resetting, setResetting] = useState<AdminUser | null>(null);
   const unlock = useHotelMutation<string, AdminUser>((h, id) => api.post<AdminUser>(h(`/users/${id}/unlock`)), ['user']);
+  const resetTotp = useHotelMutation<string, AdminUser>((h, id) => api.post<AdminUser>(h(`/users/${id}/totp/reset`)), ['user', 'session']);
+  const confirmResetTotp = (u: AdminUser) =>
+    modals.openConfirmModal({
+      title: t('users.reset_2fa_title', { name: u.full_name }),
+      children: <Text size="sm">{t('users.reset_2fa_body')}</Text>,
+      labels: { confirm: t('users.reset_2fa'), cancel: t('common.cancel') },
+      confirmProps: { color: 'red' },
+      onConfirm: () => void resetTotp.mutateAsync(u.id).then(() => notifySuccess(t('users.reset_2fa_done')), notifyError),
+    });
 
   const roleById = new Map((roles.data ?? []).map((r) => [r.id, r]));
 
@@ -119,6 +129,11 @@ export default function UsersTab() {
                           <Menu.Item leftSection={<IconKey size={14} />} onClick={() => setResetting(u)}>
                             {t('users.reset_password')}
                           </Menu.Item>
+                          {u.totp_enabled && u.id !== me?.user.id && (
+                            <Menu.Item leftSection={<IconShieldOff size={14} />} onClick={() => confirmResetTotp(u)}>
+                              {t('users.reset_2fa')}
+                            </Menu.Item>
+                          )}
                           {locked && (
                             <Menu.Item
                               leftSection={<IconLockOpen size={14} />}

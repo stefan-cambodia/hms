@@ -9,8 +9,15 @@ from dataclasses import dataclass
 from typing import Any
 
 _TEST_DB = "hms_test"
+# The API code runs as the least-privilege application role, so row-level
+# security and the append-only grants are exercised by every test. Setup and
+# inspection that must bypass them use the schema owner (`owner_db`).
 os.environ["HMS_DATABASE_URL"] = os.environ.get(
     "HMS_TEST_DATABASE_URL",
+    f"postgresql+asyncpg://hms_api:hms_api_dev_password@127.0.0.1:54329/{_TEST_DB}",
+)
+os.environ["HMS_MIGRATION_DATABASE_URL"] = os.environ.get(
+    "HMS_TEST_MIGRATION_DATABASE_URL",
     f"postgresql+asyncpg://hms:hms_dev_password@127.0.0.1:54329/{_TEST_DB}",
 )
 os.environ["HMS_ENV"] = "test"
@@ -28,7 +35,8 @@ from sqlalchemy import text  # noqa: E402
 
 import app.models  # noqa: E402,F401
 from app.core.config import get_settings  # noqa: E402
-from app.core.db import dispose_engine, sessionmaker  # noqa: E402
+from app.core.db import dispose_engine, owner_sessionmaker, sessionmaker  # noqa: E402
+from app.core.dbroles import provision_login_role  # noqa: E402
 from app.core.models import Base  # noqa: E402
 from app.main import app  # noqa: E402
 from app.modules.hotels.bootstrap import bootstrap  # noqa: E402
@@ -39,7 +47,7 @@ BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 def _dsn(database: str) -> str:
-    url = get_settings().database_url.replace("postgresql+asyncpg://", "postgresql://", 1)
+    url = get_settings().migration_database_url.replace("postgresql+asyncpg://", "postgresql://", 1)
     return url.rsplit("/", 1)[0] + "/" + database
 
 
@@ -55,6 +63,8 @@ async def database():
     cfg = Config(os.path.join(BACKEND_DIR, "alembic.ini"))
     cfg.set_main_option("script_location", os.path.join(BACKEND_DIR, "migrations"))
     await asyncio.to_thread(command.upgrade, cfg, "head")
+    async with owner_sessionmaker()() as db:
+        await provision_login_role(db, get_settings().database_url)
     yield
     await dispose_engine()
 
@@ -62,7 +72,7 @@ async def database():
 @pytest.fixture(autouse=True)
 async def clean_tables(database):
     tables = ", ".join(f'"{t.name}"' for t in Base.metadata.sorted_tables)
-    async with sessionmaker()() as db:
+    async with owner_sessionmaker()() as db:
         await db.execute(text(f"TRUNCATE {tables} RESTART IDENTITY CASCADE"))
         await db.commit()
     yield

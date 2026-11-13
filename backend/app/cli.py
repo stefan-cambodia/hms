@@ -6,6 +6,12 @@
     (the admin password is read from HMS_ADMIN_PASSWORD or prompted)
 
     python -m app.cli sync-roles      re-apply system role permissions after an upgrade
+    python -m app.cli db-roles        create/update the API's database login role
+                                      (name and password taken from HMS_DATABASE_URL)
+
+sync-roles and db-roles are installation-wide: they connect as the schema
+owner (HMS_MIGRATION_DATABASE_URL). The other commands use the application
+role like the API.
 """
 
 from __future__ import annotations
@@ -19,7 +25,9 @@ import sys
 from sqlalchemy import select
 
 import app.models  # noqa: F401
-from app.core.db import dispose_engine, sessionmaker
+from app.core.config import get_settings
+from app.core.db import dispose_engine, owner_sessionmaker, sessionmaker
+from app.core.dbroles import RoleError, provision_login_role
 from app.core.errors import AppError
 from app.modules.hotels.bootstrap import bootstrap, sync_system_roles
 from app.modules.hotels.models import Organization
@@ -62,8 +70,19 @@ async def _seed_demo(args: argparse.Namespace) -> int:
     return 0
 
 
+async def _db_roles(_: argparse.Namespace) -> int:
+    async with owner_sessionmaker()() as db:
+        try:
+            name = await provision_login_role(db, get_settings().database_url)
+        except RoleError as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 1
+    print(f"Database role {name} is ready (member of hms_app)")
+    return 0
+
+
 async def _sync_roles(_: argparse.Namespace) -> int:
-    async with sessionmaker()() as db:
+    async with owner_sessionmaker()() as db:
         for org_id in await db.scalars(select(Organization.id)):
             await sync_system_roles(db, org_id)
         await db.commit()
@@ -84,10 +103,16 @@ def main() -> int:
     b.add_argument("--currency", default="USD")
     b.add_argument("--language", default="en", choices=["en", "fr", "zh-CN", "ru", "km"])
     sub.add_parser("sync-roles", help="re-apply system role permission sets")
+    sub.add_parser("db-roles", help="create or update the API's database login role")
     d = sub.add_parser("seed-demo", help="fill an empty hotel with the demo content (training, tests)")
     d.add_argument("--admin-email", required=True)
     args = parser.parse_args()
-    handler = {"bootstrap": _bootstrap, "sync-roles": _sync_roles, "seed-demo": _seed_demo}[args.cmd]
+    handler = {
+        "bootstrap": _bootstrap,
+        "sync-roles": _sync_roles,
+        "db-roles": _db_roles,
+        "seed-demo": _seed_demo,
+    }[args.cmd]
 
     async def run() -> int:
         try:

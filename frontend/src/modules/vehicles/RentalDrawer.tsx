@@ -13,6 +13,7 @@ import { LANGUAGES } from '@/i18n';
 import { hotelLocalToIso, isoToHotelLocal } from '@/lib/dates';
 import { errorMessage, notifyError, notifySuccess } from '@/lib/errors';
 import { formatDateTime, formatMoney } from '@/lib/format';
+import { numberLocale } from '@/lib/intl';
 import { COUNTRY_CODES } from '@/lib/refdata';
 import { ReasonModal } from '@/modules/billing/FolioDialogs';
 import { SalePaymentModal } from '@/modules/billing/SalePaymentModal';
@@ -255,7 +256,7 @@ function PickupModal({ rental: r, onClose }: { rental: Rental; onClose: () => vo
   const [depositNote, setDepositNote] = useState('');
   const [error, setError] = useState<string | null>(null);
   const save = useRentalAction(r.id, '/pickup');
-  const regions = new Intl.DisplayNames([i18n.language], { type: 'region' });
+  const regions = new Intl.DisplayNames([numberLocale(i18n.language)], { type: 'region' });
   return (
     <Modal opened onClose={onClose} title={t('vehicles.hand_over')} size="lg">
       <form

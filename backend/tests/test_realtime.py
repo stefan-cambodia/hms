@@ -14,7 +14,7 @@ import websockets
 from websockets.exceptions import ConnectionClosed
 
 from app.core import events
-from app.core.db import sessionmaker
+from app.core.db import owner_sessionmaker
 from app.main import create_app
 from app.modules.realtime.hub import hub
 from tests.conftest import ADMIN_EMAIL, ADMIN_PASSWORD
@@ -94,7 +94,7 @@ async def test_change_on_one_device_reaches_another(server, installation):
 async def test_rolled_back_changes_are_never_announced(server, installation):
     token = await _token(server, ADMIN_EMAIL, ADMIN_PASSWORD)
     ws = await _subscribe(server, token, installation.hotel_id)
-    async with sessionmaker()() as db:
+    async with owner_sessionmaker()() as db:
         await events.emit(
             db, hotel_id=installation.hotel_id, entity="room", action="updated", entity_id="rolled-back"
         )

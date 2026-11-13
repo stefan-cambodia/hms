@@ -2,6 +2,7 @@
  * Calendar-date helpers. Stay dates are plain YYYY-MM-DD strings in the
  * hotel's calendar: they are never converted through the device's time zone.
  */
+import { formatInstant } from '@/lib/intl';
 
 const DAY = 86_400_000;
 
@@ -53,9 +54,9 @@ export function maxDate(a: string, b: string): string {
 export function dayLabel(iso: string, locale: string): { weekday: string; day: string; month: string } {
   const date = new Date(toUtc(iso));
   return {
-    weekday: new Intl.DateTimeFormat(locale, { weekday: 'short', timeZone: 'UTC' }).format(date),
+    weekday: formatInstant(date, locale, 'weekday_short', 'UTC'),
     day: String(date.getUTCDate()),
-    month: new Intl.DateTimeFormat(locale, { month: 'short', timeZone: 'UTC' }).format(date),
+    month: formatInstant(date, locale, 'month_short', 'UTC'),
   };
 }
 

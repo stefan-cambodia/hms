@@ -1300,3 +1300,68 @@ export interface TodayReport {
   month_to_date_last_year: Kpis;
   next_days: { date: string; occupancy: string | null; sold: number; available: number }[];
 }
+
+// --- Backups (phase 10) ------------------------------------------------------
+
+export type BackupTrigger = 'schedule' | 'manual' | 'safety' | 'cli' | 'unknown';
+
+export interface BackupFile {
+  file: string;
+  created_at: string | null;
+  bytes: number;
+  sha256: string | null;
+  verified_tables: number | null;
+  verified_hotels: number | null;
+  schema_version: string | null;
+  trigger: BackupTrigger | string;
+  requested_by: string | null;
+  restorable: boolean;
+}
+
+export interface BackupRun {
+  kind: 'backup' | 'restore' | string;
+  request_id: string | null;
+  trigger: string | null;
+  requested_by: string | null;
+  started_at: string | null;
+  finished_at: string | null;
+  status: 'ok' | 'failed' | string;
+  error: string | null;
+  file: string | null;
+  safety_backup: string | null;
+  bytes: number | null;
+}
+
+export interface BackupOperation {
+  kind: 'backup' | 'restore' | string;
+  step: string;
+  request_id: string | null;
+  requested_by: string | null;
+  since: string | null;
+}
+
+export interface BackupRequest {
+  id: string;
+  kind: 'backup' | 'restore' | string;
+  file: string | null;
+  requested_by: string | null;
+  requested_at: string | null;
+}
+
+export interface BackupsStatus {
+  service: {
+    connected: boolean;
+    running: boolean;
+    last_seen: string | null;
+    interval_hours: number | null;
+    retention_days: number | null;
+    last_scheduled: string | null;
+    next_scheduled: string | null;
+  };
+  current: BackupOperation | null;
+  pending: BackupRequest[];
+  backups: BackupFile[];
+  runs: BackupRun[];
+  schema_version: string | null;
+  restore: { allowed: boolean; reason: 'NOT_SUPERADMIN' | 'MULTI_ORGANIZATION' | null };
+}

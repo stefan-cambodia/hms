@@ -49,7 +49,8 @@
     "restaurant": "Restaurant & bar",
     "vehicles": "Vehicle rental",
     "channels": "Channel manager",
-    "reports": "Reports"
+    "reports": "Reports",
+    "backups": "Backups"
   },
   "auth": {
     "title": "Hotel Management System",
@@ -470,7 +471,11 @@
     "reset_password_for": "Reset password for {{name}}",
     "reset_password_hint": "The user will be signed out on all devices and must use the new password.",
     "new_password": "New password",
-    "password_reset_done": "Password reset; all sessions were signed out"
+    "password_reset_done": "Password reset; all sessions were signed out",
+    "reset_2fa": "Reset two-factor authentication",
+    "reset_2fa_title": "Reset two-factor authentication for {{name}}?",
+    "reset_2fa_body": "For a lost or replaced phone. Two-factor authentication is switched off and all of this person's sessions end; they sign in with their password and can enable it again on their new phone in My account.",
+    "reset_2fa_done": "Two-factor authentication reset"
   },
   "roles": {
     "hint": "A role is a set of permissions. System roles cannot be edited; duplicate one to customise it.",
@@ -633,7 +638,8 @@
       "rate_plan": "Rate plan",
       "pricing_rule": "Pricing rule",
       "cancellation_policy": "Cancellation policy",
-      "rate": "Rates"
+      "rate": "Rates",
+      "backup": "Backup"
     },
     "actions": {
       "create": "Created",
@@ -653,7 +659,11 @@
       "created": "Created",
       "updated": "Updated",
       "view_sensitive": "Identity viewed",
-      "bulk_update": "Rates updated"
+      "bulk_update": "Rates updated",
+      "request": "Backup requested",
+      "restore_request": "Restore requested",
+      "restore": "Data restored from this backup",
+      "totp_reset": "2FA reset by an administrator"
     }
   },
   "account": {
@@ -939,7 +949,15 @@
     "DUPLICATE_CODE": "The same code is used for two room types.",
     "BOOKING_NOT_FOUND": "This booking no longer exists.",
     "BOOKING_ALREADY_PROCESSED": "This booking was already processed.",
-    "MESSAGE_NOT_FOUND": "This message no longer exists."
+    "MESSAGE_NOT_FOUND": "This message no longer exists.",
+    "BACKUP_SERVICE_UNAVAILABLE": "The backup service is not responding.",
+    "BACKUP_BUSY": "Another backup operation is already waiting or running.",
+    "RESTORE_NOT_ALLOWED": "You are not allowed to restore backups on this server.",
+    "CONFIRMATION_MISMATCH": "The confirmation does not match.",
+    "BACKUP_NOT_FOUND": "This backup no longer exists.",
+    "BACKUP_SCHEMA_MISMATCH": "This backup was made by another software version: use the command-line procedure.",
+    "USE_MY_ACCOUNT": "Change your own settings in My account.",
+    "TOTP_NOT_ENABLED": "Two-factor authentication is not enabled for this user."
   },
   "reservations": {
     "description": "Every booking, whatever its source. Click a reservation to manage it.",
@@ -976,7 +994,10 @@
     "unassigned_n_other": "{{count}} rooms to assign",
     "nights_one": "{{count}} night",
     "nights_other": "{{count}} nights",
-    "guests_count": "{{adults}} adults · {{children}} children",
+    "adults_count_one": "{{count}} adult",
+    "adults_count_other": "{{count}} adults",
+    "children_count_one": "{{count}} child",
+    "children_count_other": "{{count}} children",
     "modified": "Modified",
     "modified_hint": "Dates, room or details were changed after booking (see History)",
     "overbooked": "Overbooked",
@@ -2306,5 +2327,111 @@
     "picked_up": "Booked in the last 7 days",
     "rooms_sold": "Rooms sold",
     "table_hint": "Values are also available in the table view and the CSV export."
+  },
+  "backups": {
+    "description": "Verified copies of the whole database, made automatically by the backup service. Each copy is restored into a test database before it is kept.",
+    "backup_now": "Back up now",
+    "backup_requested": "Backup requested",
+    "backup_done": "Backup completed and verified",
+    "failed_title": "The operation failed",
+    "not_connected_title": "Backup service not connected",
+    "not_connected_body": "This server does not share its control folder with the backup service (development installation, or the backup_control volume is missing). See the installation guide, section 5.",
+    "service": "Backup service",
+    "running": "Running",
+    "stopped": "Not responding",
+    "last_backup": "Last backup",
+    "none_yet": "None yet",
+    "next_backup": "Next scheduled backup",
+    "every_hours": "Every {{hours}} h",
+    "retention": "Kept for",
+    "days_one": "{{count}} day",
+    "days_other": "{{count}} days",
+    "retention_hint": "The three newest backups are always kept.",
+    "list": "Backups on the server",
+    "list_hint": "Copy them off the server regularly (external drive or another site): a copy kept only on the server is lost with it.",
+    "empty": "No backup yet",
+    "history": "History",
+    "no_runs": "No backup or restore has run yet",
+    "date": "Date",
+    "origin": "Origin",
+    "size": "Size",
+    "verification": "Verification",
+    "checksum": "Checksum (SHA-256)",
+    "verified": "Test restore passed ({{tables}} tables)",
+    "restore": "Restore…",
+    "other_version": "Made by another version of the software: restore it with the command-line procedure (installation guide, section 6).",
+    "busy": "Another operation is in progress",
+    "restore_reason": {
+      "NOT_SUPERADMIN": "Only a super administrator can restore a backup.",
+      "MULTI_ORGANIZATION": "This server holds several organisations: restoring is done by the server operator (command line, installation guide section 6)."
+    },
+    "started": "Started",
+    "operation": "Operation",
+    "result": "Result",
+    "duration": "Duration",
+    "detail": "Detail",
+    "ok": "Succeeded",
+    "failed": "Failed",
+    "duration_s": "{{value}} s",
+    "safety_backup_named": "safety backup {{file}}",
+    "kinds": {
+      "backup": "Backup",
+      "restore": "Restore"
+    },
+    "triggers": {
+      "schedule": "Scheduled",
+      "manual": "Manual",
+      "safety": "Before a restore",
+      "cli": "Command line",
+      "unknown": "Earlier version"
+    },
+    "steps": {
+      "dumping": "Copying the database…",
+      "verifying": "Test restore of the copy…",
+      "checking": "Checking the file…",
+      "loading": "Loading the backup…",
+      "safety_backup": "Safety backup of the current data…",
+      "switching": "Switching to the restored data…"
+    },
+    "run_errors": {
+      "DUMP_FAILED": "The database could not be copied",
+      "ARCHIVE_UNREADABLE": "The copy is unreadable",
+      "CREATEDB_FAILED": "Could not create the test database (disk full?)",
+      "VERIFY_RESTORE_FAILED": "The test restore failed: the copy was discarded",
+      "VERIFY_QUERY_FAILED": "The restored copy could not be checked",
+      "SCHEMA_UNKNOWN": "The copy has no schema version",
+      "INVALID_FILE": "Invalid file name",
+      "FILE_NOT_FOUND": "The backup file no longer exists",
+      "CHECKSUM_MISSING": "The checksum file is missing",
+      "CHECKSUM_MISMATCH": "The file is damaged (checksum mismatch)",
+      "RESTORE_FAILED": "The backup could not be loaded",
+      "LIVE_SCHEMA_UNKNOWN": "The current database version is unknown",
+      "BACKUP_SCHEMA_UNKNOWN": "The backup has no schema version",
+      "SCHEMA_MISMATCH": "Made by another software version: use the command-line procedure",
+      "PREPARE_FAILED": "The restored data could not be prepared",
+      "FREEZE_FAILED": "Could not pause the application",
+      "SAFETY_BACKUP_FAILED": "The safety backup failed: nothing was changed",
+      "SWITCH_FAILED": "Could not switch databases: the current data was kept"
+    },
+    "backing_up": "Backup in progress",
+    "restoring": "Restore in progress",
+    "restoring_hint": "The server is unavailable for a moment; devices reconnect automatically.",
+    "waiting": "Waiting for the backup service",
+    "waiting_backup": "A backup will start within a few seconds.",
+    "waiting_restore": "The restore will start within a few seconds.",
+    "load_failed": "The backup status could not be loaded.",
+    "restore_done_title": "Restore completed",
+    "restore_done_body": "The data is now that of the backup. Reload the application on every device to see it.",
+    "reload": "Reload",
+    "restore_title": "Restore a backup",
+    "restore_what": "All data of every hotel will be replaced by the backup of {{date}}.",
+    "restore_lost": "Everything recorded since then is removed: reservations, payments, changes.",
+    "restore_safety": "A safety backup of the current data is taken first; it appears in the list and can be restored the same way.",
+    "restore_downtime": "The server is unavailable for about a minute. Staff whose session started after the backup must sign in again.",
+    "restore_channels": "Availability and rates are sent again to the channel manager. Check the bookings received from channels since the backup.",
+    "your_password": "Your password",
+    "type_code": "Type the hotel code {{code}} to confirm",
+    "restore_confirm": "Restore this backup",
+    "restore_requested": "Restore requested"
   }
 }

@@ -24,7 +24,8 @@ cp .env.example .env
 
 Edit `.env`:
 
-* `POSTGRES_PASSWORD`: generate with `openssl rand -base64 32`.
+* `POSTGRES_PASSWORD` and `HMS_DB_APP_PASSWORD`: generate each with `openssl rand -hex 32`
+  (hexadecimal: the value goes into a connection URL, where `/`, `+` or `@` would break it).
 * `HMS_DATA_KEY`: generate with the command in the file. **Store a copy of this key somewhere safe outside the server** (a password manager or a printed sealed envelope). Encrypted fields (2FA secrets, OTA credentials, identity documents) cannot be recovered without it, even from backups.
 * `HMS_SITE_ADDRESS` and `HMS_TLS`:
   * LAN: `HMS_SITE_ADDRESS=https://hms.lan`, `HMS_TLS=internal`. Add `hms.lan` to your router's local DNS (or each device's hosts file), pointing to the server's fixed IP address.
@@ -43,13 +44,26 @@ docker compose exec api hms-entrypoint cli bootstrap \
 
 Open `https://hms.lan` (or your domain), sign in, and follow the **Set up your hotel** checklist on the dashboard.
 
+The stack starts five services: `db` (PostgreSQL), `migrate` (applies the
+database migrations and creates the API's own database role, then exits),
+`api`, `web` (Caddy: HTTPS and the interface) and `backup`. The API connects
+with the least-privilege role `hms_api` (password `HMS_DB_APP_PASSWORD`), never
+as the database owner: it cannot change the schema or erase the audit trail,
+and PostgreSQL itself keeps each hotel's data apart (row-level security). In
+production the API refuses to start otherwise.
+
 ### Upgrades
 
 ```bash
 cd hms && git pull && cd deploy
 docker compose exec backup /scripts/backup-once.sh   # safety backup first
-docker compose up -d --build                          # migrations run automatically on start
+docker compose up -d --build                          # `migrate` runs before the API restarts
 ```
+
+**Upgrading an installation made before version 0.10 (November 2026):** add
+`HMS_DB_APP_PASSWORD` to `.env` (`openssl rand -hex 32`) before
+`docker compose up -d --build`. The `migrate` service creates the `hms_api`
+role with that password; nothing else changes for users.
 
 Every device picks up the new interface automatically, because the UI is served by the server.
 
@@ -69,6 +83,7 @@ docker compose cp web:/data/caddy/pki/authorities/local/root.crt ./hms-root-ca.c
 ## 4. Connect staff devices
 
 * **Desktop application (Linux/Windows):** install *HMS* — `.deb` (Ubuntu, Debian, Mint), `.AppImage` (any recent Linux, no installation), Windows installer, or the portable `.exe` (Windows 10 21H2+ and 11). At first start, enter the server address and press *Connect*: the address is remembered, and the hotel's interface opens. *Server › Change server…* chooses another one. If the computer does not trust the server's certificate, the screen says so: install the certificate first (section 3). The application stores nothing else on the computer. See `desktop/README.md`.
+  ![Connection screen of the desktop application](../images/desktop-connect.png)
 * **Desktop in a browser:** the address also works in Chrome, Edge or Firefox.
 * **Android tablet:** Chrome › menu › *Add to home screen*.
 * **iPad:** Safari › Share › *Add to Home Screen*.
@@ -84,20 +99,52 @@ The `backup` service runs every `BACKUP_INTERVAL_HOURS` (default 6). For each ba
 3. keeps it only if verification succeeded, with a SHA-256 checksum,
 4. deletes backups older than `BACKUP_RETENTION_DAYS`, always keeping the three newest.
 
-The result of the last run is in `deploy/backups/last-run.json` (`"status": "ok"` or `"failed"` with the reason).
+The **Backups** screen (menu *Backups*, permission `backups.manage`, given to
+super administrators) shows whether the backup service is running, when the
+last backup was made and when the next one is due, every backup kept on the
+server with its size, checksum and verification, and the history of backups
+and restores with their outcome. **Back up now** makes an extra verified
+backup, for example before a large change. The result of the last run is also
+in `deploy/backups/last-run.json` (`"status": "ok"` or `"failed"` with the
+reason).
+
+![Backups screen](../images/backups.png)
 
 **Off-machine copies:** set `BACKUP_HOST_DIR` to a mounted external drive or network share, or copy `deploy/backups/` off-site with a scheduled `rsync`/`rclone`. A backup kept only on the server is lost along with the server.
 
-Manual backup at any time: `docker compose exec backup /scripts/backup-once.sh`.
+Manual backup from the command line: `docker compose exec backup /scripts/backup-once.sh`.
 
 ## 6. Restore and disaster recovery
+
+**From the Backups screen** (super administrator, server with a single
+organisation, backup made by the installed software version): *Restore…* on
+the chosen backup, then type your password (and 2FA code) and the hotel's code.
+The backup service checks the file's checksum, loads it into a new database,
+takes a safety backup of the current data (it appears in the list and can be
+restored the same way), then switches to the restored data. The server is
+unavailable for less than a minute (13 s in the test drill with a small
+database); devices reconnect by themselves, and staff whose session started
+after the backup sign in again. Availability and rates are sent to the channel
+manager again automatically; check the reservations received from channels
+since the backup. Every hotel's audit trail records the restore.
+
+![Restore confirmation](../images/backups-restore.png)
+
+**From the command line** (any backup, including one made by an older version,
+and when the screen cannot be used):
 
 ```bash
 cd hms/deploy
 ./scripts/restore.sh backups/hms-YYYYMMDDTHHMMSSZ.dump
 ```
 
-The script verifies the checksum, asks for confirmation, takes a safety backup of the current data, stops the API, restores, and restarts. Staff devices reconnect automatically.
+The script verifies the checksum, asks for confirmation, takes a safety backup
+of the current data, stops the API, restores, applies the migrations of the
+installed version, and restarts. Staff devices reconnect automatically.
+
+The procedure is tested by `deploy/tests/restore-drill.sh`, which builds a
+throwaway copy of the production stack, makes a backup and a restore through
+the API and checks the result (results in `docs/qa/phase10-report.md`).
 
 **Full server loss:** install a new server (section 2) with the **same `HMS_DATA_KEY`**, copy a backup file into `deploy/backups/`, start the stack, then run `restore.sh`. Test this procedure at least once a year on a spare machine. A backup that has never been restored should not be trusted.
 
@@ -132,6 +179,8 @@ with their source.
 | Devices show "Disconnected" | Is the server on (`docker compose ps`)? Can the device reach its IP? Is it on the hotel Wi-Fi rather than a guest network isolated from the server? |
 | Browser certificate warning | Section 3: the device does not trust the local CA yet. |
 | Cannot sign in, "Account temporarily locked" | Wait for the indicated delay, or an administrator unlocks the account in *Users & permissions*. |
-| `last-run.json` shows `failed` | `docker compose logs backup`: usually a full disk or an unreachable backup directory. |
+| `last-run.json` shows `failed`, or the Backups screen shows a failed run | The error is shown in the history (for example "Could not create the test database (disk full?)"); details in `docker compose logs backup`. Usually a full disk or an unreachable backup directory. |
+| Backups screen: "Backup service not connected" or "Not responding" | `docker compose ps backup`; the `backup` and `api` services must share the `backup_control` volume (as in `docker-compose.yml`). |
+| API does not start: "connects to PostgreSQL as … row-level security … not in force" | `HMS_DATABASE_URL` points to the database owner. Use the `hms_api` role (section 2) and run `docker compose up -d` so that `migrate` creates it. |
 | Channel manager shows "Errors" | *Channel manager › Activity log*: authentication errors mean wrong credentials; unknown codes mean the mapping must be fixed; network errors are retried automatically. |
 | Logs | `docker compose logs -f api` · `docker compose logs -f web` |

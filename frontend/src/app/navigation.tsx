@@ -5,6 +5,7 @@ import {
   IconChartBar,
   IconClipboardList,
   IconCoin,
+  IconDatabaseExport,
   IconDoor,
   IconAddressBook,
   IconBrush,
@@ -53,6 +54,7 @@ export const NAV_ITEMS: NavItem[] = [
   { key: 'billing', path: '/billing', icon: IconReceipt2, permission: 'payments.view' },
   { key: 'services', path: '/services', icon: IconSwimming, permission: 'hotel.view' },
   { key: 'users', path: '/users', icon: IconUsersGroup, permission: 'users.view' },
+  { key: 'backups', path: '/backups', icon: IconDatabaseExport, permission: 'backups.manage' },
   { key: 'configuration', path: '/settings', icon: IconSettings, permission: 'hotel.view' },
 ];
 

@@ -13,6 +13,7 @@ import { daysBetween } from '@/lib/dates';
 import { formatDate, formatMoney } from '@/lib/format';
 import { NewReservationDrawer } from './NewReservationDrawer';
 import { FlagBadges, STATUSES, StatusBadge, useHotelToday } from './shared';
+import { guestsLabel } from '@/lib/guests';
 
 const PAGE = 50;
 type Quick = 'all' | 'arrivals' | 'departures' | 'in_house' | 'pending';
@@ -124,7 +125,7 @@ export default function ReservationsPage() {
                         {r.guest_name}
                       </Text>
                       <Text size="xs" c="dimmed">
-                        {t('reservations.guests_count', { adults: r.adults, children: r.children })}
+                        {guestsLabel(t, r.adults, r.children)}
                       </Text>
                     </Table.Td>
                     <Table.Td>

@@ -15,6 +15,7 @@ import { NewReservationDrawer } from '@/modules/reservations/NewReservationDrawe
 import { useHotelToday, useInventory } from '@/modules/reservations/shared';
 import { useStayActions } from './actions';
 import { HousekeepingBadge, RoomBoard } from './RoomBoard';
+import { guestsLabel } from '@/lib/guests';
 
 type Tab = 'arrivals' | 'in_house' | 'departures' | 'rooms';
 const TABS: Tab[] = ['arrivals', 'in_house', 'departures', 'rooms'];
@@ -201,7 +202,7 @@ function StayTable({ rows, mode, isToday, actions }: { rows?: StayRow[]; mode: '
                   </Text>
                 </Table.Td>
                 <Table.Td visibleFrom="md">
-                  <Text size="sm">{t('reservations.guests_count', { adults: r.adults, children: r.children })}</Text>
+                  <Text size="sm">{guestsLabel(t, r.adults, r.children)}</Text>
                 </Table.Td>
                 <Table.Td ta="right" className="hms-num">
                   <Text size="sm" fw={600} c={Number(r.balance) > 0 ? 'red.7' : Number(r.balance) < 0 ? 'orange.7' : 'teal.7'}>

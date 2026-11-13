@@ -10,6 +10,8 @@
  * - Text that a spreadsheet would run as a formula (=, +, -, @, tab, CR at the
  *   start) is prefixed with an apostrophe (CSV injection).
  */
+import { numberLocale } from '@/lib/intl';
+
 
 export type Cell = string | number | null | undefined;
 
@@ -19,7 +21,7 @@ export interface CsvFormat {
 }
 
 export function csvFormat(locale: string): CsvFormat {
-  const decimal = new Intl.NumberFormat(locale).formatToParts(1.5).find((p) => p.type === 'decimal')?.value;
+  const decimal = new Intl.NumberFormat(numberLocale(locale)).formatToParts(1.5).find((p) => p.type === 'decimal')?.value;
   return decimal === ',' ? { separator: ';', decimal: ',' } : { separator: ',', decimal: '.' };
 }
 

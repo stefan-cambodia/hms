@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 import { addDays } from '@/lib/dates';
 import { formatMoney, formatNumber } from '@/lib/format';
+import { formatInstant } from '@/lib/intl';
 
 export type Preset = 'this_month' | 'last_month' | 'last_30' | 'this_year' | 'custom';
 export type Compare = 'none' | 'previous' | 'last_year';
@@ -35,9 +36,8 @@ export function useFormatters(currency: string) {
     money: (v: string | number | null | undefined) => (v === null || v === undefined ? '—' : formatMoney(v, currency, lang)),
     pct: (v: string | number | null | undefined) => (v === null || v === undefined ? '—' : `${formatNumber(v, lang, 1)} %`),
     num: (v: string | number | null | undefined, digits = 0) => (v === null || v === undefined ? '—' : formatNumber(v, lang, digits)),
-    shortDate: (iso: string) => new Intl.DateTimeFormat(lang, { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(`${iso}T00:00:00Z`)),
-    longDate: (iso: string) =>
-      new Intl.DateTimeFormat(lang, { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${iso}T00:00:00Z`)),
+    shortDate: (iso: string) => formatInstant(new Date(`${iso}T00:00:00Z`), lang, 'day_month', 'UTC'),
+    longDate: (iso: string) => formatInstant(new Date(`${iso}T00:00:00Z`), lang, 'weekday_long_date', 'UTC'),
   };
 }
 

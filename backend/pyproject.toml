@@ -63,3 +63,5 @@ ignore = ["S101", "B008", "UP046", "UP047", "ASYNC109"]
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S"]
 "migrations/*" = ["E501"]
+# Load-test tool: random choices are workload, not security; fixed test password.
+"loadtest/*" = ["S311", "S105", "E501", "ASYNC240"]

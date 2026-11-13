@@ -10,7 +10,7 @@ from zoneinfo import ZoneInfo
 import pytest
 from sqlalchemy import text
 
-from app.core.db import sessionmaker
+from app.core.db import owner_sessionmaker
 from app.modules.reports.service import last_year, pct, previous_period
 from tests.conftest import Api, error_code
 from tests.test_restaurant import add, in_house_guest, open_check, pay, resto  # noqa: F401 (fixture)
@@ -166,6 +166,21 @@ async def test_kpis_daily_and_breakdowns_match_hand_computed_values(admin: Api, 
     assert (bk["arrivals"], bk["average_stay"], bk["average_lead_days"]) == (2, "2.5", "10.5")
 
 
+async def test_history_entered_after_the_rooms_were_created(admin: Api, hotel: dict):
+    """A hotel entering last week's stays today: its rooms were created today,
+    but a room sold on a night existed that night, and a booking entered after
+    its arrival has a lead time of 0, never a negative one."""
+    rooms = hotel["rooms"]
+    await book(admin, hotel["a"], -6, -4, room_id=rooms["101"])  # 2 nights
+    await book(admin, hotel["a"], -5, -4, room_id=rooms["102"])  # 1 night
+    rep = await performance(admin, -6, -4)
+    t = rep["totals"]
+    # Night -6: only 101 is known to have existed; night -5: 101 and 102.
+    assert (t["sold"], t["available"], t["occupancy"]) == (3, 3, "100.0")
+    assert [(x["sold"], x["available"]) for x in rep["daily"]] == [(1, 1), (2, 2)]
+    assert rep["bookings"]["average_lead_days"] == "0.0"
+
+
 async def test_cancellation_and_no_show_rates(admin: Api, hotel: dict):
     await scenario(admin, hotel)
     # Booking basis: 3 reservations created today, 1 cancelled.
@@ -173,7 +188,7 @@ async def test_cancellation_and_no_show_rates(admin: Api, hotel: dict):
     assert (bk["created"], bk["cancelled"], bk["cancellation_rate"]) == (3, 1, "33.3")
     # A no-show among the arrivals of the window (status set as the night audit would).
     r4 = await book(admin, hotel["a"], 11, 12)
-    async with sessionmaker()() as db:
+    async with owner_sessionmaker()() as db:
         await db.execute(text("UPDATE reservations SET status = 'no_show' WHERE id = :id"), {"id": r4["id"]})
         await db.execute(
             text("UPDATE reservation_rooms SET occupies_inventory = false WHERE reservation_id = :id"),

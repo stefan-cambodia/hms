@@ -22,6 +22,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from app.core.config import get_settings
 from app.core.db import sessionmaker
+from app.core.tenancy import tenant_scope
 from app.modules.auth import service as auth_service
 from app.modules.auth.deps import SESSION_COOKIE
 from app.modules.realtime.hub import Client, hub
@@ -81,7 +82,7 @@ async def websocket_endpoint(ws: WebSocket) -> None:
     client = Client(websocket=ws, user_id=user.id, session_id=session.id)
     hub.register(client)
     sender = asyncio.create_task(_sender(client))
-    checker = asyncio.create_task(_session_checker(client))
+    checker = asyncio.create_task(_session_checker(client, user.organization_id))
     try:
         while True:
             msg = json.loads(await ws.receive_text())
@@ -125,11 +126,12 @@ async def _sender(client: Client) -> None:
         await ws.send_text(json.dumps(msg, separators=(",", ":")))
 
 
-async def _session_checker(client: Client) -> None:
+async def _session_checker(client: Client, organization_id: uuid.UUID) -> None:
     while True:
         await asyncio.sleep(SESSION_CHECK_INTERVAL)
-        async with sessionmaker()() as db:
-            active = await auth_service.is_session_active(db, client.session_id)
+        with tenant_scope(organization_id):
+            async with sessionmaker()() as db:
+                active = await auth_service.is_session_active(db, client.session_id)
         if not active:
             client.offer({"type": "session_revoked"})
             return

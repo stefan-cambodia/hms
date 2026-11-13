@@ -8,6 +8,7 @@ import { useHotel } from '@/auth/AuthProvider';
 import { addDays, dayLabel, eachDay, weekday } from '@/lib/dates';
 import { pickLocalized } from '@/lib/localized';
 import { barGeometry, dayShift, isMovable, STATUS_COLORS, stackLanes } from './layout';
+import { guestsLabel } from '@/lib/guests';
 
 export const LABEL_W = 136;
 const ROW_H = 40;
@@ -203,7 +204,7 @@ export function Timeline(props: TimelineProps) {
       <Tooltip
         key={it.id}
         disabled={!!drag}
-        label={block ? label : `${it.code} · ${it.guest_name} · ${t(`reservations.status.${it.status}`)} · ${t('reservations.guests_count', { adults: it.adults ?? 0, children: it.children ?? 0 })}`}
+        label={block ? label : `${it.code} · ${it.guest_name} · ${t(`reservations.status.${it.status}`)} · ${guestsLabel(t, it.adults ?? 0, it.children ?? 0)}`}
         openDelay={400}
       >
         <div

@@ -49,7 +49,8 @@
     "restaurant": "餐厅与酒吧",
     "vehicles": "车辆租赁",
     "channels": "渠道管理",
-    "reports": "报表"
+    "reports": "报表",
+    "backups": "备份"
   },
   "auth": {
     "title": "酒店管理系统",
@@ -464,7 +465,11 @@
     "reset_password_for": "为 {{name}} 重置密码",
     "reset_password_hint": "该用户将在所有设备上退出登录，并须使用新密码登录。",
     "new_password": "新密码",
-    "password_reset_done": "密码已重置；所有会话均已退出登录"
+    "password_reset_done": "密码已重置；所有会话均已退出登录",
+    "reset_2fa": "重置双因素认证",
+    "reset_2fa_title": "要重置 {{name}} 的双因素认证吗？",
+    "reset_2fa_body": "用于手机丢失或更换的情况。双因素认证将被关闭，此人的所有会话都会结束；其可使用密码登录，并在“我的账户”中为新手机重新启用。",
+    "reset_2fa_done": "双因素认证已重置"
   },
   "roles": {
     "hint": "角色是一组权限。系统角色不可编辑；可复制后进行自定义。",
@@ -626,7 +631,8 @@
       "rate_plan": "价格计划",
       "pricing_rule": "定价规则",
       "cancellation_policy": "取消政策",
-      "rate": "房价"
+      "rate": "房价",
+      "backup": "备份"
     },
     "actions": {
       "create": "创建",
@@ -646,7 +652,11 @@
       "created": "创建",
       "updated": "更新",
       "view_sensitive": "查看身份证件",
-      "bulk_update": "批量更新房价"
+      "bulk_update": "批量更新房价",
+      "request": "已请求备份",
+      "restore_request": "已请求还原",
+      "restore": "已从此备份还原数据",
+      "totp_reset": "管理员已重置双因素认证"
     }
   },
   "account": {
@@ -932,7 +942,15 @@
     "DUPLICATE_CODE": "同一代码被用于两个房型。",
     "BOOKING_NOT_FOUND": "此预订已不存在。",
     "BOOKING_ALREADY_PROCESSED": "此预订已处理过。",
-    "MESSAGE_NOT_FOUND": "此消息已不存在。"
+    "MESSAGE_NOT_FOUND": "此消息已不存在。",
+    "BACKUP_SERVICE_UNAVAILABLE": "备份服务无响应。",
+    "BACKUP_BUSY": "已有另一项备份操作在等待或进行中。",
+    "RESTORE_NOT_ALLOWED": "您无权在此服务器上还原备份。",
+    "CONFIRMATION_MISMATCH": "确认内容不匹配。",
+    "BACKUP_NOT_FOUND": "该备份已不存在。",
+    "BACKUP_SCHEMA_MISMATCH": "该备份由其他版本的软件生成：请使用命令行流程。",
+    "USE_MY_ACCOUNT": "请在“我的账户”中更改您自己的设置。",
+    "TOTP_NOT_ENABLED": "该用户未启用双因素认证。"
   },
   "reservations": {
     "description": "所有来源的全部预订。点击预订即可进行管理。",
@@ -967,7 +985,8 @@
     "unassigned": "未排房",
     "unassigned_n_other": "{{count}} 间待排房",
     "nights_other": "{{count}} 晚",
-    "guests_count": "{{adults}} 名成人 · {{children}} 名儿童",
+    "adults_count_other": "{{count}} 名成人",
+    "children_count_other": "{{count}} 名儿童",
     "modified": "已修改",
     "modified_hint": "预订后日期、房间或详情已更改（见历史记录）",
     "overbooked": "超订",
@@ -2264,5 +2283,110 @@
     "picked_up": "最近 7 天预订",
     "rooms_sold": "已售房间",
     "table_hint": "数值也可在表格视图和 CSV 导出中查看。"
+  },
+  "backups": {
+    "description": "整个数据库的已验证副本，由备份服务自动生成。每份副本在保留前都会先还原到测试数据库中进行检验。",
+    "backup_now": "立即备份",
+    "backup_requested": "已请求备份",
+    "backup_done": "备份已完成并通过验证",
+    "failed_title": "操作失败",
+    "not_connected_title": "备份服务未连接",
+    "not_connected_body": "此服务器未与备份服务共享控制文件夹（开发环境，或缺少 backup_control 卷）。请参阅安装指南第 5 节。",
+    "service": "备份服务",
+    "running": "运行中",
+    "stopped": "无响应",
+    "last_backup": "最近一次备份",
+    "none_yet": "暂无",
+    "next_backup": "下次计划备份",
+    "every_hours": "每 {{hours}} 小时",
+    "retention": "保留期限",
+    "days_other": "{{count}} 天",
+    "retention_hint": "最新的三份备份始终保留。",
+    "list": "服务器上的备份",
+    "list_hint": "请定期将备份复制到服务器以外（外接硬盘或其他地点）：只保存在服务器上的副本会随服务器一起丢失。",
+    "empty": "暂无备份",
+    "history": "历史记录",
+    "no_runs": "尚未进行过备份或还原",
+    "date": "日期",
+    "origin": "来源",
+    "size": "大小",
+    "verification": "验证",
+    "checksum": "校验值 (SHA-256)",
+    "verified": "试还原成功（{{tables}} 张表）",
+    "restore": "还原…",
+    "other_version": "由其他版本的软件生成：请使用命令行流程还原（安装指南第 6 节）。",
+    "busy": "另一项操作正在进行",
+    "restore_reason": {
+      "NOT_SUPERADMIN": "只有超级管理员可以还原备份。",
+      "MULTI_ORGANIZATION": "此服务器托管多个组织：还原由服务器运维人员执行（命令行，安装指南第 6 节）。"
+    },
+    "started": "开始时间",
+    "operation": "操作",
+    "result": "结果",
+    "duration": "耗时",
+    "detail": "详情",
+    "ok": "成功",
+    "failed": "失败",
+    "duration_s": "{{value}} 秒",
+    "safety_backup_named": "安全备份 {{file}}",
+    "kinds": {
+      "backup": "备份",
+      "restore": "还原"
+    },
+    "triggers": {
+      "schedule": "计划",
+      "manual": "手动",
+      "safety": "还原前",
+      "cli": "命令行",
+      "unknown": "早期版本"
+    },
+    "steps": {
+      "dumping": "正在复制数据库…",
+      "verifying": "正在试还原副本…",
+      "checking": "正在检查文件…",
+      "loading": "正在载入备份…",
+      "safety_backup": "正在为当前数据做安全备份…",
+      "switching": "正在切换到还原后的数据…"
+    },
+    "run_errors": {
+      "DUMP_FAILED": "无法复制数据库",
+      "ARCHIVE_UNREADABLE": "副本无法读取",
+      "CREATEDB_FAILED": "无法创建测试数据库（磁盘已满？）",
+      "VERIFY_RESTORE_FAILED": "试还原失败：该副本已被丢弃",
+      "VERIFY_QUERY_FAILED": "无法检查还原后的副本",
+      "SCHEMA_UNKNOWN": "副本缺少架构版本",
+      "INVALID_FILE": "文件名无效",
+      "FILE_NOT_FOUND": "备份文件已不存在",
+      "CHECKSUM_MISSING": "缺少校验文件",
+      "CHECKSUM_MISMATCH": "文件已损坏（校验值不符）",
+      "RESTORE_FAILED": "无法载入备份",
+      "LIVE_SCHEMA_UNKNOWN": "当前数据库版本未知",
+      "BACKUP_SCHEMA_UNKNOWN": "备份缺少架构版本",
+      "SCHEMA_MISMATCH": "由其他版本的软件生成：请使用命令行流程",
+      "PREPARE_FAILED": "无法准备还原后的数据",
+      "FREEZE_FAILED": "无法暂停应用",
+      "SAFETY_BACKUP_FAILED": "安全备份失败：未做任何更改",
+      "SWITCH_FAILED": "切换失败：已保留当前数据"
+    },
+    "backing_up": "正在备份",
+    "restoring": "正在还原",
+    "restoring_hint": "服务器会短暂不可用；各设备将自动重新连接。",
+    "waiting": "等待备份服务",
+    "waiting_backup": "备份将在几秒内开始。",
+    "waiting_restore": "还原将在几秒内开始。",
+    "load_failed": "无法加载备份状态。",
+    "restore_done_title": "还原完成",
+    "restore_done_body": "现在的数据即为该备份中的数据。请在每台设备上重新加载应用以查看。",
+    "reload": "重新加载",
+    "restore_title": "还原备份",
+    "restore_what": "所有酒店的全部数据将被替换为 {{date}} 的备份。",
+    "restore_lost": "此后记录的所有内容都将被删除：预订、付款、修改。",
+    "restore_safety": "系统会先为当前数据做一份安全备份；它会出现在列表中，也可以用同样方式还原。",
+    "restore_downtime": "服务器约有一分钟不可用。会话在备份之后开始的员工需要重新登录。",
+    "restore_channels": "房态和房价会重新发送到渠道管理。请核对备份之后从渠道收到的预订。",
+    "your_password": "您的密码",
+    "type_code": "输入酒店代码 {{code}} 以确认",
+    "restore_confirm": "还原此备份",
+    "restore_requested": "已请求还原"
   }
 }

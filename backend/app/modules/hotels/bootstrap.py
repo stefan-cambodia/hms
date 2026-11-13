@@ -6,7 +6,7 @@ import uuid
 from dataclasses import dataclass
 
 from pydantic import TypeAdapter, ValidationError
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core import audit
@@ -15,6 +15,7 @@ from app.core.errors import Conflict, ValidationFailed, field_error
 from app.core.permissions import SYSTEM_ROLES
 from app.core.schemas import StaffEmail
 from app.core.security import hash_password
+from app.core.tenancy import set_tenant
 from app.modules.auth.models import Role, RolePermission, User, UserHotelRole
 from app.modules.auth.service import check_password_policy
 from app.modules.hotels.models import Hotel, Organization
@@ -269,7 +270,7 @@ async def bootstrap(
 ) -> BootstrapResult:
     """Create the first organisation, hotel and super administrator.
     Refuses to run if any user already exists."""
-    if await db.scalar(select(User.id).limit(1)) is not None:
+    if await db.scalar(select(func.hms_installation_initialized())):
         raise Conflict("ALREADY_INITIALIZED", "The system is already initialised")
     check_password_policy(admin_password, field="admin_password")
     try:
@@ -277,7 +278,8 @@ async def bootstrap(
     except ValidationError as exc:
         raise ValidationFailed(fields=[field_error("admin_email", "INVALID_EMAIL")]) from exc
 
-    org = Organization(name=organization_name)
+    org = Organization(id=uuid.uuid4(), name=organization_name)
+    await set_tenant(db, org.id)
     db.add(org)
     await db.flush()
     hotel = Hotel(

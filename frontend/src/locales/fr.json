@@ -49,7 +49,8 @@
     "restaurant": "Restaurant et bar",
     "vehicles": "Location de véhicules",
     "channels": "Channel manager",
-    "reports": "Rapports"
+    "reports": "Rapports",
+    "backups": "Sauvegardes"
   },
   "auth": {
     "title": "Système de gestion hôtelière",
@@ -476,7 +477,11 @@
     "reset_password_for": "Réinitialiser le mot de passe de {{name}}",
     "reset_password_hint": "L’utilisateur sera déconnecté de tous ses appareils et devra utiliser le nouveau mot de passe.",
     "new_password": "Nouveau mot de passe",
-    "password_reset_done": "Mot de passe réinitialisé ; toutes les sessions ont été fermées"
+    "password_reset_done": "Mot de passe réinitialisé ; toutes les sessions ont été fermées",
+    "reset_2fa": "Réinitialiser l'authentification à deux facteurs",
+    "reset_2fa_title": "Réinitialiser l'authentification à deux facteurs de {{name}} ?",
+    "reset_2fa_body": "En cas de téléphone perdu ou remplacé. L'authentification à deux facteurs est désactivée et toutes les sessions de cette personne se terminent ; elle se connecte avec son mot de passe et peut la réactiver sur son nouveau téléphone dans Mon compte.",
+    "reset_2fa_done": "Authentification à deux facteurs réinitialisée"
   },
   "roles": {
     "hint": "Un rôle est un ensemble de droits. Les rôles système ne sont pas modifiables ; dupliquez-en un pour le personnaliser.",
@@ -640,7 +645,8 @@
       "rate_plan": "Plan tarifaire",
       "pricing_rule": "Règle tarifaire",
       "cancellation_policy": "Politique d’annulation",
-      "rate": "Tarifs"
+      "rate": "Tarifs",
+      "backup": "Sauvegarde"
     },
     "actions": {
       "create": "Création",
@@ -660,7 +666,11 @@
       "created": "Création",
       "updated": "Modification",
       "view_sensitive": "Consultation de la pièce d’identité",
-      "bulk_update": "Mise à jour des tarifs"
+      "bulk_update": "Mise à jour des tarifs",
+      "request": "Sauvegarde demandée",
+      "restore_request": "Restauration demandée",
+      "restore": "Données restaurées depuis cette sauvegarde",
+      "totp_reset": "Authentification à deux facteurs réinitialisée par un administrateur"
     }
   },
   "account": {
@@ -946,7 +956,15 @@
     "DUPLICATE_CODE": "Le même code est utilisé pour deux catégories de chambres.",
     "BOOKING_NOT_FOUND": "Cette réservation n’existe plus.",
     "BOOKING_ALREADY_PROCESSED": "Cette réservation a déjà été traitée.",
-    "MESSAGE_NOT_FOUND": "Ce message n’existe plus."
+    "MESSAGE_NOT_FOUND": "Ce message n’existe plus.",
+    "BACKUP_SERVICE_UNAVAILABLE": "Le service de sauvegarde ne répond pas.",
+    "BACKUP_BUSY": "Une autre opération de sauvegarde est déjà en attente ou en cours.",
+    "RESTORE_NOT_ALLOWED": "Vous n'êtes pas autorisé à restaurer des sauvegardes sur ce serveur.",
+    "CONFIRMATION_MISMATCH": "La confirmation ne correspond pas.",
+    "BACKUP_NOT_FOUND": "Cette sauvegarde n'existe plus.",
+    "BACKUP_SCHEMA_MISMATCH": "Cette sauvegarde a été faite par une autre version du logiciel : utilisez la procédure en ligne de commande.",
+    "USE_MY_ACCOUNT": "Modifiez vos propres réglages dans Mon compte.",
+    "TOTP_NOT_ENABLED": "L'authentification à deux facteurs n'est pas activée pour cet utilisateur."
   },
   "reservations": {
     "description": "Toutes les réservations, quelle que soit leur origine. Cliquez sur une réservation pour la gérer.",
@@ -985,7 +1003,12 @@
     "nights_one": "{{count}} nuit",
     "nights_many": "{{count}} nuits",
     "nights_other": "{{count}} nuits",
-    "guests_count": "{{adults}} adultes · {{children}} enfants",
+    "adults_count_one": "{{count}} adulte",
+    "adults_count_many": "{{count}} adultes",
+    "adults_count_other": "{{count}} adultes",
+    "children_count_one": "{{count}} enfant",
+    "children_count_many": "{{count}} enfants",
+    "children_count_other": "{{count}} enfants",
     "modified": "Modifiée",
     "modified_hint": "Dates, chambre ou détails modifiés après la réservation (voir Historique)",
     "overbooked": "Surréservation",
@@ -2335,5 +2358,112 @@
     "picked_up": "Réservées ces 7 derniers jours",
     "rooms_sold": "Chambres vendues",
     "table_hint": "Les valeurs sont également disponibles dans la vue tableau et dans l’export CSV."
+  },
+  "backups": {
+    "description": "Copies vérifiées de toute la base de données, faites automatiquement par le service de sauvegarde. Chaque copie est restaurée dans une base de test avant d'être conservée.",
+    "backup_now": "Sauvegarder maintenant",
+    "backup_requested": "Sauvegarde demandée",
+    "backup_done": "Sauvegarde terminée et vérifiée",
+    "failed_title": "L'opération a échoué",
+    "not_connected_title": "Service de sauvegarde non relié",
+    "not_connected_body": "Ce serveur ne partage pas son dossier de contrôle avec le service de sauvegarde (installation de développement, ou volume backup_control absent). Voir le guide d'installation, section 5.",
+    "service": "Service de sauvegarde",
+    "running": "En marche",
+    "stopped": "Ne répond pas",
+    "last_backup": "Dernière sauvegarde",
+    "none_yet": "Aucune pour l'instant",
+    "next_backup": "Prochaine sauvegarde planifiée",
+    "every_hours": "Toutes les {{hours}} h",
+    "retention": "Conservation",
+    "days_one": "{{count}} jour",
+    "days_many": "{{count}} jours",
+    "days_other": "{{count}} jours",
+    "retention_hint": "Les trois sauvegardes les plus récentes sont toujours gardées.",
+    "list": "Sauvegardes sur le serveur",
+    "list_hint": "Copiez-les régulièrement hors du serveur (disque externe ou autre site) : une copie gardée seulement sur le serveur disparaît avec lui.",
+    "empty": "Aucune sauvegarde pour l'instant",
+    "history": "Historique",
+    "no_runs": "Aucune sauvegarde ni restauration n'a encore eu lieu",
+    "date": "Date",
+    "origin": "Origine",
+    "size": "Taille",
+    "verification": "Vérification",
+    "checksum": "Empreinte (SHA-256)",
+    "verified": "Restauration d'essai réussie ({{tables}} tables)",
+    "restore": "Restaurer…",
+    "other_version": "Faite par une autre version du logiciel : restaurez-la avec la procédure en ligne de commande (guide d'installation, section 6).",
+    "busy": "Une autre opération est en cours",
+    "restore_reason": {
+      "NOT_SUPERADMIN": "Seul un super-administrateur peut restaurer une sauvegarde.",
+      "MULTI_ORGANIZATION": "Ce serveur héberge plusieurs organisations : la restauration est faite par l'exploitant du serveur (ligne de commande, guide d'installation section 6)."
+    },
+    "started": "Début",
+    "operation": "Opération",
+    "result": "Résultat",
+    "duration": "Durée",
+    "detail": "Détail",
+    "ok": "Réussie",
+    "failed": "Échec",
+    "duration_s": "{{value}} s",
+    "safety_backup_named": "sauvegarde de sécurité {{file}}",
+    "kinds": {
+      "backup": "Sauvegarde",
+      "restore": "Restauration"
+    },
+    "triggers": {
+      "schedule": "Planifiée",
+      "manual": "Manuelle",
+      "safety": "Avant restauration",
+      "cli": "Ligne de commande",
+      "unknown": "Version antérieure"
+    },
+    "steps": {
+      "dumping": "Copie de la base de données…",
+      "verifying": "Restauration d'essai de la copie…",
+      "checking": "Vérification du fichier…",
+      "loading": "Chargement de la sauvegarde…",
+      "safety_backup": "Sauvegarde de sécurité des données actuelles…",
+      "switching": "Bascule vers les données restaurées…"
+    },
+    "run_errors": {
+      "DUMP_FAILED": "La base de données n'a pas pu être copiée",
+      "ARCHIVE_UNREADABLE": "La copie est illisible",
+      "CREATEDB_FAILED": "Impossible de créer la base de test (disque plein ?)",
+      "VERIFY_RESTORE_FAILED": "La restauration d'essai a échoué : la copie a été écartée",
+      "VERIFY_QUERY_FAILED": "La copie restaurée n'a pas pu être contrôlée",
+      "SCHEMA_UNKNOWN": "La copie n'indique pas sa version de schéma",
+      "INVALID_FILE": "Nom de fichier invalide",
+      "FILE_NOT_FOUND": "Le fichier de sauvegarde n'existe plus",
+      "CHECKSUM_MISSING": "Le fichier d'empreinte est absent",
+      "CHECKSUM_MISMATCH": "Le fichier est endommagé (empreinte différente)",
+      "RESTORE_FAILED": "La sauvegarde n'a pas pu être chargée",
+      "LIVE_SCHEMA_UNKNOWN": "La version de la base actuelle est inconnue",
+      "BACKUP_SCHEMA_UNKNOWN": "La sauvegarde n'indique pas sa version de schéma",
+      "SCHEMA_MISMATCH": "Faite par une autre version du logiciel : utilisez la procédure en ligne de commande",
+      "PREPARE_FAILED": "Les données restaurées n'ont pas pu être préparées",
+      "FREEZE_FAILED": "Impossible de mettre l'application en pause",
+      "SAFETY_BACKUP_FAILED": "La sauvegarde de sécurité a échoué : rien n'a été modifié",
+      "SWITCH_FAILED": "La bascule a échoué : les données actuelles ont été conservées"
+    },
+    "backing_up": "Sauvegarde en cours",
+    "restoring": "Restauration en cours",
+    "restoring_hint": "Le serveur est indisponible quelques instants ; les appareils se reconnectent automatiquement.",
+    "waiting": "En attente du service de sauvegarde",
+    "waiting_backup": "Une sauvegarde va démarrer dans quelques secondes.",
+    "waiting_restore": "La restauration va démarrer dans quelques secondes.",
+    "load_failed": "L'état des sauvegardes n'a pas pu être chargé.",
+    "restore_done_title": "Restauration terminée",
+    "restore_done_body": "Les données sont désormais celles de la sauvegarde. Rechargez l'application sur chaque appareil pour les voir.",
+    "reload": "Recharger",
+    "restore_title": "Restaurer une sauvegarde",
+    "restore_what": "Toutes les données de tous les hôtels seront remplacées par la sauvegarde du {{date}}.",
+    "restore_lost": "Tout ce qui a été enregistré depuis est supprimé : réservations, paiements, modifications.",
+    "restore_safety": "Une sauvegarde de sécurité des données actuelles est faite d'abord ; elle apparaît dans la liste et peut être restaurée de la même façon.",
+    "restore_downtime": "Le serveur est indisponible environ une minute. Les employés dont la session a commencé après la sauvegarde doivent se reconnecter.",
+    "restore_channels": "Les disponibilités et les tarifs sont renvoyés au channel manager. Vérifiez les réservations reçues des canaux depuis la sauvegarde.",
+    "your_password": "Votre mot de passe",
+    "type_code": "Saisissez le code de l'hôtel {{code}} pour confirmer",
+    "restore_confirm": "Restaurer cette sauvegarde",
+    "restore_requested": "Restauration demandée"
   }
 }

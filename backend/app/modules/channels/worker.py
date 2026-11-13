@@ -17,13 +17,14 @@ from datetime import UTC, datetime, timedelta
 from sqlalchemy import delete, select, text
 
 from app.core.db import get_engine, sessionmaker
+from app.core.tenancy import tenant_scope
 from app.modules.channels.models import (
     ChannelConnection,
     ChannelDirtyRange,
     ChannelMessage,
     ChannelSyncStatus,
 )
-from app.modules.channels.sync import is_due, sync_connection
+from app.modules.channels.sync import connection_refs, is_due, sync_connection
 from app.modules.hotels.models import Hotel
 
 logger = logging.getLogger("hms.channels")
@@ -32,17 +33,29 @@ MESSAGE_RETENTION = timedelta(days=30)
 
 
 async def due_connections(now: datetime) -> list[ChannelConnection]:
-    async with sessionmaker()() as db:
-        rows = (
-            await db.execute(
-                select(ChannelConnection, ChannelSyncStatus, Hotel)
-                .join(ChannelSyncStatus, ChannelSyncStatus.connection_id == ChannelConnection.id)
-                .join(Hotel, Hotel.id == ChannelConnection.hotel_id)
-                .where(ChannelConnection.enabled.is_(True))
-            )
-        ).all()
-        dirty = set(await db.scalars(select(ChannelDirtyRange.connection_id).distinct()))
-    return [c for c, s, h in rows if is_due(c, s, h.today(), c.id in dirty, now)]
+    due: list[ChannelConnection] = []
+    for ref in await connection_refs():
+        if not ref.enabled:
+            continue
+        with tenant_scope(ref.organization_id, (ref.hotel_id,)):
+            async with sessionmaker()() as db:
+                row = (
+                    await db.execute(
+                        select(ChannelConnection, ChannelSyncStatus, Hotel)
+                        .join(ChannelSyncStatus, ChannelSyncStatus.connection_id == ChannelConnection.id)
+                        .join(Hotel, Hotel.id == ChannelConnection.hotel_id)
+                        .where(ChannelConnection.id == ref.id)
+                    )
+                ).one_or_none()
+                if row is None:
+                    continue
+                conn, status, hotel = row
+                dirty = await db.scalar(
+                    select(ChannelDirtyRange.id).where(ChannelDirtyRange.connection_id == conn.id).limit(1)
+                )
+            if is_due(conn, status, hotel.today(), dirty is not None, now):
+                due.append(conn)
+    return due
 
 
 async def run_once(now: datetime | None = None) -> int:
@@ -59,11 +72,16 @@ async def run_once(now: datetime | None = None) -> int:
 
 
 async def purge_old_messages() -> None:
-    async with sessionmaker()() as db:
-        await db.execute(
-            delete(ChannelMessage).where(ChannelMessage.at < datetime.now(UTC) - MESSAGE_RETENTION)
-        )
-        await db.commit()
+    cutoff = datetime.now(UTC) - MESSAGE_RETENTION
+    for ref in await connection_refs():
+        with tenant_scope(ref.organization_id, (ref.hotel_id,)):
+            async with sessionmaker()() as db:
+                await db.execute(
+                    delete(ChannelMessage).where(
+                        ChannelMessage.connection_id == ref.id, ChannelMessage.at < cutoff
+                    )
+                )
+                await db.commit()
 
 
 class ChannelWorker:

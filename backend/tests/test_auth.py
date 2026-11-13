@@ -3,7 +3,7 @@ from __future__ import annotations
 import pyotp
 from sqlalchemy import select, text
 
-from app.core.db import sessionmaker
+from app.core.db import owner_sessionmaker
 from app.modules.auth.models import LoginEvent
 from tests.conftest import ADMIN_EMAIL, ADMIN_PASSWORD, Api, error_code, new_client
 
@@ -29,7 +29,7 @@ async def test_wrong_password_and_unknown_email_look_identical(installation):
         r2 = await client.post("/api/v1/auth/login", json={"email": "ghost@example.com", "password": "nope"})
     assert r1.status_code == r2.status_code == 401
     assert error_code(r1) == error_code(r2) == "INVALID_CREDENTIALS"
-    async with sessionmaker()() as db:
+    async with owner_sessionmaker()() as db:
         events = list(await db.scalars(select(LoginEvent).order_by(LoginEvent.id)))
     assert [(e.success, e.reason) for e in events] == [(False, "bad_password"), (False, "unknown_user")]
 
@@ -58,7 +58,7 @@ async def test_login_throttle_is_shared_by_all_api_processes(installation, monke
             r = await client.post("/api/v1/auth/login", json=body)
             codes.append(r.status_code)
     assert codes == [401] * limit + [429]
-    async with sessionmaker()() as db:
+    async with owner_sessionmaker()() as db:
         stored = (await db.execute(text("SELECT sum(hits) FROM rate_limit_buckets"))).scalar_one()
     assert stored == limit + 1
     # The limiter of another process (a new instance, nothing in memory) agrees.
@@ -151,9 +151,37 @@ async def test_totp_two_factor_flow(admin: Api, installation):
         r = await api.login(ADMIN_EMAIL, ADMIN_PASSWORD, totp_code=totp.now())
         assert r.status_code == 200
     # The secret is stored encrypted, never in clear text.
-    async with sessionmaker()() as db:
+    async with owner_sessionmaker()() as db:
         raw = await db.scalar(text("SELECT totp_secret FROM users"))
     assert setup["secret"].encode() not in raw
+
+
+async def test_admin_resets_a_lost_authenticator(admin: Api, user_factory):
+    clerk = await user_factory("receptionist", "clerk@example.com")
+    secret = (await clerk.post("/api/v1/auth/me/totp/setup")).json()["secret"]
+    enabled = await clerk.post("/api/v1/auth/me/totp/enable", {"code": pyotp.TOTP(secret).now()})
+    assert enabled.status_code == 204
+    target = next(u for u in (await admin.get(admin.h("/users"))).json() if u["email"] == "clerk@example.com")
+    assert target["totp_enabled"] is True
+
+    # Not one's own (that is done in My account, with the password).
+    r = await admin.post(admin.h(f"/users/{admin.me['user']['id']}/totp/reset"))
+    assert r.status_code == 403 and error_code(r) == "USE_MY_ACCOUNT"
+    # A receptionist cannot do it.
+    other = await user_factory("receptionist")
+    assert (await other.post(other.h(f"/users/{target['id']}/totp/reset"))).status_code == 403
+
+    r = await admin.post(admin.h(f"/users/{target['id']}/totp/reset"))
+    assert r.status_code == 200 and r.json()["totp_enabled"] is False
+    # Their sessions ended (the lost device may be in someone's hands)...
+    assert (await clerk.get("/api/v1/auth/me")).status_code == 401
+    # ...and they sign in with the password alone, then may enrol a new device.
+    async with new_client() as client:
+        assert (await Api(client).login("clerk@example.com", "Str0ng-Passw0rd")).status_code == 200
+    again = await admin.post(admin.h(f"/users/{target['id']}/totp/reset"))
+    assert again.status_code == 409 and error_code(again) == "TOTP_NOT_ENABLED"
+    logs = (await admin.get(admin.h("/audit-logs"), params={"entity_type": "user"})).json()["items"]
+    assert any(e["action"] == "user.totp_reset" for e in logs)
 
 
 async def test_language_preference_is_per_user(admin: Api, user_factory):

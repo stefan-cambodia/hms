@@ -36,3 +36,4 @@ desktop/target/
 desktop/node_modules/
 desktop/src-tauri/gen/
 desktop/dist/
+deploy/tests/results/

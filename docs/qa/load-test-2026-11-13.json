@@ -1,0 +1,1716 @@
+{
+  "machine": {
+    "platform": "Linux-6.18.60-2-cachyos-lts-x86_64-with-glibc2.44",
+    "python": "3.12.11"
+  },
+  "settings": {
+    "base": "https://localhost:19443",
+    "email": "load@hotel.local",
+    "password": "***",
+    "staff": 30,
+    "minutes": 5.0,
+    "rooms": 120,
+    "history": 1500,
+    "race": 50,
+    "devices": 60,
+    "insecure": true,
+    "out": "tests/results/load-20261113T051038Z.json"
+  },
+  "preparation": {
+    "room_type_id": "c700834c-ba4b-403f-a67d-a69fadec2a7f",
+    "rooms": 120,
+    "history_created": 1500,
+    "managers": 5,
+    "seconds": 98.2
+  },
+  "front_desk_mix": {
+    "operations": {
+      "availability search": {
+        "count": 705,
+        "errors": 0,
+        "p50_ms": 65.9,
+        "p95_ms": 537.5,
+        "p99_ms": 935.0,
+        "max_ms": 2393.2
+      },
+      "calendar 14 days": {
+        "count": 686,
+        "errors": 0,
+        "p50_ms": 308.9,
+        "p95_ms": 1120.9,
+        "p99_ms": 1682.9,
+        "max_ms": 2770.0
+      },
+      "cancel reservation": {
+        "count": 566,
+        "errors": 0,
+        "p50_ms": 189.0,
+        "p95_ms": 1204.4,
+        "p99_ms": 1829.1,
+        "max_ms": 3906.1
+      },
+      "create reservation": {
+        "count": 921,
+        "errors": 0,
+        "p50_ms": 280.7,
+        "p95_ms": 1585.9,
+        "p99_ms": 2356.1,
+        "max_ms": 3726.7
+      },
+      "dashboard (reports/today)": {
+        "count": 557,
+        "errors": 0,
+        "p50_ms": 333.0,
+        "p95_ms": 1171.5,
+        "p99_ms": 1809.9,
+        "max_ms": 2935.9
+      },
+      "front desk": {
+        "count": 602,
+        "errors": 0,
+        "p50_ms": 136.1,
+        "p95_ms": 794.4,
+        "p99_ms": 1402.9,
+        "max_ms": 2437.1
+      },
+      "guest search": {
+        "count": 339,
+        "errors": 0,
+        "p50_ms": 89.8,
+        "p95_ms": 623.8,
+        "p99_ms": 1375.0,
+        "max_ms": 2380.1
+      },
+      "housekeeping tasks": {
+        "count": 299,
+        "errors": 0,
+        "p50_ms": 64.2,
+        "p95_ms": 640.1,
+        "p99_ms": 951.2,
+        "max_ms": 2424.8
+      },
+      "performance report 30 days": {
+        "count": 36,
+        "errors": 0,
+        "p50_ms": 199.8,
+        "p95_ms": 968.2,
+        "p99_ms": 1523.3,
+        "max_ms": 1692.8
+      },
+      "reservation detail": {
+        "count": 921,
+        "errors": 0,
+        "p50_ms": 61.5,
+        "p95_ms": 418.6,
+        "p99_ms": 783.1,
+        "max_ms": 1659.7
+      },
+      "reservation search": {
+        "count": 434,
+        "errors": 0,
+        "p50_ms": 130.2,
+        "p95_ms": 796.2,
+        "p99_ms": 1163.7,
+        "max_ms": 1665.3
+      },
+      "room board": {
+        "count": 555,
+        "errors": 0,
+        "p50_ms": 114.0,
+        "p95_ms": 652.1,
+        "p99_ms": 1114.5,
+        "max_ms": 1418.8
+      }
+    },
+    "requests": 6621,
+    "throughput_rps": 21.9,
+    "error_statuses": {},
+    "slow_requests": [
+      [
+        0.0,
+        "availability search",
+        2393
+      ],
+      [
+        0.0,
+        "calendar 14 days",
+        2680
+      ],
+      [
+        0.0,
+        "calendar 14 days",
+        2728
+      ],
+      [
+        0.0,
+        "calendar 14 days",
+        2765
+      ],
+      [
+        0.0,
+        "calendar 14 days",
+        2766
+      ],
+      [
+        0.0,
+        "calendar 14 days",
+        2770
+      ],
+      [
+        0.0,
+        "create reservation",
+        1779
+      ],
+      [
+        0.0,
+        "create reservation",
+        1863
+      ],
+      [
+        0.0,
+        "create reservation",
+        1968
+      ],
+      [
+        0.0,
+        "create reservation",
+        2073
+      ],
+      [
+        0.0,
+        "create reservation",
+        2934
+      ],
+      [
+        0.0,
+        "create reservation",
+        3116
+      ],
+      [
+        0.0,
+        "create reservation",
+        3450
+      ],
+      [
+        0.0,
+        "create reservation",
+        3605
+      ],
+      [
+        0.0,
+        "create reservation",
+        3727
+      ],
+      [
+        0.0,
+        "dashboard (reports/today)",
+        1802
+      ],
+      [
+        0.0,
+        "dashboard (reports/today)",
+        1818
+      ],
+      [
+        0.0,
+        "dashboard (reports/today)",
+        1937
+      ],
+      [
+        0.0,
+        "dashboard (reports/today)",
+        2000
+      ],
+      [
+        0.0,
+        "dashboard (reports/today)",
+        2831
+      ],
+      [
+        0.0,
+        "dashboard (reports/today)",
+        2936
+      ],
+      [
+        0.0,
+        "front desk",
+        1671
+      ],
+      [
+        0.0,
+        "front desk",
+        2437
+      ],
+      [
+        0.0,
+        "guest search",
+        2380
+      ],
+      [
+        0.0,
+        "housekeeping tasks",
+        1742
+      ],
+      [
+        0.0,
+        "housekeeping tasks",
+        2425
+      ],
+      [
+        0.0,
+        "reservation search",
+        1665
+      ],
+      [
+        0.1,
+        "calendar 14 days",
+        1487
+      ],
+      [
+        0.1,
+        "create reservation",
+        1109
+      ],
+      [
+        0.1,
+        "guest search",
+        1696
+      ],
+      [
+        1.2,
+        "reservation detail",
+        1660
+      ],
+      [
+        2.8,
+        "create reservation",
+        1105
+      ],
+      [
+        3.0,
+        "create reservation",
+        1072
+      ],
+      [
+        3.1,
+        "create reservation",
+        1602
+      ],
+      [
+        3.4,
+        "create reservation",
+        1566
+      ],
+      [
+        3.6,
+        "create reservation",
+        1628
+      ],
+      [
+        3.7,
+        "create reservation",
+        1353
+      ],
+      [
+        3.8,
+        "create reservation",
+        1545
+      ],
+      [
+        3.9,
+        "create reservation",
+        1420
+      ],
+      [
+        4.2,
+        "create reservation",
+        1384
+      ],
+      [
+        35.9,
+        "create reservation",
+        1083
+      ],
+      [
+        54.5,
+        "cancel reservation",
+        1289
+      ],
+      [
+        54.6,
+        "calendar 14 days",
+        1186
+      ],
+      [
+        54.6,
+        "create reservation",
+        1246
+      ],
+      [
+        54.7,
+        "calendar 14 days",
+        1121
+      ],
+      [
+        54.8,
+        "calendar 14 days",
+        1046
+      ],
+      [
+        59.7,
+        "create reservation",
+        1214
+      ],
+      [
+        76.8,
+        "create reservation",
+        1016
+      ],
+      [
+        78.5,
+        "create reservation",
+        1015
+      ],
+      [
+        78.7,
+        "cancel reservation",
+        1146
+      ],
+      [
+        78.7,
+        "create reservation",
+        1198
+      ],
+      [
+        78.8,
+        "create reservation",
+        1049
+      ],
+      [
+        79.4,
+        "create reservation",
+        1832
+      ],
+      [
+        80.1,
+        "cancel reservation",
+        1251
+      ],
+      [
+        93.4,
+        "create reservation",
+        1030
+      ],
+      [
+        110.7,
+        "calendar 14 days",
+        1007
+      ],
+      [
+        110.8,
+        "cancel reservation",
+        1349
+      ],
+      [
+        110.8,
+        "reservation search",
+        1153
+      ],
+      [
+        111.1,
+        "dashboard (reports/today)",
+        1235
+      ],
+      [
+        111.2,
+        "dashboard (reports/today)",
+        1054
+      ],
+      [
+        114.7,
+        "create reservation",
+        1079
+      ],
+      [
+        115.6,
+        "dashboard (reports/today)",
+        1248
+      ],
+      [
+        115.8,
+        "create reservation",
+        1064
+      ],
+      [
+        116.0,
+        "dashboard (reports/today)",
+        1056
+      ],
+      [
+        117.3,
+        "calendar 14 days",
+        1086
+      ],
+      [
+        117.4,
+        "dashboard (reports/today)",
+        1339
+      ],
+      [
+        117.5,
+        "front desk",
+        1071
+      ],
+      [
+        117.7,
+        "create reservation",
+        1083
+      ],
+      [
+        117.7,
+        "dashboard (reports/today)",
+        1071
+      ],
+      [
+        119.0,
+        "create reservation",
+        1272
+      ],
+      [
+        119.4,
+        "dashboard (reports/today)",
+        1114
+      ],
+      [
+        120.0,
+        "front desk",
+        1403
+      ],
+      [
+        120.3,
+        "calendar 14 days",
+        1317
+      ],
+      [
+        120.5,
+        "reservation search",
+        1294
+      ],
+      [
+        120.6,
+        "cancel reservation",
+        2155
+      ],
+      [
+        120.6,
+        "create reservation",
+        2356
+      ],
+      [
+        120.6,
+        "reservation search",
+        1445
+      ],
+      [
+        120.7,
+        "front desk",
+        1403
+      ],
+      [
+        121.1,
+        "calendar 14 days",
+        1039
+      ],
+      [
+        121.1,
+        "create reservation",
+        1281
+      ],
+      [
+        121.2,
+        "dashboard (reports/today)",
+        1290
+      ],
+      [
+        121.4,
+        "calendar 14 days",
+        1343
+      ],
+      [
+        121.5,
+        "dashboard (reports/today)",
+        1718
+      ],
+      [
+        121.7,
+        "calendar 14 days",
+        1015
+      ],
+      [
+        121.8,
+        "create reservation",
+        1302
+      ],
+      [
+        122.0,
+        "front desk",
+        1016
+      ],
+      [
+        122.1,
+        "create reservation",
+        1003
+      ],
+      [
+        124.1,
+        "create reservation",
+        1373
+      ],
+      [
+        124.2,
+        "cancel reservation",
+        1216
+      ],
+      [
+        124.2,
+        "dashboard (reports/today)",
+        1354
+      ],
+      [
+        124.2,
+        "performance report 30 days",
+        1208
+      ],
+      [
+        124.3,
+        "calendar 14 days",
+        1077
+      ],
+      [
+        124.8,
+        "create reservation",
+        1243
+      ],
+      [
+        126.5,
+        "create reservation",
+        1716
+      ],
+      [
+        126.6,
+        "cancel reservation",
+        1633
+      ],
+      [
+        126.7,
+        "create reservation",
+        1491
+      ],
+      [
+        126.7,
+        "dashboard (reports/today)",
+        1590
+      ],
+      [
+        126.7,
+        "room board",
+        1113
+      ],
+      [
+        126.9,
+        "calendar 14 days",
+        1362
+      ],
+      [
+        126.9,
+        "guest search",
+        1371
+      ],
+      [
+        126.9,
+        "room board",
+        1171
+      ],
+      [
+        127.0,
+        "create reservation",
+        2054
+      ],
+      [
+        127.1,
+        "create reservation",
+        1586
+      ],
+      [
+        127.2,
+        "availability search",
+        1013
+      ],
+      [
+        127.4,
+        "calendar 14 days",
+        1349
+      ],
+      [
+        128.2,
+        "create reservation",
+        1777
+      ],
+      [
+        128.7,
+        "calendar 14 days",
+        1215
+      ],
+      [
+        128.7,
+        "create reservation",
+        1383
+      ],
+      [
+        128.8,
+        "cancel reservation",
+        1280
+      ],
+      [
+        128.9,
+        "create reservation",
+        1212
+      ],
+      [
+        129.0,
+        "create reservation",
+        1268
+      ],
+      [
+        129.0,
+        "dashboard (reports/today)",
+        1171
+      ],
+      [
+        135.3,
+        "create reservation",
+        1241
+      ],
+      [
+        135.4,
+        "calendar 14 days",
+        1007
+      ],
+      [
+        135.4,
+        "cancel reservation",
+        1285
+      ],
+      [
+        135.4,
+        "create reservation",
+        1591
+      ],
+      [
+        135.4,
+        "create reservation",
+        1902
+      ],
+      [
+        135.4,
+        "dashboard (reports/today)",
+        1189
+      ],
+      [
+        135.7,
+        "cancel reservation",
+        1249
+      ],
+      [
+        135.7,
+        "cancel reservation",
+        1303
+      ],
+      [
+        135.8,
+        "cancel reservation",
+        1369
+      ],
+      [
+        136.0,
+        "cancel reservation",
+        1607
+      ],
+      [
+        136.1,
+        "cancel reservation",
+        1501
+      ],
+      [
+        136.3,
+        "availability search",
+        1410
+      ],
+      [
+        136.5,
+        "calendar 14 days",
+        1020
+      ],
+      [
+        136.5,
+        "dashboard (reports/today)",
+        1790
+      ],
+      [
+        137.3,
+        "calendar 14 days",
+        1402
+      ],
+      [
+        137.6,
+        "dashboard (reports/today)",
+        1335
+      ],
+      [
+        137.6,
+        "front desk",
+        1121
+      ],
+      [
+        137.6,
+        "front desk",
+        1149
+      ],
+      [
+        137.6,
+        "room board",
+        1151
+      ],
+      [
+        137.7,
+        "create reservation",
+        1285
+      ],
+      [
+        137.7,
+        "front desk",
+        1059
+      ],
+      [
+        139.1,
+        "calendar 14 days",
+        1150
+      ],
+      [
+        139.1,
+        "cancel reservation",
+        1600
+      ],
+      [
+        139.2,
+        "guest search",
+        1080
+      ],
+      [
+        139.3,
+        "create reservation",
+        1653
+      ],
+      [
+        139.3,
+        "dashboard (reports/today)",
+        1442
+      ],
+      [
+        139.4,
+        "calendar 14 days",
+        1265
+      ],
+      [
+        139.7,
+        "create reservation",
+        1400
+      ],
+      [
+        139.9,
+        "dashboard (reports/today)",
+        1276
+      ],
+      [
+        140.0,
+        "calendar 14 days",
+        1290
+      ],
+      [
+        140.0,
+        "front desk",
+        1156
+      ],
+      [
+        140.1,
+        "calendar 14 days",
+        1272
+      ],
+      [
+        140.1,
+        "calendar 14 days",
+        1322
+      ],
+      [
+        140.2,
+        "create reservation",
+        1543
+      ],
+      [
+        140.2,
+        "create reservation",
+        1751
+      ],
+      [
+        140.3,
+        "front desk",
+        1330
+      ],
+      [
+        140.3,
+        "reservation search",
+        1169
+      ],
+      [
+        143.6,
+        "create reservation",
+        1890
+      ],
+      [
+        143.9,
+        "calendar 14 days",
+        1155
+      ],
+      [
+        144.1,
+        "create reservation",
+        1189
+      ],
+      [
+        144.3,
+        "create reservation",
+        1136
+      ],
+      [
+        144.7,
+        "create reservation",
+        1104
+      ],
+      [
+        145.4,
+        "create reservation",
+        1051
+      ],
+      [
+        145.4,
+        "create reservation",
+        1346
+      ],
+      [
+        145.4,
+        "create reservation",
+        1557
+      ],
+      [
+        145.5,
+        "create reservation",
+        1396
+      ],
+      [
+        145.6,
+        "create reservation",
+        1483
+      ],
+      [
+        145.8,
+        "create reservation",
+        1796
+      ],
+      [
+        146.0,
+        "cancel reservation",
+        1128
+      ],
+      [
+        146.4,
+        "cancel reservation",
+        1109
+      ],
+      [
+        146.5,
+        "dashboard (reports/today)",
+        1172
+      ],
+      [
+        147.3,
+        "create reservation",
+        1287
+      ],
+      [
+        147.5,
+        "create reservation",
+        1278
+      ],
+      [
+        147.5,
+        "create reservation",
+        1714
+      ],
+      [
+        148.3,
+        "create reservation",
+        1328
+      ],
+      [
+        148.5,
+        "create reservation",
+        1233
+      ],
+      [
+        148.8,
+        "create reservation",
+        1698
+      ],
+      [
+        148.9,
+        "create reservation",
+        1117
+      ],
+      [
+        149.7,
+        "dashboard (reports/today)",
+        1073
+      ],
+      [
+        149.8,
+        "create reservation",
+        1010
+      ],
+      [
+        149.8,
+        "create reservation",
+        1195
+      ],
+      [
+        150.1,
+        "cancel reservation",
+        1368
+      ],
+      [
+        150.2,
+        "dashboard (reports/today)",
+        1221
+      ],
+      [
+        150.2,
+        "dashboard (reports/today)",
+        1477
+      ],
+      [
+        150.5,
+        "availability search",
+        1328
+      ],
+      [
+        150.5,
+        "calendar 14 days",
+        2372
+      ],
+      [
+        150.5,
+        "create reservation",
+        2442
+      ],
+      [
+        151.3,
+        "calendar 14 days",
+        1408
+      ],
+      [
+        151.4,
+        "cancel reservation",
+        1983
+      ],
+      [
+        151.4,
+        "front desk",
+        1334
+      ],
+      [
+        151.6,
+        "create reservation",
+        1992
+      ],
+      [
+        151.6,
+        "room board",
+        1419
+      ],
+      [
+        151.8,
+        "performance report 30 days",
+        1693
+      ],
+      [
+        152.7,
+        "create reservation",
+        1280
+      ],
+      [
+        154.8,
+        "create reservation",
+        1828
+      ],
+      [
+        155.0,
+        "create reservation",
+        1947
+      ],
+      [
+        155.1,
+        "cancel reservation",
+        1624
+      ],
+      [
+        155.1,
+        "cancel reservation",
+        1742
+      ],
+      [
+        155.1,
+        "room board",
+        1360
+      ],
+      [
+        155.2,
+        "dashboard (reports/today)",
+        1516
+      ],
+      [
+        155.3,
+        "reservation detail",
+        1051
+      ],
+      [
+        155.4,
+        "calendar 14 days",
+        1128
+      ],
+      [
+        155.4,
+        "calendar 14 days",
+        1197
+      ],
+      [
+        155.8,
+        "calendar 14 days",
+        1672
+      ],
+      [
+        155.8,
+        "cancel reservation",
+        3906
+      ],
+      [
+        156.1,
+        "create reservation",
+        2314
+      ],
+      [
+        156.6,
+        "create reservation",
+        3371
+      ],
+      [
+        157.2,
+        "calendar 14 days",
+        1311
+      ],
+      [
+        157.3,
+        "calendar 14 days",
+        1680
+      ],
+      [
+        157.3,
+        "front desk",
+        1646
+      ],
+      [
+        157.4,
+        "dashboard (reports/today)",
+        1804
+      ],
+      [
+        157.4,
+        "reservation detail",
+        1289
+      ],
+      [
+        157.6,
+        "front desk",
+        1409
+      ],
+      [
+        157.9,
+        "dashboard (reports/today)",
+        1654
+      ],
+      [
+        158.0,
+        "create reservation",
+        1674
+      ],
+      [
+        158.2,
+        "reservation search",
+        1013
+      ],
+      [
+        158.4,
+        "create reservation",
+        1275
+      ],
+      [
+        158.4,
+        "create reservation",
+        2271
+      ],
+      [
+        158.4,
+        "room board",
+        1117
+      ],
+      [
+        158.5,
+        "cancel reservation",
+        2264
+      ],
+      [
+        158.8,
+        "cancel reservation",
+        1877
+      ],
+      [
+        159.2,
+        "room board",
+        1279
+      ],
+      [
+        159.5,
+        "create reservation",
+        2887
+      ],
+      [
+        159.8,
+        "create reservation",
+        2173
+      ],
+      [
+        160.1,
+        "calendar 14 days",
+        1525
+      ],
+      [
+        160.2,
+        "front desk",
+        1455
+      ],
+      [
+        160.3,
+        "availability search",
+        1259
+      ],
+      [
+        160.3,
+        "calendar 14 days",
+        1641
+      ],
+      [
+        160.3,
+        "dashboard (reports/today)",
+        1834
+      ],
+      [
+        160.3,
+        "front desk",
+        1638
+      ],
+      [
+        160.4,
+        "calendar 14 days",
+        1700
+      ],
+      [
+        161.1,
+        "guest search",
+        1093
+      ],
+      [
+        161.2,
+        "calendar 14 days",
+        1120
+      ],
+      [
+        161.3,
+        "dashboard (reports/today)",
+        1239
+      ],
+      [
+        161.4,
+        "cancel reservation",
+        1140
+      ],
+      [
+        161.5,
+        "cancel reservation",
+        1170
+      ],
+      [
+        161.8,
+        "create reservation",
+        1095
+      ],
+      [
+        162.0,
+        "create reservation",
+        1018
+      ],
+      [
+        163.5,
+        "calendar 14 days",
+        1283
+      ],
+      [
+        163.8,
+        "create reservation",
+        1598
+      ],
+      [
+        164.2,
+        "cancel reservation",
+        1262
+      ],
+      [
+        164.2,
+        "create reservation",
+        1222
+      ],
+      [
+        164.3,
+        "calendar 14 days",
+        1046
+      ],
+      [
+        164.3,
+        "create reservation",
+        1167
+      ],
+      [
+        164.5,
+        "cancel reservation",
+        1027
+      ],
+      [
+        164.6,
+        "create reservation",
+        1025
+      ],
+      [
+        178.7,
+        "create reservation",
+        1040
+      ],
+      [
+        178.7,
+        "create reservation",
+        1075
+      ],
+      [
+        178.7,
+        "create reservation",
+        1138
+      ],
+      [
+        179.1,
+        "create reservation",
+        1083
+      ],
+      [
+        207.6,
+        "create reservation",
+        1025
+      ],
+      [
+        212.3,
+        "create reservation",
+        1304
+      ],
+      [
+        212.3,
+        "dashboard (reports/today)",
+        1179
+      ],
+      [
+        214.5,
+        "create reservation",
+        1032
+      ],
+      [
+        214.8,
+        "create reservation",
+        1044
+      ],
+      [
+        216.8,
+        "create reservation",
+        1200
+      ],
+      [
+        216.9,
+        "calendar 14 days",
+        1016
+      ],
+      [
+        221.0,
+        "cancel reservation",
+        1026
+      ],
+      [
+        221.0,
+        "create reservation",
+        1095
+      ],
+      [
+        221.0,
+        "dashboard (reports/today)",
+        1041
+      ],
+      [
+        223.4,
+        "cancel reservation",
+        1072
+      ],
+      [
+        229.7,
+        "cancel reservation",
+        1147
+      ],
+      [
+        229.8,
+        "cancel reservation",
+        1127
+      ],
+      [
+        229.9,
+        "create reservation",
+        1141
+      ],
+      [
+        229.9,
+        "create reservation",
+        1186
+      ],
+      [
+        230.2,
+        "create reservation",
+        1021
+      ],
+      [
+        245.2,
+        "cancel reservation",
+        1264
+      ],
+      [
+        245.5,
+        "dashboard (reports/today)",
+        1120
+      ],
+      [
+        249.3,
+        "create reservation",
+        1164
+      ],
+      [
+        249.5,
+        "create reservation",
+        1100
+      ],
+      [
+        249.6,
+        "create reservation",
+        1107
+      ],
+      [
+        249.7,
+        "create reservation",
+        1102
+      ],
+      [
+        253.8,
+        "cancel reservation",
+        1343
+      ],
+      [
+        255.0,
+        "cancel reservation",
+        1006
+      ],
+      [
+        257.7,
+        "create reservation",
+        1098
+      ],
+      [
+        260.1,
+        "create reservation",
+        1010
+      ],
+      [
+        260.2,
+        "create reservation",
+        1048
+      ],
+      [
+        268.0,
+        "create reservation",
+        1031
+      ],
+      [
+        268.7,
+        "cancel reservation",
+        1233
+      ],
+      [
+        268.7,
+        "create reservation",
+        1314
+      ],
+      [
+        278.7,
+        "create reservation",
+        2307
+      ],
+      [
+        279.0,
+        "create reservation",
+        1898
+      ],
+      [
+        279.1,
+        "cancel reservation",
+        1532
+      ],
+      [
+        279.7,
+        "create reservation",
+        1487
+      ],
+      [
+        281.2,
+        "create reservation",
+        1707
+      ],
+      [
+        281.3,
+        "create reservation",
+        2126
+      ],
+      [
+        281.5,
+        "calendar 14 days",
+        1328
+      ],
+      [
+        281.5,
+        "cancel reservation",
+        1863
+      ],
+      [
+        281.5,
+        "front desk",
+        1264
+      ],
+      [
+        281.5,
+        "reservation detail",
+        1048
+      ],
+      [
+        281.6,
+        "availability search",
+        1076
+      ],
+      [
+        281.7,
+        "create reservation",
+        2356
+      ],
+      [
+        281.8,
+        "front desk",
+        1282
+      ],
+      [
+        281.8,
+        "reservation search",
+        1417
+      ],
+      [
+        281.9,
+        "calendar 14 days",
+        1375
+      ],
+      [
+        282.0,
+        "cancel reservation",
+        1811
+      ],
+      [
+        282.1,
+        "create reservation",
+        1303
+      ],
+      [
+        282.2,
+        "create reservation",
+        1285
+      ],
+      [
+        282.5,
+        "guest search",
+        1378
+      ],
+      [
+        282.8,
+        "create reservation",
+        1553
+      ],
+      [
+        283.3,
+        "dashboard (reports/today)",
+        1061
+      ],
+      [
+        284.4,
+        "create reservation",
+        1078
+      ],
+      [
+        284.6,
+        "create reservation",
+        1135
+      ],
+      [
+        287.7,
+        "create reservation",
+        1159
+      ],
+      [
+        287.9,
+        "cancel reservation",
+        1325
+      ],
+      [
+        287.9,
+        "create reservation",
+        1374
+      ],
+      [
+        287.9,
+        "dashboard (reports/today)",
+        1238
+      ],
+      [
+        288.2,
+        "availability search",
+        1077
+      ],
+      [
+        295.0,
+        "create reservation",
+        2393
+      ],
+      [
+        295.1,
+        "create reservation",
+        1889
+      ],
+      [
+        295.3,
+        "create reservation",
+        1951
+      ],
+      [
+        295.4,
+        "create reservation",
+        2146
+      ],
+      [
+        295.5,
+        "calendar 14 days",
+        1142
+      ],
+      [
+        295.5,
+        "create reservation",
+        2229
+      ],
+      [
+        295.6,
+        "guest search",
+        1606
+      ],
+      [
+        295.7,
+        "calendar 14 days",
+        1196
+      ],
+      [
+        295.7,
+        "reservation search",
+        1076
+      ],
+      [
+        295.9,
+        "create reservation",
+        1582
+      ],
+      [
+        295.9,
+        "create reservation",
+        1892
+      ],
+      [
+        296.4,
+        "create reservation",
+        1235
+      ],
+      [
+        299.2,
+        "dashboard (reports/today)",
+        1046
+      ]
+    ],
+    "host_paused_seconds": 0.0
+  },
+  "contention": {
+    "attempts": 50,
+    "rooms": 3,
+    "status_codes": {
+      "201": 3,
+      "409": 47
+    },
+    "available_after": 0,
+    "seconds": 3.6,
+    "ok": true
+  },
+  "realtime": {
+    "devices": 60,
+    "received": 60,
+    "p50_ms": 46.9,
+    "p95_ms": 55.7,
+    "max_ms": 56.7,
+    "note": "from sending the change (request included) to delivery on each device"
+  }
+}

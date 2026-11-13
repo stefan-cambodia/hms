@@ -15,11 +15,12 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, timedelta
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, select
 
 from app.core import events
 from app.core.db import sessionmaker
 from app.core.security import decrypt_secret
+from app.core.tenancy import tenant_scope
 from app.modules.channels import ari, importer
 from app.modules.channels.adapters import get_adapter
 from app.modules.channels.adapters.base import (
@@ -252,9 +253,42 @@ async def pull(conn: ChannelConnection, adapter: ChannelAdapter, report: SyncRep
     await _record_success(conn, "pull", now)
 
 
+@dataclass(frozen=True)
+class ConnectionRef:
+    id: uuid.UUID
+    hotel_id: uuid.UUID
+    organization_id: uuid.UUID
+    enabled: bool
+
+
+async def connection_refs(connection_id: uuid.UUID | None = None) -> list[ConnectionRef]:
+    """Connections and the tenant owning each. The worker serves every
+    organisation, so this is its one cross-tenant lookup (a SECURITY DEFINER
+    function returning identifiers only)."""
+    async with sessionmaker()() as db:
+        rows = (
+            await db.execute(
+                select(
+                    func.hms_channel_connections(connection_id).table_valued(
+                        "id", "hotel_id", "organization_id", "enabled"
+                    )
+                )
+            )
+        ).all()
+    return [ConnectionRef(*row) for row in rows]
+
+
 async def sync_connection(
     connection_id: uuid.UUID, *, push_only: bool = False, now: datetime | None = None
 ) -> SyncReport:
+    refs = await connection_refs(connection_id)
+    if not refs:
+        return SyncReport()
+    with tenant_scope(refs[0].organization_id, (refs[0].hotel_id,)):
+        return await _sync_connection(connection_id, push_only=push_only, now=now)
+
+
+async def _sync_connection(connection_id: uuid.UUID, *, push_only: bool, now: datetime | None) -> SyncReport:
     now = now or datetime.now(UTC)
     report = SyncReport()
     async with sessionmaker()() as db:

@@ -4,7 +4,9 @@ import { ApiError } from '@/api/client';
 import { hotelKey, invalidateForEvent } from '@/api/realtime';
 import i18n, { applyLanguage } from '@/i18n';
 import { applyFieldErrors, errorMessage, fieldMessage } from '@/lib/errors';
-import { formatDate, formatMoney } from '@/lib/format';
+import { formatBytes, formatDate, formatMoney } from '@/lib/format';
+import { guestsLabel } from '@/lib/guests';
+import { khmerDate } from '@/lib/intl';
 import { pickLocalized } from '@/lib/localized';
 
 describe('pickLocalized', () => {
@@ -27,6 +29,16 @@ describe('formatMoney', () => {
     expect(formatMoney('1234.5', 'EUR', 'fr').replace(/\s/g, ' ')).toBe('1 234,50 €');
   });
   it('shows a dash for missing values', () => expect(formatMoney(null, 'USD', 'en')).toBe('—'));
+});
+
+describe('formatBytes', () => {
+  it('picks a short unit and follows the locale', () => {
+    expect(formatBytes(512, 'en')).toBe('512 byte');
+    expect(formatBytes(123456, 'en')).toBe('123 kB');
+    expect(formatBytes(48_300_000, 'en')).toBe('48.3 MB');
+    // French separates number and unit with a (narrow) no-break space.
+    expect(formatBytes(48_300_000, 'fr').replace(/[\u00a0\u202f]/g, ' ')).toBe('48,3 Mo');
+  });
 });
 
 describe('formatDate', () => {
@@ -91,5 +103,28 @@ describe('hotel-local date-times', () => {
     expect(hotelLocalToIso('2026-11-12 09:00', 'Europe/Paris')).toBe('2026-11-12T08:00:00.000Z');
     expect(hotelLocalToIso('2026-07-01 09:00', 'Europe/Paris')).toBe('2026-07-01T07:00:00.000Z');
     expect(isoToHotelLocal('2026-11-12T02:00:00Z', 'Asia/Phnom_Penh')).toBe('2026-11-12 09:00:00');
+  });
+});
+
+describe('Khmer dates without browser data', () => {
+  // Desktop Chrome has no Khmer Intl data; these are the dates it then shows.
+  it('writes Khmer month and weekday names in the hotel time zone', () => {
+    const instant = new Date('2026-11-13T02:13:00Z');
+    expect(khmerDate(instant, 'datetime', 'Asia/Phnom_Penh')).toBe('13 វិច្ឆិកា 2026 ម៉ោង 09:13');
+    expect(khmerDate(instant, 'date', 'UTC')).toBe('13 វិច្ឆិកា 2026');
+    expect(khmerDate(instant, 'weekday_long_date', 'UTC')).toBe('ថ្ងៃសុក្រ 13 វិច្ឆិកា 2026');
+    expect(khmerDate(instant, 'weekday_short', 'UTC')).toBe('សុ');
+    expect(khmerDate(new Date('2026-01-31T23:30:00Z'), 'day_month', 'Asia/Phnom_Penh')).toBe('1 កុម្ភៈ');
+  });
+});
+
+describe('guestsLabel', () => {
+  it('uses the plural forms of the language and omits zero children', async () => {
+    await applyLanguage('en');
+    expect(guestsLabel(i18n.t, 1, 0)).toBe('1 adult');
+    expect(guestsLabel(i18n.t, 2, 1)).toBe('2 adults · 1 child');
+    await applyLanguage('fr');
+    expect(guestsLabel(i18n.t, 1, 2)).toBe('1 adulte · 2 enfants');
+    await applyLanguage('en');
   });
 });

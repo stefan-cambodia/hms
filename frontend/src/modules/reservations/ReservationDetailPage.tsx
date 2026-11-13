@@ -62,6 +62,7 @@ import { addDays } from '@/lib/dates';
 import { FolioSection } from '@/modules/billing/FolioSection';
 import { useStayActions } from '@/modules/frontdesk/actions';
 import { FlagBadges, SOURCES, StatusBadge, useHotelToday, useInventory } from './shared';
+import { guestsLabel } from '@/lib/guests';
 
 const INVALIDATES = ['reservation', 'calendar', 'folio', 'front_desk', 'room_board'];
 
@@ -377,7 +378,7 @@ function StayCard({
             </Text>
             <Text size="sm" c="dimmed">
               {formatDate(stay.arrival, i18n.language)} → {formatDate(stay.departure, i18n.language)} · {t('reservations.nights', { count: daysBetween(stay.arrival, stay.departure) })} ·{' '}
-              {t('reservations.guests_count', { adults: stay.adults, children: stay.children })}
+              {guestsLabel(t, stay.adults, stay.children)}
             </Text>
           </div>
         </Group>

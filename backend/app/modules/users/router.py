@@ -72,6 +72,11 @@ async def reset_password(user_id: uuid.UUID, body: PasswordReset, ctx: ManageUse
     await service.reset_password(db, ctx, user_id, body.new_password)
 
 
+@router.post(H + "/users/{user_id}/totp/reset", response_model=UserAdminOut)
+async def reset_totp(user_id: uuid.UUID, ctx: ManageUsers, db: DB):
+    return await service.reset_totp(db, ctx, user_id)
+
+
 @router.post(H + "/users/{user_id}/unlock", response_model=UserAdminOut)
 async def unlock_user(user_id: uuid.UUID, ctx: ManageUsers, db: DB):
     return await service.unlock_user(db, ctx, user_id)

@@ -10,7 +10,7 @@ import pytest
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
 
-from app.core.db import sessionmaker
+from app.core.db import owner_sessionmaker
 from tests.conftest import ADMIN_EMAIL, ADMIN_PASSWORD, Api, error_code, new_client
 
 D0 = date.today() + timedelta(days=30)
@@ -116,7 +116,7 @@ async def test_same_room_cannot_be_allocated_twice(admin: Api, hotel):
 
 async def test_database_rejects_overlap_even_without_the_api(admin: Api, hotel):
     r = (await admin.post(admin.h("/reservations"), booking(hotel, 0, 3, room=hotel["r101"]))).json()
-    async with sessionmaker()() as db:
+    async with owner_sessionmaker()() as db:
         with pytest.raises(IntegrityError, match="ex_room_allocations_no_overlap"):
             await db.execute(
                 text(
@@ -170,7 +170,7 @@ async def test_concurrent_bookings_of_the_same_room(admin: Api, hotel):
     codes = sorted(r.status_code for r in results)
     assert codes.count(201) == 1, codes
     assert all(error_code(r) == "ROOM_UNAVAILABLE" for r in results if r.status_code == 409)
-    async with sessionmaker()() as db:
+    async with owner_sessionmaker()() as db:
         n = await db.scalar(
             text("SELECT count(*) FROM room_allocations WHERE room_id = :r"), {"r": uuid.UUID(hotel["r101"])}
         )
@@ -365,7 +365,7 @@ async def test_guest_duplicates_and_sensitive_data(admin: Api, hotel, user_facto
         clerk.h(f"/guests/{g.json()['id']}"), {"version": seen["version"], "id_document_number": "X"}
     )
     assert r.status_code == 422 and error_code(r) == "SENSITIVE_FIELDS_FORBIDDEN"
-    async with sessionmaker()() as db:
+    async with owner_sessionmaker()() as db:
         raw = await db.scalar(text("SELECT id_document_number FROM guests"))
     assert b"N1234567" not in raw  # encrypted at rest
 

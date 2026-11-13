@@ -11,8 +11,10 @@ from sqlalchemy import text
 import app.models  # noqa: F401  (register all ORM models)
 from app.core.config import get_settings
 from app.core.db import dispose_engine, sessionmaker
+from app.core.dbroles import runtime_role_posture
 from app.core.errors import install_error_handlers
 from app.modules.auth.router import router as auth_router
+from app.modules.backups.router import router as backups_router
 from app.modules.billing.router import router as billing_router
 from app.modules.channels.router import router as channels_router
 from app.modules.channels.worker import worker as channel_worker
@@ -35,9 +37,30 @@ from app.modules.vehicles.router import router as vehicles_router
 API_PREFIX = "/api/v1"
 
 
+logger = logging.getLogger("hms")
+
+
+async def _check_database_role() -> None:
+    """Row-level security and the append-only grants only protect anything if
+    the API connects with the least-privilege role (migration 0010)."""
+    async with sessionmaker()() as db:
+        posture = await runtime_role_posture(db)
+    if not posture.problems:
+        return
+    message = (
+        f"the API connects to PostgreSQL as {posture.role!r}, which {', '.join(posture.problems)}: "
+        "row-level security and append-only protections are not in force. Set HMS_DATABASE_URL to "
+        "the application role and run `hms db-roles` (installation guide, section 2)."
+    )
+    if get_settings().env == "production":
+        raise RuntimeError(message)
+    logger.warning(message)
+
+
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     logging.basicConfig(level=get_settings().log_level)
+    await _check_database_role()
     await hub.start()
     settings = get_settings()
     if settings.channel_worker_enabled:
@@ -98,6 +121,7 @@ def create_app() -> FastAPI:
     api.include_router(vehicles_router)
     api.include_router(channels_router)
     api.include_router(reports_router)
+    api.include_router(backups_router)
     api.include_router(realtime_router)
     app.include_router(api)
     return app

@@ -2,7 +2,7 @@
 
 Legend: ✅ implemented **and** covered by automated tests · 🟡 implemented, partially tested or with a known limitation · ⬜ not started
 
-Last updated: 2026-11-12. Test counts: backend 48 (pytest, real PostgreSQL), frontend unit 23 (Vitest), end-to-end 21 executed across desktop, iPad landscape and Android tablet viewports (Playwright; some flows run on one viewport by design). CI (GitHub Actions) green.
+Last updated: 2026-11-13. Test counts: backend 163 passed + 1 opt-in live test skipped (pytest, real PostgreSQL, run as the least-privilege role), frontend unit 38 (Vitest), end-to-end 54 passed and 36 skipped by design across desktop, iPad landscape and Android tablet locally (Playwright), plus iPad Safari (WebKit) in CI. Restore drill and load test on the production stack: see docs/qa/phase10-report.md.
 
 ## Phase 1 — Architecture ✅
 
@@ -24,12 +24,12 @@ Last updated: 2026-11-12. Test counts: backend 48 (pytest, real PostgreSQL), fro
 | Authentication: Argon2id, opaque sessions, httpOnly cookie or bearer token | ✅ | test_auth.py |
 | CSRF protection (per-session token) | ✅ | |
 | Brute-force protection: per-IP rate limit and account lockout | ✅ | |
-| Optional TOTP two-factor authentication (secret encrypted at rest) | ✅ | Recovery codes ⬜ |
+| Optional TOTP two-factor authentication (secret encrypted at rest) | ✅ | Administrator reset for a lost phone (phase 10, ends the user's sessions, audited). Recovery codes and mandatory 2FA per role ⬜ |
 | Session management: list, revoke (own and admin), idle and absolute expiry | ✅ | |
 | Login history | ✅ | |
 | RBAC: permission catalog, 8 seeded system roles, custom roles | ✅ | test_rbac.py |
 | Anti-escalation (cannot grant permissions you lack) | ✅ | |
-| Tenant isolation (composite FKs; 404 for foreign hotels) | ✅ | PostgreSQL RLS planned for phase 10 |
+| Tenant isolation (composite FKs; 404 for foreign hotels) | ✅ | Enforced by PostgreSQL row-level security since phase 10 |
 | Append-only audit log (DB trigger) with before/after diffs | ✅ | |
 | Optimistic locking (version column plus client-supplied version) | ✅ | |
 | Real-time sync: pg_notify on commit → WebSocket → query invalidation | ✅ | test_realtime.py, E2E sync test |
@@ -41,7 +41,7 @@ Last updated: 2026-11-12. Test counts: backend 48 (pytest, real PostgreSQL), fro
 | Translation completeness check (keys, variables, plurals) | ✅ | `npm run i18n:check` |
 | Khmer rendering (shaping, line height) | ✅ | Screenshots verified; **native-speaker review of wording pending** |
 | Login throttling per IP shared by all API processes (PostgreSQL counters) | ✅ | test_auth; account lockout on top |
-| Least-privilege DB roles (separate migration and app users) | ⬜ | Phase 10 |
+| Least-privilege DB roles (separate migration and app users) | ✅ | Phase 10: API as `hms_api` (member of `hms_app`), migrations in the `migrate` service |
 
 ## Phase 3 — Hotel configuration
 
@@ -227,7 +227,7 @@ Definitions: [`docs/guides/reports.md`](guides/reports.md). The formulas live in
 | Revenue figures only with `reports.financial`; ratios null (not 0) when there is nothing to divide | ✅ | |
 | CSV exports readable by Excel in every language (BOM, `;` and decimal comma where the locale uses them, formula injection neutralised) | ✅ | Unit tests |
 | Charts: one axis, accessible (keyboard, table view, legend), colours checked for colour blindness in light and dark mode | ✅ | |
-| Historic room count (rooms taken out of service permanently) | 🟡 | Rooms count from their creation; deactivation history is not kept, so a deactivated room disappears from past periods too |
+| Historic room count (rooms taken out of service permanently) | 🟡 | Rooms count from their creation (or from an earlier night on which they were sold); deactivation history is not kept, so a deactivated room disappears from past periods too |
 | PDF reports, scheduled e-mail reports, night audit | ⬜ | |
 
 ## Phase 9 — Cross-platform ✅ (installers built in CI; physical devices to try)
@@ -247,10 +247,17 @@ Definitions: [`docs/guides/reports.md`](guides/reports.md). The formulas live in
 
 | Item | Status | Notes |
 |------|--------|-------|
-| Production Docker Compose (Caddy TLS, API, PostgreSQL, backups) | ✅ | Built and run; HTTPS, headers, WSS verified manually |
-| Automated backups, each verified by restoring into a scratch database | ✅ | backup-once.sh |
-| Restore procedure with safety backup and checksum check | ✅ | Restore drill performed 2026-11-12 |
-| Backup history and restore in the admin UI | ⬜ | Script-based today (`last-run.json`) |
-| CI pipeline (lint, tests, i18n, build, Docker images) | ✅ | Green on GitHub Actions |
-| End-to-end suite (Playwright, 3 devices) against the demo hotel | ✅ | Run locally, not in CI. Tests create their own data through the API; when tonight is sold out after many runs, `e2e/support.ts` adds a "T-…" room instead of failing |
-| Load tests, security audit, RLS | ⬜ | |
+| Production Docker Compose (Caddy TLS, API, PostgreSQL, migrations, backups) | ✅ | Separate `migrate` service; started in production mode by the restore drill and the load test |
+| Least-privilege database role for the API; production refuses a privileged role | ✅ | `test_tenancy.py` (privilege matrix), restore drill (roles in production) |
+| PostgreSQL row-level security on every tenant table (organisation, and hotel for hotel requests) | ✅ | Migration 0010; whole backend suite runs as the restricted role; `test_tenancy.py` (second organisation invisible in API and SQL, writes refused, tables without policy fail the test) |
+| Access control over every API operation (session, CSRF, other organisation's hotel, no permission) | ✅ | `test_security.py`, generated from the OpenAPI schema (226 operations) |
+| Security audit | ✅ | `docs/security/audit-2026-11.md`: 9 findings fixed (1 high: client IP spoofing through X-Forwarded-For) |
+| Automated backups, each verified by restoring into a scratch database | ✅ | `backup-once.sh` |
+| Backups screen: service state, backups, history, back up now, restore with re-authentication | ✅ | `test_backups.py`, E2E `backups.spec.ts`, restore drill |
+| Restore from the screen (checksum, new database, safety backup with the API frozen, switch by renaming) and from the command line | ✅ | `deploy/tests/restore-drill.sh` passed 2026-11-13 on the production stack (restore in 13 s) |
+| CI pipeline (lint, tests, i18n, build, Docker images, dependency audits) | ✅ | |
+| End-to-end suite (Playwright) | ✅ | Desktop, iPad, Android tablet locally; plus iPad Safari (WebKit) in CI |
+| Load test (front desk mix, booking contention, real-time fan-out) on the production stack | ✅ | `deploy/tests/load-test.sh`; results in `docs/qa/phase10-report.md` |
+| Khmer dates on browsers without Khmer data (desktop Chrome) | ✅ | Found during this phase: dates were shown in the device's language; Khmer month/weekday names now built in (`lib/intl.ts`, unit-tested) |
+| External penetration test | ⬜ | Recommended before hosting several organisations on one server or exposing it to the Internet |
+| Documentation screenshots (28) from a generated demo hotel, reproducible | ✅ | `tools/screenshots/`; tour in `docs/guides/screens.md` |

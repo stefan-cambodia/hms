@@ -46,7 +46,10 @@ jobs:
         working-directory: backend
         run: |
           pip install -e .
+          # Migrations as the schema owner, then the API's least-privilege role
+          # (defaults: hms / hms_api, see app/core/config.py).
           alembic upgrade head
+          python -m app.cli db-roles
           python -m app.cli bootstrap --org "Lotus Group" --hotel "Lotus Riverside Hotel" --code LOTUS \
             --admin-email admin@demo.local --admin-name "Sokha Chan" --timezone Asia/Phnom_Penh --currency USD
           python -m app.cli seed-demo --admin-email admin@demo.local

@@ -13,7 +13,7 @@ import pytest
 from pypdf import PdfReader
 from sqlalchemy import text
 
-from app.core.db import sessionmaker
+from app.core.db import owner_sessionmaker
 from tests.conftest import Api, error_code
 from tests.test_reservations import _parallel_clients
 
@@ -140,7 +140,7 @@ async def test_a_vehicle_is_never_double_booked(admin: Api, fleet):
     codes = sorted(r.status_code for r in results)
     assert codes == [201, 409, 409, 409, 409, 409]
     # The database itself refuses an overlap, whatever the code path.
-    async with sessionmaker()() as db:
+    async with owner_sessionmaker()() as db:
         with pytest.raises(Exception, match="ex_vehicle_rentals_no_overlap"):
             await db.execute(
                 text(
@@ -208,7 +208,7 @@ async def test_pickup_return_and_late_fee(admin: Api, fleet, user_factory):
     out = r.json()
     assert out["status"] == "out" and out["licence_last4"] == "8899" and out["overdue"] is True
     assert out["deposit_amount"] == "50.00" and out["deposit_currency"] == "USD"
-    async with sessionmaker()() as db:
+    async with owner_sessionmaker()() as db:
         stored = (
             await db.execute(
                 text("SELECT licence_number FROM vehicle_rentals WHERE id = :i"), {"i": late["id"]}

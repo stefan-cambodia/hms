@@ -281,6 +281,24 @@ async def reset_password(db: AsyncSession, ctx: HotelContext, user_id: uuid.UUID
     await db.commit()
 
 
+async def reset_totp(db: AsyncSession, ctx: HotelContext, user_id: uuid.UUID) -> UserAdminOut:
+    """For a user who lost their authenticator: two-factor authentication is
+    switched off (they can enable it again) and their sessions end, in case
+    the device was stolen. One's own 2FA is switched off in My account, with
+    the password."""
+    user = await _get_hotel_user(db, ctx, user_id)
+    if user.id == ctx.actor.user_id:
+        raise Forbidden("USE_MY_ACCOUNT")
+    if not user.totp_enabled:
+        raise Conflict("TOTP_NOT_ENABLED")
+    user.totp_enabled = False
+    user.totp_secret = None
+    await revoke_all_sessions(db, ctx.actor, user.id, "totp_reset")
+    audit.record(db, ctx.actor, "user.totp_reset", "user", user.id, hotel_id=ctx.hotel_id)
+    await db.commit()
+    return await _user_out(db, ctx, user)
+
+
 async def unlock_user(db: AsyncSession, ctx: HotelContext, user_id: uuid.UUID) -> UserAdminOut:
     user = await _get_hotel_user(db, ctx, user_id)
     user.failed_logins = 0

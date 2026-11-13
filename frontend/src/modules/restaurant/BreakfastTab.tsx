@@ -11,6 +11,7 @@ import { useAuth } from '@/auth/AuthProvider';
 import { EmptyState } from '@/components/ui';
 import { notifyError } from '@/lib/errors';
 import { useHotelToday } from '@/modules/reservations/shared';
+import { guestsLabel } from '@/lib/guests';
 
 /** Breakfasts included in the guests' rates: expected and served. */
 export default function BreakfastTab() {
@@ -60,7 +61,7 @@ export default function BreakfastTab() {
                         {r.reservation_code} · {t(`pricing.meal_plans.${r.meal_plan}`)}
                       </Text>
                     </Table.Td>
-                    <Table.Td>{t('reservations.guests_count', { adults: r.adults, children: r.children })}</Table.Td>
+                    <Table.Td>{guestsLabel(t, r.adults, r.children)}</Table.Td>
                     <Table.Td>
                       {r.served_covers ? (
                         <Group gap="xs">

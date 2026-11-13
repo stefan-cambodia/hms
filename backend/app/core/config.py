@@ -17,7 +17,13 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="HMS_", env_file=".env", extra="ignore")
 
     env: Literal["development", "test", "production"] = "development"
-    database_url: str = "postgresql+asyncpg://hms:hms_dev_password@127.0.0.1:54329/hms"
+    # The API's connection: a login role that is a member of `hms_app`
+    # (least privilege, subject to row-level security). Created or updated by
+    # `hms db-roles` from this URL's user name and password.
+    database_url: str = "postgresql+asyncpg://hms_api:hms_api_dev_password@127.0.0.1:54329/hms"
+    # The schema owner, used only by migrations and installation-wide commands
+    # (`alembic upgrade`, `hms db-roles`, `hms sync-roles`). Never by the API.
+    migration_database_url: str = "postgresql+asyncpg://hms:hms_dev_password@127.0.0.1:54329/hms"
     db_pool_size: int = 10
 
     # Fernet key used to encrypt recoverable secrets (OTA credentials, TOTP
@@ -40,6 +46,10 @@ class Settings(BaseSettings):
 
     enable_docs: bool = True
     media_dir: Path = Path("var/media")
+    # Shared with the backup service (deploy/docker-compose.yml): its status
+    # files are read from here and backup/restore requests written here.
+    # Unset: the Backups screen says the service is not connected.
+    backup_control_dir: Path | None = None
     log_level: str = "INFO"
 
     @model_validator(mode="after")

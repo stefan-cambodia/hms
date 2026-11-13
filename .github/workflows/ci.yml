@@ -63,5 +63,10 @@ jobs:
       - uses: actions/checkout@v4
       - run: docker build -t hms-api backend
       - run: docker build -f deploy/caddy/Dockerfile -t hms-web .
+      - name: Backup service image and scripts
+        run: |
+          for f in deploy/scripts/*.sh deploy/tests/*.sh; do sh -n "$f" || bash -n "$f"; done
+          docker build -f deploy/backup/Dockerfile -t hms-backup deploy
+          docker run --rm --entrypoint jq hms-backup --version
       - name: Validate Caddyfile
         run: docker run --rm -e HMS_SITE_ADDRESS=https://hms.lan -e HMS_TLS=internal hms-web caddy validate --config /etc/caddy/Caddyfile

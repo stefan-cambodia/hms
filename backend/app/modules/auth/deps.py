@@ -14,6 +14,7 @@ from app.core.context import Actor, HotelContext
 from app.core.db import get_db
 from app.core.errors import Forbidden, NotFound, Unauthorized
 from app.core.security import constant_time_equals
+from app.core.tenancy import set_tenant
 from app.modules.auth import service
 from app.modules.auth.models import User, UserSession
 
@@ -103,6 +104,9 @@ def require_hotel(
         granted = perms[hotel_id]
         if permission is not None and permission not in granted:
             raise Forbidden("PERMISSION_DENIED", "Permission denied", params={"permission": permission})
+        # From here on the database only shows this hotel's rows.
+        assert auth.actor.organization_id is not None
+        await set_tenant(db, auth.actor.organization_id, (hotel_id,))
         return HotelContext(actor=auth.actor, hotel_id=hotel_id, permissions=granted)
 
     return dependency

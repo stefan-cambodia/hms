@@ -25,6 +25,7 @@ const RestaurantOrderPage = lazy(() => import('@/modules/restaurant/OrderPage'))
 const VehiclesPage = lazy(() => import('@/modules/vehicles/VehiclesPage'));
 const ServicesPage = lazy(() => import('@/modules/services/ServicesPage'));
 const UsersPage = lazy(() => import('@/modules/users/UsersPage'));
+const BackupsPage = lazy(() => import('@/modules/backups/BackupsPage'));
 const SettingsPage = lazy(() => import('@/modules/settings/SettingsPage'));
 const AccountPage = lazy(() => import('@/modules/account/AccountPage'));
 
@@ -80,6 +81,7 @@ const router = createBrowserRouter([
       { path: 'vehicles/*', element: <VehiclesPage /> },
       { path: 'services', element: <ServicesPage /> },
       { path: 'users/*', element: <UsersPage /> },
+      { path: 'backups', element: <BackupsPage /> },
       { path: 'settings/*', element: <SettingsPage /> },
       { path: 'account', element: <AccountPage /> },
       { path: 'login', element: <Navigate to="/" replace /> },

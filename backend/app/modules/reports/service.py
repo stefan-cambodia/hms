@@ -95,7 +95,11 @@ _SUPPLY = text(
            count(b.room_id) AS blocked
     FROM nights nt
     JOIN rooms r ON r.hotel_id = :hotel AND r.is_active
-                AND (r.created_at AT TIME ZONE :tz)::date <= nt.night
+                AND ((r.created_at AT TIME ZONE :tz)::date <= nt.night
+                     -- A room sold that night existed, whatever its record's
+                     -- date (history entered after the rooms were set up).
+                     OR EXISTS (SELECT 1 FROM room_allocations s
+                                WHERE s.room_id = r.id AND s.room_block_id IS NULL AND s.period @> nt.night))
     LEFT JOIN LATERAL (
         SELECT a.room_id FROM room_allocations a
         WHERE a.room_id = r.id AND a.room_block_id IS NOT NULL AND a.period @> nt.night
@@ -144,7 +148,8 @@ _ARRIVALS = text(
     SELECT count(*) FILTER (WHERE rr.occupies_inventory) AS stays,
            count(*) FILTER (WHERE res.status = 'no_show') AS no_shows,
            coalesce(sum(rr.departure - rr.arrival) FILTER (WHERE rr.occupies_inventory), 0) AS nights,
-           coalesce(sum(rr.arrival - (res.created_at AT TIME ZONE :tz)::date)
+           -- Booked on or after arrival (walk-in, entered late): lead time 0.
+           coalesce(sum(greatest(rr.arrival - (res.created_at AT TIME ZONE :tz)::date, 0))
                     FILTER (WHERE rr.occupies_inventory), 0) AS lead_days
     FROM reservation_rooms rr
     JOIN reservations res ON res.id = rr.reservation_id

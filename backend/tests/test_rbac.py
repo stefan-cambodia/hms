@@ -4,7 +4,7 @@ import pytest
 from sqlalchemy import text
 from sqlalchemy.exc import DBAPIError
 
-from app.core.db import sessionmaker
+from app.core.db import owner_sessionmaker, sessionmaker
 from tests.conftest import Api, error_code, make_user, new_client, role_id
 
 
@@ -102,9 +102,18 @@ async def test_audit_log_is_append_only(admin: Api):
     await admin.post(admin.h("/buildings"), {"code": "A", "name": "Main"})
     logs = (await admin.get(admin.h("/audit-logs"))).json()
     assert logs["items"][0]["action"] == "building.create"
+    # The API's role has no UPDATE/DELETE privilege on the table...
     async with sessionmaker()() as db:
-        with pytest.raises(DBAPIError):
+        with pytest.raises(DBAPIError, match="permission denied"):
             await db.execute(text("UPDATE audit_logs SET action = 'tampered'"))
         await db.rollback()
-        with pytest.raises(DBAPIError):
+        with pytest.raises(DBAPIError, match="permission denied"):
+            await db.execute(text("DELETE FROM audit_logs"))
+        await db.rollback()
+    # ...and even the schema owner is stopped by the trigger.
+    async with owner_sessionmaker()() as db:
+        with pytest.raises(DBAPIError, match="append-only"):
+            await db.execute(text("UPDATE audit_logs SET action = 'tampered'"))
+        await db.rollback()
+        with pytest.raises(DBAPIError, match="append-only"):
             await db.execute(text("DELETE FROM audit_logs"))

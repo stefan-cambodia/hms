@@ -9,7 +9,7 @@ from zoneinfo import ZoneInfo
 import pytest
 from sqlalchemy import text
 
-from app.core.db import sessionmaker
+from app.core.db import owner_sessionmaker
 from tests.conftest import Api, error_code
 
 
@@ -157,7 +157,7 @@ async def test_late_arrival_and_ended_stays(admin: Api, hotel):
 async def test_room_still_occupied_blocks_check_in(admin: Api, hotel):
     # Guest A in 101 since yesterday, due out today, still in the room.
     a = await book(admin, hotel, -1, 0, room="101")
-    async with sessionmaker()() as db:
+    async with owner_sessionmaker()() as db:
         # Check A in yesterday (the API only checks in while nights remain).
         await db.execute(
             text(

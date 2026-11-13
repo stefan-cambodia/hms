@@ -7,7 +7,7 @@ in December.
 
 | Figure | Definition |
 |--------|-----------|
-| **Rooms** | Rooms in service on each night of the period, added up (a room counts from the day it was created). |
+| **Rooms** | Rooms in service on each night of the period, added up. A room counts from the day it was created, or from an earlier night on which it was sold (history entered after the rooms were set up). |
 | **Out of service** | Room-nights blocked for maintenance, out of order or owner use. |
 | **Available** | Rooms − out of service. |
 | **Sold (room nights)** | Nights of reservations that hold a room: pending, confirmed, in house or checked out. Cancelled and no-show reservations release their nights. Complimentary nights (price 0) count as sold. |
@@ -18,9 +18,13 @@ in December.
 | **Cancellation rate** | Of the reservations *made* during the period, the share that is now cancelled. |
 | **No-show rate** | No-shows ÷ (stays arriving in the period + no-shows). |
 | **Average length of stay** | Nights per stay, for stays arriving in the period. |
-| **Booking lead time** | Days between the booking and the arrival, for stays arriving in the period. |
+| **Booking lead time** | Days between the booking and the arrival, for stays arriving in the period. A booking made on the arrival day or entered afterwards (walk-in, history typed in later) counts 0, never a negative number. |
 | **On the books / pickup** | In the forecast: room nights already reserved for each coming night, and how many of them were booked in the last 7 days. |
 | **Revenue by department** | Rooms; restaurant checks closed in the period; vehicle rentals returned in the period; services, fees and adjustments on folios (by service date). All before taxes added on top. A restaurant check or a rental charged to a room is counted once, under the restaurant or the rentals. |
+
+![Reports: performance of the month with comparison](../images/reports-performance.png)
+
+![Reports: forecast with the last 7 days' pickup](../images/reports-forecast.png)
 
 When there is nothing to divide by (no room available, nothing sold), the
 ratio is shown as "—", never as a misleading 0.

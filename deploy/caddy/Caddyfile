@@ -5,7 +5,12 @@
 # HMS_TLS: "internal" (local CA) or your email address (Let's Encrypt account).
 {
 	servers {
-		trusted_proxies static private_ranges
+		# Caddy is the edge: an X-Forwarded-For header sent by a client is
+		# replaced, never trusted. Otherwise any device on the hotel network
+		# could choose the address the API sees (login throttling, login
+		# history, audit trail). Only behind another proxy, set
+		# HMS_TRUSTED_PROXIES to that proxy's address range.
+		trusted_proxies static {$HMS_TRUSTED_PROXIES:127.0.0.1/32}
 	}
 }
 

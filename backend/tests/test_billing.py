@@ -18,7 +18,7 @@ from sqlalchemy import text
 from sqlalchemy.exc import DBAPIError, IntegrityError
 
 from app.core import sequences
-from app.core.db import sessionmaker
+from app.core.db import owner_sessionmaker
 from tests.conftest import Api, error_code
 from tests.test_reservations import _parallel_clients
 
@@ -306,7 +306,7 @@ async def test_concurrent_postings_keep_totals_exact(admin: Api, hotel):
 async def test_financial_rows_are_immutable(admin: Api, hotel):
     res = await book(admin, hotel, 5, 6)
     p = (await pay(admin, res, amount="10.00")).json()
-    async with sessionmaker()() as db:
+    async with owner_sessionmaker()() as db:
         with pytest.raises((IntegrityError, DBAPIError), match="financial_row_immutable|only void fields"):
             await db.execute(text("UPDATE payments SET amount = 1 WHERE id = :i"), {"i": p["id"]})
         await db.rollback()
@@ -327,7 +327,7 @@ async def test_financial_rows_are_immutable(admin: Api, hotel):
 async def test_invoice_numbers_are_gapless(admin: Api, hotel):
     reservations = [await book(admin, hotel, 5 + i, 6 + i, room=i % 4) for i in range(5)]
     # A transaction that takes a number and then fails gives it back.
-    async with sessionmaker()() as db:
+    async with owner_sessionmaker()() as db:
         assert await sequences.next_value(db, uuid.UUID(admin.hotel_id), "invoice") == 1
         await db.rollback()
     results = await asyncio.gather(
@@ -385,7 +385,7 @@ async def test_invoice_snapshot_and_khmer_pdf(admin: Api, hotel):
     flat = content.replace(" ", "")
     for word in ("វិក្កយបត្រ", "សរុប", inv["number"]):
         assert word in flat, word
-    async with sessionmaker()() as db:
+    async with owner_sessionmaker()() as db:
         doc = (
             await db.execute(text("SELECT document FROM invoices WHERE id = :i"), {"i": inv["id"]})
         ).scalar()
