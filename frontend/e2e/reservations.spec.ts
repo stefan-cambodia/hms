@@ -1,5 +1,7 @@
 import { type BrowserContext, expect, type Page, test } from '@playwright/test';
 
+import { calendarSample } from './support';
+
 const EMAIL = process.env.E2E_EMAIL ?? 'admin@demo.local';
 const PASSWORD = process.env.E2E_PASSWORD ?? 'Demo-Admin-2026';
 const SHOTS = 'e2e-results/screenshots';
@@ -29,6 +31,9 @@ const GUEST = `Run${Date.now() % 1_000_000}`;
 
 test('calendar shows bookings, availability and blocks', async ({ page }, info) => {
   await login(page);
+  // A fresh installation has no booking and no block: add a sample (API).
+  const me = await (await page.request.get('/api/v1/auth/me')).json();
+  await calendarSample({ request: page.request, csrf: me.csrf_token, hotel: me.hotels[0] });
   await page.goto('/calendar');
   await expect(page.locator('[data-calendar-item="stay"]').first()).toBeVisible();
   await expect(page.locator('[data-calendar-item="block"]').first()).toBeVisible();

@@ -26,6 +26,9 @@ jobs:
           --health-cmd "pg_isready -U hms" --health-interval 2s --health-timeout 3s --health-retries 30
     env:
       HMS_COOKIE_SECURE: "false"
+      # The tests sign in many times a minute from one address; the default
+      # per-IP limit (20/min, phase 6) would refuse them.
+      HMS_LOGIN_RATE_PER_MINUTE: "600"
       HMS_ADMIN_PASSWORD: Demo-Admin-2026
       E2E_EMAIL: admin@demo.local
       E2E_PASSWORD: Demo-Admin-2026

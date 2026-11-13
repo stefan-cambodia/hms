@@ -73,3 +73,29 @@ export async function freeRoom(s: RoomContext, nights = 1, spare = 1): Promise<F
   expect(r.ok(), `clean room ${room.number}: ${await r.text()}`).toBeTruthy();
   return room;
 }
+
+/**
+ * Make sure the calendar's first days show at least one stay and one room
+ * block (a fresh installation has neither). Created through the API.
+ */
+export async function calendarSample(s: RoomContext): Promise<void> {
+  const start = hotelDay(s.hotel.timezone, 1);
+  const end = hotelDay(s.hotel.timezone, 3);
+  const post = async (path: string, data: unknown) => {
+    const r = await s.request.post(`/api/v1/hotels/${s.hotel.id}${path}`, { data, headers: { 'X-CSRF-Token': s.csrf } });
+    expect(r.ok(), `POST ${path}: ${await r.text()}`).toBeTruthy();
+  };
+  const blocks = await get<unknown[]>(s, `/room-blocks?start=${start}&end=${end}`);
+  if (blocks.length === 0) {
+    const [room] = await get<FreeRoom[]>(s, `/available-rooms?start=${start}&end=${end}`);
+    await post('/room-blocks', { room_id: room.id, start_date: start, end_date: end, reason: 'maintenance', notes: 'E2E sample' });
+  }
+  const free = await get<FreeRoom[]>(s, `/available-rooms?start=${start}&end=${end}`);
+  await post('/reservations', {
+    arrival: start,
+    departure: end,
+    guest: { first_name: 'Calendar', last_name: 'Sample' },
+    rooms: [{ room_type_id: free[0].room_type_id, room_id: free[0].id, adults: 1 }],
+    override_restrictions: true,
+  });
+}
