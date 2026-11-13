@@ -1,6 +1,7 @@
 """Imports every ORM model so metadata is complete (Alembic, tests)."""
 
 from app.core.audit import AuditLog  # noqa: F401
+from app.modules.accounts.models import AccountAllocation, AccountPayment, CompanyAccount  # noqa: F401
 from app.modules.auth.models import (  # noqa: F401
     LoginEvent,
     RecoveryCode,

@@ -42,8 +42,8 @@ class MediaFile(UUIDPk, Base):
     width: Mapped[int] = mapped_column(Integer)
     height: Mapped[int] = mapped_column(Integer)
     sha256: Mapped[str] = mapped_column(String(64))
-    data: Mapped[bytes] = deferred(mapped_column(LargeBinary))
-    thumbnail: Mapped[bytes] = deferred(mapped_column(LargeBinary))
+    data: Mapped[bytes] = deferred(mapped_column(LargeBinary, nullable=False))
+    thumbnail: Mapped[bytes] = deferred(mapped_column(LargeBinary, nullable=False))
     sort_order: Mapped[int] = mapped_column(Integer, server_default=text("0"))
     uploaded_by: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")

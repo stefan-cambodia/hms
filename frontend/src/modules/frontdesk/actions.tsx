@@ -10,6 +10,7 @@ import type { PaymentKind, Reservation } from '@/api/types';
 import { useAuth, useHotel } from '@/auth/AuthProvider';
 import { errorMessage, notifyError, notifySuccess } from '@/lib/errors';
 import { formatDate, formatMoney } from '@/lib/format';
+import { useCompanyAccounts } from '@/modules/accounts/shared';
 import { PaymentModal } from '@/modules/billing/FolioDialogs';
 
 const AFFECTED = ['reservation', 'front_desk', 'room_board', 'folio', 'calendar', 'room', 'payment'];
@@ -34,6 +35,7 @@ export function useStayActions() {
   const qc = useQueryClient();
   const [payment, setPayment] = useState<PendingPayment | null>(null);
   const [busy, setBusy] = useState(false);
+  const companies = useCompanyAccounts();
 
   const base = `/hotels/${hotel.id}/reservations`;
   const refresh = () => {
@@ -110,6 +112,21 @@ export function useStayActions() {
         const due = err.code === 'BALANCE_DUE';
         const amount = formatMoney(p.balance, p.currency, i18n.language);
         const options = [];
+        // Billed to a company: its balance goes to the company's account.
+        const company = due && can('payments.record') ? companies.byId((await fetchReservation(resId)).company_account_id) : undefined;
+        if (company)
+          options.push({
+            label: t('accounts.transfer_to', { name: company.name }),
+            onClick: async () => {
+              try {
+                await api.post(`${base}/${resId}/transfer-to-account`, {});
+                notifySuccess(t('accounts.transferred', { name: company.name }));
+                await retryFresh();
+              } catch (e) {
+                notifyError(e);
+              }
+            },
+          });
         if (due ? can('payments.record') : can('payments.refund'))
           options.push({
             label: due ? t('frontdesk.take_payment_amount', { amount }) : t('frontdesk.refund_amount', { amount }),

@@ -137,7 +137,7 @@ async def list_payments(
     db: DB,
     start: date | None = None,
     end: date | None = None,
-    method: Literal["cash", "card", "bank_transfer", "online", "other"] | None = None,
+    method: Literal["cash", "card", "bank_transfer", "online", "other", "city_ledger"] | None = None,
     currency: Annotated[str | None, Query(pattern=r"^[A-Z]{3}$")] = None,
     include_void: bool = False,
     limit: Annotated[int, Query(ge=1, le=500)] = 100,

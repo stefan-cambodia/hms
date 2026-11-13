@@ -38,7 +38,8 @@ from app.core.models import Base, Timestamps, UUIDPk, Versioned
 CHARGE_KINDS = ("service", "fee", "adjustment", "outlet")
 FEE_TYPES = ("cancellation", "no_show", "early_departure", "late_checkout", "damage", "other")
 PAYMENT_KINDS = ("payment", "deposit", "refund")
-PAYMENT_METHODS = ("cash", "card", "bank_transfer", "online", "other")
+# city_ledger: the balance transferred to a company account (not money received).
+PAYMENT_METHODS = ("cash", "card", "bank_transfer", "online", "other", "city_ledger")
 CARD_BRANDS = ("visa", "mastercard", "amex", "unionpay", "jcb", "discover", "other")
 
 
@@ -140,6 +141,11 @@ class Payment(UUIDPk, Timestamps, Base):
     void_reason: Mapped[str | None] = mapped_column(String(500))
     voided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     voided_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    # Transfers to a company account (method 'city_ledger'): the company, the
+    # invoice made out to it, and when it is due.
+    company_account_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    invoice_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("invoices.id", ondelete="RESTRICT"))
+    due_date: Mapped[date | None] = mapped_column(Date)
 
     __table_args__ = (
         ForeignKeyConstraint(
@@ -147,14 +153,32 @@ class Payment(UUIDPk, Timestamps, Base):
             ["reservations.hotel_id", "reservations.id"],
             ondelete="CASCADE",
         ),
+        ForeignKeyConstraint(
+            ["hotel_id", "company_account_id"],
+            ["company_accounts.hotel_id", "company_accounts.id"],
+            ondelete="RESTRICT",
+        ),
         UniqueConstraint("hotel_id", "number"),
         CheckConstraint("kind IN ('payment','deposit','refund')", name="kind"),
-        CheckConstraint("method IN ('cash','card','bank_transfer','online','other')", name="method"),
+        CheckConstraint(
+            "method IN ('cash','card','bank_transfer','online','other','city_ledger')", name="method"
+        ),
+        CheckConstraint(
+            "(method = 'city_ledger') = (company_account_id IS NOT NULL) AND "
+            "(method <> 'city_ledger' OR "
+            "(kind = 'payment' AND invoice_id IS NOT NULL AND due_date IS NOT NULL))",
+            name="city_ledger",
+        ),
         CheckConstraint("amount > 0 AND amount_base > 0 AND exchange_rate > 0", name="amount_positive"),
         CheckConstraint("card_last4 IS NULL OR card_last4 ~ '^[0-9]{4}$'", name="card_last4"),
         CheckConstraint("NOT is_void OR void_reason IS NOT NULL", name="void_reason"),
         Index("ix_payments_reservation", "reservation_id"),
         Index("ix_payments_hotel_received", "hotel_id", "received_at"),
+        Index(
+            "ix_payments_company_account",
+            "company_account_id",
+            postgresql_where=text("company_account_id IS NOT NULL"),
+        ),
     )
 
 

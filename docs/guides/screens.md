@@ -145,6 +145,16 @@ made on the current day.
 
 ![Payments received, with totals per method](../images/billing-payments.png)
 
+## Company accounts
+
+![A company account: open invoices, aging and the payments received](../images/company-account.png)
+
+Companies the hotel bills directly (travel agencies, NGOs, employers): a
+booking is authorised for a company, and at departure its balance is
+transferred to the company's account with the invoice made out to it. The
+account shows the open invoices with their due dates, the aging, the payments
+received (applied to the oldest invoices first) and prints a statement.
+
 ## Photos and logo
 
 *Configuration → Hotel profile* holds the logo. It appears in the header and

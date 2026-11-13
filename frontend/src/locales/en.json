@@ -52,7 +52,8 @@
     "channels": "Channel manager",
     "reports": "Reports",
     "backups": "Backups",
-    "night_audit": "End of day"
+    "night_audit": "End of day",
+    "accounts": "Company accounts"
   },
   "auth": {
     "title": "Hotel Management System",
@@ -529,7 +530,8 @@
       "administration": "Administration",
       "folio": "Guest folio",
       "restaurant": "Restaurant & bar",
-      "vehicles": "Vehicle rental"
+      "vehicles": "Vehicle rental",
+      "accounts": "Company accounts"
     },
     "codes": {
       "hotel_view": "View hotel information",
@@ -589,7 +591,9 @@
       "vehicles_view": "See the fleet and rentals",
       "vehicles_rent": "Rent vehicles: book, hand over, take back, take payment",
       "vehicles_manage": "Manage the fleet and rates; void payments, discounts, waive late fees",
-      "nightaudit_run": "Close the business day (end of day)"
+      "nightaudit_run": "Close the business day (end of day)",
+      "accounts_view": "See company accounts, their invoices and payments",
+      "accounts_manage": "Create and edit company accounts (terms, credit limits)"
     }
   },
   "sessions": {
@@ -1007,7 +1011,19 @@
     "RECOVERY_CODE_INVALID": "This recovery code is wrong or has already been used.",
     "TWO_FACTOR_SETUP_REQUIRED": "Set up two-factor authentication first.",
     "TWO_FACTOR_REQUIRED_BY_ROLE": "Your role requires two-factor authentication: it cannot be turned off.",
-    "ROOM_HAS_STAYS": "Guests are in this room tonight or booked into it later ({{count}}): move them to another room first."
+    "ROOM_HAS_STAYS": "Guests are in this room tonight or booked into it later ({{count}}): move them to another room first.",
+    "ACCOUNT_CODE_EXISTS": "This code is already used by another account.",
+    "ACCOUNT_NOT_FOUND": "This company account no longer exists.",
+    "ACCOUNT_NOT_AVAILABLE": "Choose an active company account.",
+    "ACCOUNT_INACTIVE": "This company account is inactive.",
+    "NO_COMPANY_ACCOUNT": "This booking is not billed to a company: choose one under Direct billing.",
+    "NOTHING_TO_TRANSFER": "There is no balance to transfer.",
+    "CREDIT_LIMIT_EXCEEDED": "Credit limit of {{limit}} exceeded: the company already owes {{balance}}, and {{amount}} would be added. Raise the limit or take payment from the guest.",
+    "INVOICE_NOT_TO_COMPANY": "Invoice {{number}} is made out to the guest: void it, then transfer again.",
+    "TRANSFER_HAS_PAYMENTS": "The company has already paid part of this transfer: void its payment first.",
+    "NOT_AN_OPEN_ITEM": "This invoice is not open on this account.",
+    "ALLOCATION_EXCEEDS_OPEN": "More than the amount still open on this invoice.",
+    "ALLOCATIONS_EXCEED_PAYMENT": "The amounts applied exceed the payment."
   },
   "reservations": {
     "description": "Every booking, whatever its source. Click a reservation to manage it.",
@@ -1588,7 +1604,8 @@
       "card": "Card",
       "bank_transfer": "Bank transfer",
       "online": "Online payment",
-      "other": "Other"
+      "other": "Other",
+      "city_ledger": "Company account"
     },
     "card_brands": {
       "visa": "Visa",
@@ -2553,7 +2570,8 @@
     "sources": {
       "folio": "Front desk",
       "restaurant": "Restaurant & bar",
-      "vehicles": "Vehicle rental"
+      "vehicles": "Vehicle rental",
+      "accounts": "Company accounts"
     },
     "invoices_issued_one": "{{count}} invoice issued",
     "invoices_issued_other": "{{count}} invoices issued",
@@ -2563,7 +2581,8 @@
     "accept_open_other": "Close with {{count}} items still open (they are recorded in the report)",
     "notes": "Notes",
     "notes_hint": "For the next shift and the management (optional).",
-    "closed_notice": "{{date}} closed"
+    "closed_notice": "{{date}} closed",
+    "transfers": "Transferred to company accounts ({{n}})"
   },
   "media": {
     "photos": "Photos",
@@ -2590,6 +2609,83 @@
       "saved": "Logo saved",
       "removed": "Logo removed",
       "none": "No logo"
+    }
+  },
+  "accounts": {
+    "description": "Companies the hotel bills directly: their bookings are transferred to their account at departure, and they pay later, by invoice.",
+    "add": "New account",
+    "edit": "Edit account",
+    "search": "Name, code or tax ID",
+    "all": "All",
+    "empty": "No company account yet",
+    "empty_hint": "Create one for each company you invoice directly (travel agency, NGO, employer).",
+    "company": "Company",
+    "contact": "Contact",
+    "terms": "Payment terms",
+    "terms_days": "{{n}} days",
+    "terms_hint": "Days between the invoice and its due date",
+    "days": "days",
+    "limit_short": "Limit {{amount}}",
+    "credit_limit": "Credit limit",
+    "credit_limit_hint": "empty: no limit",
+    "no_limit": "No limit",
+    "balance": "Balance due",
+    "overdue": "Overdue",
+    "overdue_amount": "{{amount}} overdue",
+    "open_invoices": "{{n}} open invoice(s)",
+    "record_payment": "Record a payment",
+    "record_payment_for": "Payment from {{name}}",
+    "payment_hint": "Applied to the oldest open invoices first.",
+    "payment_recorded": "Payment recorded",
+    "payment_voided": "Payment voided",
+    "statement": "Statement (PDF)",
+    "invoices_tab": "Invoices ({{n}} open)",
+    "payments_tab": "Payments received",
+    "details_tab": "Details",
+    "no_invoices": "No invoice transferred to this account yet.",
+    "no_payments": "No payment received yet.",
+    "invoice": "Invoice",
+    "due": "Due",
+    "amount": "Amount",
+    "open": "Open",
+    "days_late": "{{n}} d late",
+    "settled": "Paid",
+    "unallocated": "{{amount}} not applied (credit)",
+    "voided_reason": "Voided: {{reason}}",
+    "void_payment": "Void this payment",
+    "void_payment_hint": "For a bounced transfer or a mistake: the invoices it paid are open again.",
+    "void_reason": "Reason",
+    "code": "Code",
+    "name": "Name",
+    "legal_name": "Legal name (on invoices)",
+    "tax_id": "Tax ID",
+    "address": "Address",
+    "city": "City",
+    "country": "Country",
+    "contact_name": "Contact person",
+    "email": "Billing e-mail",
+    "phone": "Phone",
+    "language": "Language of documents",
+    "language_hint": "Invoices and statements; empty: the hotel’s",
+    "notes": "Notes",
+    "active_hint": "Active (new bookings can be billed to it)",
+    "reference": "Reference",
+    "reference_placeholder": "Bank transfer number…",
+    "equivalent": "= {{amount}}",
+    "direct_billing": "Direct billing",
+    "direct_billing_hint": "The company that pays this stay: its balance is transferred to the company at departure.",
+    "guest_pays": "The guest pays",
+    "billed_to": "Billed to {{name}}",
+    "transfer": "Transfer",
+    "transfer_to": "Transfer to {{name}}",
+    "transfer_confirm": "The balance of {{amount}} goes to the account of {{name}}, due in {{days}} days. The invoice is made out to the company.",
+    "transferred": "Transferred to {{name}}",
+    "aging": {
+      "current": "Not yet due",
+      "days_1_30": "1–30 days late",
+      "days_31_60": "31–60 days late",
+      "days_61_90": "61–90 days late",
+      "days_over_90": "Over 90 days late"
     }
   }
 }

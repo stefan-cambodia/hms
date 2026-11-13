@@ -127,7 +127,8 @@ Last updated: 2026-11-13. Test counts: backend 163 passed + 1 opt-in live test s
 | PDFs in 5 languages (WeasyPrint + HarfBuzz; Noto fonts) — Khmer and Chinese verified visually and by embedded fonts | ✅ | Also verified inside the Docker image |
 | Cancellation fees from the policy (free window, nights/percent, non-refundable), no-show fees; preview; waive needs folio.adjust | ✅ | |
 | Payments & invoices page: cash-up totals per method/currency, net received, invoice search, void | ✅ | E2E |
-| City-ledger / company accounts, split folios, credit notes | ⬜ | Invoices are corrected by void + reissue |
+| Company accounts (city ledger): direct billing, transfer at departure, payments from companies, aging, statement PDF | ✅ | A booking is authorised for a company; its balance is transferred with the invoice made out to the company (credit limit checked); the company's payments (any currency) are applied to its open invoices, oldest first or as chosen; aging 0/1–30/31–60/61–90/90+; statement PDF in 5 languages; transfers are not money received (cash-up, payments report). `test_accounts.py`, E2E `accounts.spec.ts` |
+| Split folios (company pays the room, guest the extras), credit notes | ⬜ | Invoices are corrected by void + reissue |
 | End-of-day closure (night audit): open items (expected not arrived, due out not departed, open checks, overdue rentals, next day without room, balances due), no-show from the list, day report with cash-up, closure record + PDF, closed days frozen | ✅ | `test_nightaudit.py`, E2E `night-audit.spec.ts`. Run after midnight, days in order. No-shows are confirmed by the auditor, not automatic. No daily room revenue posting: accommodation is billed from fixed nightly prices |
 | Payment terminal / online payment gateway integration | ⬜ | Card payments are recorded, not processed |
 

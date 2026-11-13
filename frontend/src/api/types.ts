@@ -381,6 +381,7 @@ export interface Reservation {
   internal_notes: string | null;
   cancelled_at: string | null;
   cancellation_reason: string | null;
+  company_account_id: UUID | null;
   booker: { id: UUID; first_name: string; last_name: string; email: string | null; phone: string | null; nationality: string | null; vip_level: number };
   rooms: ReservationRoom[];
   version: number;
@@ -579,7 +580,8 @@ export interface Offer {
 export type ChargeKind = 'service' | 'fee' | 'adjustment' | 'outlet';
 export type FeeType = 'cancellation' | 'no_show' | 'early_departure' | 'late_checkout' | 'damage' | 'other';
 export type PaymentKind = 'payment' | 'deposit' | 'refund';
-export type PaymentMethod = 'cash' | 'card' | 'bank_transfer' | 'online' | 'other';
+// city_ledger: the balance transferred to a company account (never taken by hand).
+export type PaymentMethod = 'cash' | 'card' | 'bank_transfer' | 'online' | 'other' | 'city_ledger';
 export type CardBrand = 'visa' | 'mastercard' | 'amex' | 'unionpay' | 'jcb' | 'discover' | 'other';
 export type HousekeepingStatus = 'clean' | 'dirty' | 'in_progress' | 'inspected';
 
@@ -692,7 +694,8 @@ export interface Folio {
   charges: FolioCharge[];
   payments: Payment[];
   taxes: TaxLine[];
-  totals: { accommodation: string; charges: string; tax_total: string; grand_total: string; paid_total: string; balance: string };
+  /** transferred: settled by a transfer to a company account (part of paid_total, not refundable). */
+  totals: { accommodation: string; charges: string; tax_total: string; grand_total: string; paid_total: string; balance: string; transferred: string };
   invoices: Invoice[];
   invoice_outdated: boolean;
 }
@@ -1412,10 +1415,12 @@ export interface DayReport {
     occupancy_tomorrow: string | null;
   };
   revenue: { rooms: string; restaurant: string; vehicles: string; services: string; fees: string; adjustments: string; total: string } | null;
-  payments: { source: 'folio' | 'restaurant' | 'vehicles'; kind: string; method: string; currency: string; count: number; amount: string; amount_base: string }[];
+  payments: { source: 'folio' | 'restaurant' | 'vehicles' | 'accounts'; kind: string; method: string; currency: string; count: number; amount: string; amount_base: string }[];
   payments_by_method: { method: string; amount_base: string }[];
   payments_net: string | null;
   invoices: { issued: number; total: string; voided: number } | null;
+  /** Balances transferred to company accounts that day (not money received). */
+  transfers?: { count: number; total: string } | null;
 }
 
 export interface DayClosureInfo {
@@ -1467,4 +1472,74 @@ export interface MediaFile {
   created_at: string;
   url: string;
   thumbnail_url: string;
+}
+
+// --- Company accounts (city ledger) ----------------------------------------------------
+
+export interface CompanyAccount {
+  id: UUID;
+  code: string;
+  name: string;
+  legal_name: string | null;
+  tax_id: string | null;
+  address: string | null;
+  city: string | null;
+  country_code: string | null;
+  email: string | null;
+  phone: string | null;
+  contact_name: string | null;
+  language: string | null;
+  payment_terms_days: number;
+  credit_limit: string | null;
+  is_active: boolean;
+  notes: string | null;
+  version: number;
+  currency: string;
+  /** Owed by the company; negative: credit on the account. */
+  balance: string;
+  overdue: string;
+  open_items: number;
+}
+
+export interface AccountOpenItem {
+  transfer_id: UUID;
+  number: string;
+  invoice_id: UUID;
+  invoice_number: string;
+  reservation_id: UUID;
+  reservation_code: string;
+  guest_name: string;
+  date: string;
+  due_date: string;
+  amount: string;
+  paid: string;
+  open: string;
+  days_overdue: number;
+  is_void: boolean;
+}
+
+export interface AccountPayment {
+  id: UUID;
+  number: string;
+  method: PaymentMethod;
+  amount: string;
+  currency: string;
+  exchange_rate: string;
+  amount_base: string;
+  reference: string | null;
+  notes: string | null;
+  received_at: string;
+  received_by_name: string | null;
+  is_void: boolean;
+  void_reason: string | null;
+  allocations: { transfer_id: UUID; invoice_number: string; amount: string }[];
+  unallocated: string;
+}
+
+export type AgingBucket = 'current' | 'days_1_30' | 'days_31_60' | 'days_61_90' | 'days_over_90';
+
+export interface CompanyAccountDetail extends CompanyAccount {
+  aging: Record<AgingBucket, string>;
+  items: AccountOpenItem[];
+  payments: AccountPayment[];
 }

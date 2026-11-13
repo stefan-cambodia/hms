@@ -43,6 +43,12 @@ decimals with a comma (French, Russian), columns are separated by semicolons,
 as these spreadsheets expect. Amounts are plain numbers in the hotel currency,
 given in the column title.
 
+**Company accounts.** When a departing guest's bill is transferred to a
+company account, the folio is settled but no money is received: the transfer
+is left out of the payments received and of the end-of-day cash-up (shown
+there on its own line, with the invoices). The company's payment counts as
+money received on the day it arrives, under *Company accounts*.
+
 **Rooms taken out of service.** A room counts on the nights it was part of the
 hotel: from the night it was created, until the night it was deactivated, and
 again from the night it is reactivated. Deactivating a room therefore changes

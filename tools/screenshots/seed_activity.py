@@ -306,7 +306,9 @@ async def main() -> None:
     ]:
         fleet[v["code"]] = await api("POST", "/vehicles", v)
     james = in_house[2]
-    rental = await api("POST", "/vehicle-rentals", {"vehicle_id": fleet["SC-01"]["id"], "start_at": at(today, 9).isoformat(),
+    # Picked up this morning (within the hour when the script runs before dawn).
+    start = at(today, 9) if datetime.now(TZ).hour >= 7 else at(today, datetime.now(TZ).hour + 1)
+    rental = await api("POST", "/vehicle-rentals", {"vehicle_id": fleet["SC-01"]["id"], "start_at": start.isoformat(),
                                                      "end_at": at(today + timedelta(days=1), 9).isoformat(),
                                                      "guest_id": james["booker"]["id"] if "booker" in james else None,
                                                      "reservation_room_id": james["rooms"][0]["id"]})

@@ -20,6 +20,7 @@ const ReportsPage = lazy(() => import('@/modules/reports/ReportsPage'));
 const NightAuditPage = lazy(() => import('@/modules/nightaudit/NightAuditPage'));
 const FrontDeskPage = lazy(() => import('@/modules/frontdesk/FrontDeskPage'));
 const BillingPage = lazy(() => import('@/modules/billing/BillingPage'));
+const AccountsPage = lazy(() => import('@/modules/accounts/AccountsPage'));
 const HousekeepingPage = lazy(() => import('@/modules/housekeeping/HousekeepingPage'));
 const MaintenancePage = lazy(() => import('@/modules/maintenance/MaintenancePage'));
 const RestaurantPage = lazy(() => import('@/modules/restaurant/RestaurantPage'));
@@ -77,6 +78,7 @@ const router = createBrowserRouter([
       { path: 'night-audit', element: <NightAuditPage /> },
       { path: 'front-desk', element: <FrontDeskPage /> },
       { path: 'billing/*', element: <BillingPage /> },
+      { path: 'accounts', element: <AccountsPage /> },
       { path: 'housekeeping', element: <HousekeepingPage /> },
       { path: 'maintenance', element: <MaintenancePage /> },
       { path: 'restaurant/orders/:id', element: <RestaurantOrderPage /> },

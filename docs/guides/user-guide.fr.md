@@ -78,6 +78,8 @@ L'écran **Réception** liste pour la journée les arrivées, les clients prése
 2. S'il reste un solde, encaissez-le ou laissez-le ouvert. Un départ anticipé libère les nuits restantes.
 3. **Émettre une facture** produit la facture PDF, numérotée sans trou. Une facture émise ne se modifie pas : elle s'annule puis se réémet.
 
+**Facturation directe à une société** (agence de voyage, entreprise) : sur la réservation, **Modifier les détails**, puis choisissez la société dans **Facturation directe**. Au départ, **Transférer à …** (sur le compte client ou dans la fenêtre de départ) émet la facture au nom de la société et solde le compte du client ; la société paiera plus tard. Les extras que le client règle lui-même s'encaissent avant le transfert.
+
 ![Réception : arrivées du jour](../images/guide/fr-front-desk.png)
 
 ## 5. Ménage et maintenance
@@ -150,6 +152,8 @@ La **Clôture de journée** se fait après minuit, pour la journée qui vient de
 Une journée clôturée est figée : plus aucune prestation ni paiement ne peut y être ajouté ou annulé. Les corrections se font sur la journée en cours.
 
 ![Clôture de journée](../images/guide/fr-night-audit.png)
+
+**Comptes société** (comptabilité) : le solde de chaque société, ses factures ouvertes et leur retard (non échues, 1 à 30 jours de retard…). Quand la société paie, **Enregistrer un paiement** : le montant s'impute d'abord sur les factures les plus anciennes. Le **Relevé (PDF)** s'envoie à la société. Un transfert n'est pas de l'argent reçu : il ne compte pas dans la caisse du jour, les paiements des sociétés si.
 
 ## 10. Configuration (responsables)
 

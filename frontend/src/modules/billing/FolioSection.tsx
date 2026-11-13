@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { ActionIcon, Alert, Badge, Button, Card, Divider, Group, Menu, Stack, Table, Text, Title, Tooltip } from '@mantine/core';
-import { IconCash, IconDotsVertical, IconFileInvoice, IconPlus, IconPrinter, IconReceipt, IconTrash } from '@tabler/icons-react';
+import { modals } from '@mantine/modals';
+import { IconBuildingBank, IconCash, IconDotsVertical, IconFileInvoice, IconPlus, IconPrinter, IconReceipt, IconTrash } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 
 import { api } from '@/api/client';
@@ -8,7 +9,9 @@ import { useHotelMutation, useHotelQuery } from '@/api/hooks';
 import type { Folio, Invoice, Reservation } from '@/api/types';
 import { useAuth, useHotel } from '@/auth/AuthProvider';
 import { LANGUAGES } from '@/i18n';
+import { notifyError, notifySuccess } from '@/lib/errors';
 import { formatDate, formatDateTime, formatMoney, formatNumber } from '@/lib/format';
+import { useCompanyAccounts } from '@/modules/accounts/shared';
 import { pickLocalized } from '@/lib/localized';
 import { useInventory } from '@/modules/reservations/shared';
 import { ChargeModal, InvoiceModal, PaymentModal, ReasonModal } from './FolioDialogs';
@@ -77,6 +80,19 @@ export function FolioSection({ reservation: r }: { reservation: Reservation }) {
   const f = folio.data;
   const money = (v: string | number) => formatMoney(v, r.currency, i18n.language);
   const active = f?.invoices.find((x) => x.status === 'issued');
+  const company = useCompanyAccounts().byId(r.company_account_id);
+  const transfer = useHotelMutation<void, Folio>(
+    (h) => api.post<Folio>(h(`/reservations/${r.id}/transfer-to-account`), {}),
+    ['folio', 'reservation', 'payment', 'front_desk', 'invoice', 'company_account'],
+  );
+  const transferToCompany = () =>
+    company &&
+    modals.openConfirmModal({
+      title: t('accounts.transfer_to', { name: company.name }),
+      children: <Text size="sm">{t('accounts.transfer_confirm', { amount: money(r.balance), name: company.name, days: company.payment_terms_days })}</Text>,
+      labels: { confirm: t('accounts.transfer'), cancel: t('common.cancel') },
+      onConfirm: () => void transfer.mutateAsync().then(() => notifySuccess(t('accounts.transferred', { name: company.name })), notifyError),
+    });
 
   return (
     <Card data-testid="folio">
@@ -91,6 +107,11 @@ export function FolioSection({ reservation: r }: { reservation: Reservation }) {
           {can('payments.record') && (
             <Button size="xs" leftSection={<IconCash size={14} />} onClick={() => setDialog({ kind: 'payment' })}>
               {t('billing.take_payment')}
+            </Button>
+          )}
+          {company && can('payments.record') && Number(r.balance) > 0 && (
+            <Button size="xs" variant="light" color="indigo" leftSection={<IconBuildingBank size={14} />} onClick={transferToCompany} data-testid="transfer-to-company">
+              {t('accounts.transfer_to', { name: company.name })}
             </Button>
           )}
           {can('invoices.issue') && !active && Number(r.grand_total) > 0 && (
@@ -262,7 +283,7 @@ export function FolioSection({ reservation: r }: { reservation: Reservation }) {
           </Table>
         </div>
       )}
-      {can('payments.refund') && f && Number(f.totals.paid_total) > 0 && (
+      {can('payments.refund') && f && Number(f.totals.paid_total) - Number(f.totals.transferred) > 0 && (
         <Button variant="subtle" color="orange" size="xs" mt="xs" onClick={() => setDialog({ kind: 'payment', refund: true })}>
           {t('billing.refund')}
         </Button>

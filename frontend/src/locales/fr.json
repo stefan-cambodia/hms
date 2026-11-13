@@ -52,7 +52,8 @@
     "channels": "Channel manager",
     "reports": "Rapports",
     "backups": "Sauvegardes",
-    "night_audit": "Clôture de journée"
+    "night_audit": "Clôture de journée",
+    "accounts": "Comptes société"
   },
   "auth": {
     "title": "Système de gestion hôtelière",
@@ -536,7 +537,8 @@
       "administration": "Administration",
       "folio": "Comptes clients",
       "restaurant": "Restaurant et bar",
-      "vehicles": "Location de véhicules"
+      "vehicles": "Location de véhicules",
+      "accounts": "Comptes société"
     },
     "codes": {
       "hotel_view": "Consulter les informations de l’hôtel",
@@ -596,7 +598,9 @@
       "vehicles_view": "Consulter la flotte et les locations",
       "vehicles_rent": "Louer des véhicules : réserver, remettre et reprendre les véhicules, encaisser les paiements",
       "vehicles_manage": "Gérer la flotte et les tarifs ; annuler des paiements, accorder des remises, renoncer aux frais de retard",
-      "nightaudit_run": "Clôturer la journée"
+      "nightaudit_run": "Clôturer la journée",
+      "accounts_view": "Voir les comptes société, leurs factures et paiements",
+      "accounts_manage": "Créer et modifier les comptes société (délais, plafonds)"
     }
   },
   "sessions": {
@@ -1014,7 +1018,19 @@
     "RECOVERY_CODE_INVALID": "Ce code de secours est erroné ou a déjà servi.",
     "TWO_FACTOR_SETUP_REQUIRED": "Activez d’abord la double authentification.",
     "TWO_FACTOR_REQUIRED_BY_ROLE": "Votre rôle exige la double authentification : elle ne peut pas être désactivée.",
-    "ROOM_HAS_STAYS": "Des clients occupent cette chambre ce soir ou y sont attendus plus tard ({{count}}) : déplacez-les d’abord dans une autre chambre."
+    "ROOM_HAS_STAYS": "Des clients occupent cette chambre ce soir ou y sont attendus plus tard ({{count}}) : déplacez-les d’abord dans une autre chambre.",
+    "ACCOUNT_CODE_EXISTS": "Ce code est déjà utilisé par un autre compte.",
+    "ACCOUNT_NOT_FOUND": "Ce compte société n’existe plus.",
+    "ACCOUNT_NOT_AVAILABLE": "Choisissez un compte société actif.",
+    "ACCOUNT_INACTIVE": "Ce compte société est désactivé.",
+    "NO_COMPANY_ACCOUNT": "Cette réservation n’est pas facturée à une société : choisissez-en une dans Facturation directe.",
+    "NOTHING_TO_TRANSFER": "Il n’y a aucun solde à transférer.",
+    "CREDIT_LIMIT_EXCEEDED": "Plafond de crédit de {{limit}} dépassé : la société doit déjà {{balance}}, et {{amount}} s’ajouteraient. Relevez le plafond ou encaissez le client.",
+    "INVOICE_NOT_TO_COMPANY": "La facture {{number}} est au nom du client : annulez-la, puis transférez à nouveau.",
+    "TRANSFER_HAS_PAYMENTS": "La société a déjà réglé une partie de ce transfert : annulez d’abord son paiement.",
+    "NOT_AN_OPEN_ITEM": "Cette facture n’est pas ouverte sur ce compte.",
+    "ALLOCATION_EXCEEDS_OPEN": "Plus que le montant restant dû sur cette facture.",
+    "ALLOCATIONS_EXCEED_PAYMENT": "Les montants affectés dépassent le paiement."
   },
   "reservations": {
     "description": "Toutes les réservations, quelle que soit leur origine. Cliquez sur une réservation pour la gérer.",
@@ -1612,7 +1628,8 @@
       "card": "Carte",
       "bank_transfer": "Virement bancaire",
       "online": "Paiement en ligne",
-      "other": "Autre"
+      "other": "Autre",
+      "city_ledger": "Compte société"
     },
     "card_brands": {
       "visa": "Visa",
@@ -2587,7 +2604,8 @@
     "sources": {
       "folio": "Réception",
       "restaurant": "Restaurant et bar",
-      "vehicles": "Location de véhicules"
+      "vehicles": "Location de véhicules",
+      "accounts": "Comptes société"
     },
     "invoices_issued_one": "{{count}} facture émise",
     "invoices_issued_many": "{{count}} factures émises",
@@ -2599,7 +2617,8 @@
     "accept_open_other": "Clôturer avec {{count}} points encore ouverts (ils sont consignés dans le rapport)",
     "notes": "Remarques",
     "notes_hint": "Pour l’équipe suivante et la direction (facultatif).",
-    "closed_notice": "Le {{date}} est clôturé"
+    "closed_notice": "Le {{date}} est clôturé",
+    "transfers": "Transféré aux comptes société ({{n}})"
   },
   "media": {
     "photos": "Photos",
@@ -2626,6 +2645,83 @@
       "saved": "Logo enregistré",
       "removed": "Logo retiré",
       "none": "Aucun logo"
+    }
+  },
+  "accounts": {
+    "description": "Sociétés facturées directement : leurs séjours sont transférés sur leur compte au départ, et elles paient plus tard, sur facture.",
+    "add": "Nouveau compte",
+    "edit": "Modifier le compte",
+    "search": "Nom, code ou n° fiscal",
+    "all": "Tous",
+    "empty": "Aucun compte société",
+    "empty_hint": "Créez-en un pour chaque société facturée directement (agence de voyages, ONG, employeur).",
+    "company": "Société",
+    "contact": "Contact",
+    "terms": "Délai de paiement",
+    "terms_days": "{{n}} jours",
+    "terms_hint": "Jours entre la facture et son échéance",
+    "days": "jours",
+    "limit_short": "Plafond {{amount}}",
+    "credit_limit": "Plafond de crédit",
+    "credit_limit_hint": "vide : sans plafond",
+    "no_limit": "Sans plafond",
+    "balance": "Solde dû",
+    "overdue": "En retard",
+    "overdue_amount": "{{amount}} en retard",
+    "open_invoices": "{{n}} facture(s) ouverte(s)",
+    "record_payment": "Enregistrer un paiement",
+    "record_payment_for": "Paiement de {{name}}",
+    "payment_hint": "Imputé d’abord sur les factures ouvertes les plus anciennes.",
+    "payment_recorded": "Paiement enregistré",
+    "payment_voided": "Paiement annulé",
+    "statement": "Relevé (PDF)",
+    "invoices_tab": "Factures ({{n}} ouvertes)",
+    "payments_tab": "Paiements reçus",
+    "details_tab": "Informations",
+    "no_invoices": "Aucune facture transférée sur ce compte.",
+    "no_payments": "Aucun paiement reçu.",
+    "invoice": "Facture",
+    "due": "Échéance",
+    "amount": "Montant",
+    "open": "Restant dû",
+    "days_late": "{{n}} j de retard",
+    "settled": "Réglée",
+    "unallocated": "{{amount}} non affectés (avoir)",
+    "voided_reason": "Annulé : {{reason}}",
+    "void_payment": "Annuler ce paiement",
+    "void_payment_hint": "En cas de virement rejeté ou d’erreur : les factures qu’il réglait redeviennent ouvertes.",
+    "void_reason": "Motif",
+    "code": "Code",
+    "name": "Nom",
+    "legal_name": "Raison sociale (sur les factures)",
+    "tax_id": "N° d’identification fiscale",
+    "address": "Adresse",
+    "city": "Ville",
+    "country": "Pays",
+    "contact_name": "Interlocuteur",
+    "email": "E-mail de facturation",
+    "phone": "Téléphone",
+    "language": "Langue des documents",
+    "language_hint": "Factures et relevés ; vide : celle de l’hôtel",
+    "notes": "Remarques",
+    "active_hint": "Actif (les nouvelles réservations peuvent lui être facturées)",
+    "reference": "Référence",
+    "reference_placeholder": "N° de virement…",
+    "equivalent": "= {{amount}}",
+    "direct_billing": "Facturation directe",
+    "direct_billing_hint": "La société qui paie ce séjour : le solde lui est transféré au départ.",
+    "guest_pays": "Le client paie",
+    "billed_to": "Facturé à {{name}}",
+    "transfer": "Transférer",
+    "transfer_to": "Transférer à {{name}}",
+    "transfer_confirm": "Le solde de {{amount}} est transféré sur le compte de {{name}}, payable sous {{days}} jours. La facture est établie au nom de la société.",
+    "transferred": "Transféré à {{name}}",
+    "aging": {
+      "current": "Non échu",
+      "days_1_30": "1 à 30 j de retard",
+      "days_31_60": "31 à 60 j de retard",
+      "days_61_90": "61 à 90 j de retard",
+      "days_over_90": "Plus de 90 j de retard"
     }
   }
 }

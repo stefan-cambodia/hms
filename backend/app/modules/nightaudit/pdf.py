@@ -115,6 +115,12 @@ def document(
                 "rows": [
                     (tr("day_report.issued"), f"{inv['issued']} · {_money(tr, inv['total'], cur)}"),
                     (tr("day_report.voided"), str(inv["voided"])),
+                    # Settled by the companies later: not money received today.
+                    *(
+                        [(tr("day_report.transfers"), f"{t['count']} · {_money(tr, t['total'], cur)}")]
+                        if (t := report.get("transfers") or {}).get("count")
+                        else []
+                    ),
                 ],
             }
         )

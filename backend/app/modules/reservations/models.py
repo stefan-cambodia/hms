@@ -82,6 +82,8 @@ class Reservation(UUIDPk, Timestamps, Versioned, Base):
     cancelled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     cancellation_reason: Mapped[str | None] = mapped_column(String(500))
     created_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    # Authorised for direct billing: the balance may be transferred to this company.
+    company_account_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
 
     rooms: Mapped[list[ReservationRoom]] = relationship(
         back_populates="reservation",
@@ -93,6 +95,11 @@ class Reservation(UUIDPk, Timestamps, Versioned, Base):
     __table_args__ = (
         ForeignKeyConstraint(
             ["hotel_id", "booker_guest_id"], ["guests.hotel_id", "guests.id"], ondelete="RESTRICT"
+        ),
+        ForeignKeyConstraint(
+            ["hotel_id", "company_account_id"],
+            ["company_accounts.hotel_id", "company_accounts.id"],
+            ondelete="RESTRICT",
         ),
         UniqueConstraint("hotel_id", "code"),
         UniqueConstraint("hotel_id", "id"),

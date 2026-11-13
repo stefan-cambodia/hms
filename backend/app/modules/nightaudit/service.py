@@ -27,7 +27,7 @@ from app.core.errors import Conflict, NotFound, ValidationFailed, field_error
 from app.core.money import ZERO
 from app.core.permissions import P
 from app.modules.auth.models import User
-from app.modules.billing.models import Invoice
+from app.modules.billing.models import Invoice, Payment
 from app.modules.guests.models import Guest
 from app.modules.hotels.models import Hotel
 from app.modules.nightaudit.lock import last_closed
@@ -189,7 +189,8 @@ def _open_count(items: dict[str, Any]) -> int:
 _PAYMENTS = text(
     """
     SELECT 'folio' AS source, kind, method, currency, count(*), sum(amount), sum(amount_base)
-    FROM payments WHERE hotel_id = :hotel AND NOT is_void AND received_at >= :start AND received_at < :end
+    FROM payments WHERE hotel_id = :hotel AND NOT is_void AND method <> 'city_ledger'
+      AND received_at >= :start AND received_at < :end
     GROUP BY kind, method, currency
     UNION ALL
     SELECT 'restaurant', 'payment', method, currency, count(*), sum(amount), sum(amount_base)
@@ -202,6 +203,11 @@ _PAYMENTS = text(
     FROM vehicle_rental_payments
     WHERE hotel_id = :hotel AND NOT is_void AND method <> 'room_charge'
       AND received_at >= :start AND received_at < :end
+    GROUP BY method, currency
+    UNION ALL
+    SELECT 'accounts', 'payment', method, currency, count(*), sum(amount), sum(amount_base)
+    FROM account_payments
+    WHERE hotel_id = :hotel AND NOT is_void AND received_at >= :start AND received_at < :end
     GROUP BY method, currency
     ORDER BY 3, 4, 1, 2
     """
@@ -286,6 +292,18 @@ async def build_report(db: AsyncSession, hotel: Hotel, day: date) -> dict[str, A
             Invoice.hotel_id == hotel.id, Invoice.voided_at >= start, Invoice.voided_at < end
         )
     )
+    # Balances transferred to company accounts: settled, but not money received.
+    transfers = (
+        await db.execute(
+            select(func.count(), func.coalesce(func.sum(Payment.amount_base), 0)).where(
+                Payment.hotel_id == hotel.id,
+                Payment.method == "city_ledger",
+                Payment.is_void.is_(False),
+                Payment.received_at >= start,
+                Payment.received_at < end,
+            )
+        )
+    ).one()
     return {
         "date": day,
         "currency": hotel.currency_code,
@@ -296,6 +314,7 @@ async def build_report(db: AsyncSession, hotel: Hotel, day: date) -> dict[str, A
         "payments_by_method": [{"method": m, "amount_base": a} for m, a in sorted(by_method.items())],
         "payments_net": sum(by_method.values(), ZERO),
         "invoices": {"issued": int(issued[0]), "total": issued[1], "voided": int(voided or 0)},
+        "transfers": {"count": int(transfers[0]), "total": transfers[1]},
     }
 
 
@@ -308,6 +327,7 @@ def _hide_money(report: dict[str, Any], ctx: HotelContext) -> dict[str, Any]:
     if not ctx.has(P.PAYMENTS_VIEW):
         out["payments"], out["payments_by_method"], out["payments_net"] = [], [], None
         out["invoices"] = None
+        out["transfers"] = None
     return out
 
 

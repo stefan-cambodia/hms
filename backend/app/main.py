@@ -14,6 +14,7 @@ from app.core.config import get_settings
 from app.core.db import dispose_engine, sessionmaker
 from app.core.dbroles import runtime_role_posture
 from app.core.errors import install_error_handlers
+from app.modules.accounts.router import router as accounts_router
 from app.modules.auth.router import router as auth_router
 from app.modules.backups.router import router as backups_router
 from app.modules.billing.router import router as billing_router
@@ -145,6 +146,7 @@ def create_app() -> FastAPI:
     api.include_router(reports_router)
     api.include_router(nightaudit_router)
     api.include_router(media_router)
+    api.include_router(accounts_router)
     api.include_router(backups_router)
     api.include_router(realtime_router)
     app.include_router(api)

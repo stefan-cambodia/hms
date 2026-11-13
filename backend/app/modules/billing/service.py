@@ -201,15 +201,31 @@ async def folio_out(db: AsyncSession, res: Reservation) -> FolioOut:
             grand_total=res.grand_total,
             paid_total=res.paid_total,
             balance=st.balance,
+            transferred=sum((p.amount_base for p in st.payments if _live_transfer(p)), ZERO),
         ),
         invoices=[invoice_out(i) for i in st.invoices],
+        # The transfer to a company is made right after its invoice was issued
+        # (the invoice shows what the company owes): that is not a change.
         invoice_outdated=bool(
-            active and (active.total != res.grand_total or active.paid_total != res.paid_total)
+            active
+            and (
+                active.total != res.grand_total
+                or active.paid_total
+                != res.paid_total
+                - sum(
+                    (p.amount_base for p in st.payments if _live_transfer(p) and p.invoice_id == active.id),
+                    ZERO,
+                )
+            )
         ),
     )
 
 
 # --- charges -----------------------------------------------------------------------
+
+
+def _live_transfer(p: Payment) -> bool:
+    return p.method == "city_ledger" and not p.is_void
 
 
 def _require(ctx: HotelContext, permission: P) -> None:
@@ -434,8 +450,14 @@ async def record_payment(
     amount_base = round_money(data.amount / rate, res.currency)
     if amount_base <= ZERO:
         raise ValidationFailed("AMOUNT_TOO_SMALL", fields=[field_error("amount", "AMOUNT_TOO_SMALL")])
-    if data.kind == "refund" and amount_base > res.paid_total:
-        raise Conflict("REFUND_EXCEEDS_PAID", params={"max": str(max(res.paid_total, ZERO))})
+    if data.kind == "refund":
+        # Only what the guest paid can be refunded, not a transfer to a company.
+        transferred = sum(
+            (p.amount_base for p in await folio.payments_of(db, res.id) if _live_transfer(p)), ZERO
+        )
+        refundable = res.paid_total - transferred
+        if amount_base > refundable:
+            raise Conflict("REFUND_EXCEEDS_PAID", params={"max": str(max(refundable, ZERO))})
     prefix = (hotel.billing_info or {}).get("receipt_prefix") or "RC-"
     payment = Payment(
         id=uuid.uuid4(),
@@ -497,6 +519,11 @@ async def void_payment(
         raise Conflict("ALREADY_VOID")
     hotel = await _hotel(db, ctx.hotel_id)
     await lock.ensure_received_on_open_day(db, ctx.hotel_id, payment.received_at, hotel.timezone)
+    if payment.method == "city_ledger":
+        from app.modules.accounts.service import paid_on_transfer
+
+        if await paid_on_transfer(db, payment.id) > ZERO:
+            raise Conflict("TRANSFER_HAS_PAYMENTS", "The company already paid part of this transfer")
     payment.is_void = True
     payment.void_reason = reason
     payment.voided_at = datetime.now(UTC)
@@ -583,7 +610,15 @@ async def list_payments(
         {"method": m, "currency": c, "kind": k, "count": n, "amount": a, "amount_base": b}
         for m, c, k, n, a, b in summary_rows
     ]
-    net = sum((-r["amount_base"] if r["kind"] == "refund" else r["amount_base"] for r in summary), ZERO)
+    # A transfer to a company account settles the folio but is not money received.
+    net = sum(
+        (
+            -r["amount_base"] if r["kind"] == "refund" else r["amount_base"]
+            for r in summary
+            if r["method"] != "city_ledger"
+        ),
+        ZERO,
+    )
     return {
         "items": items,
         "total": int(total or 0),
@@ -600,9 +635,24 @@ async def list_payments(
 async def issue_invoice(
     db: AsyncSession, ctx: HotelContext, res_id: uuid.UUID, data: IssueInvoiceIn
 ) -> Invoice:
+    res = await load_reservation(db, ctx.hotel_id, res_id, for_update=True)
+    bill_to = data.bill_to.model_dump(exclude_none=True) if data.bill_to else None
+    inv = await issue_invoice_tx(db, ctx, res, data.language, bill_to)
+    await db.commit()
+    return inv
+
+
+async def issue_invoice_tx(
+    db: AsyncSession,
+    ctx: HotelContext,
+    res: Reservation,
+    language: str | None,
+    bill_to: dict[str, Any] | None,
+) -> Invoice:
+    """Issue the reservation's invoice in the caller's transaction (no commit);
+    the reservation is locked by the caller. `bill_to` None: the booker."""
     from app.modules.billing import documents
 
-    res = await load_reservation(db, ctx.hotel_id, res_id, for_update=True)
     existing = await db.scalar(
         select(func.count()).where(Invoice.reservation_id == res.id, Invoice.status == "issued")
     )
@@ -613,8 +663,8 @@ async def issue_invoice(
     hotel = await _hotel(db, ctx.hotel_id)
     guest = await db.get(Guest, res.booker_guest_id)
     assert guest is not None
-    language = documents.pick_language(data.language, guest, hotel)
-    bill_to = data.bill_to.model_dump(exclude_none=True) if data.bill_to else documents.guest_bill_to(guest)
+    language = documents.pick_language(language, guest, hotel)
+    bill_to = bill_to or documents.guest_bill_to(guest)
     prefix = (hotel.billing_info or {}).get("invoice_prefix") or "INV-"
     number = f"{prefix}{await sequences.next_value(db, ctx.hotel_id, 'invoice'):06d}"
     issue_date = hotel_today(hotel)
@@ -665,7 +715,6 @@ async def issue_invoice(
         version=res.version,
         actor=ctx.actor,
     )
-    await db.commit()
     return inv
 
 

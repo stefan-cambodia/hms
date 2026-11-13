@@ -49,6 +49,9 @@ class P(StrEnum):
     INVOICES_VIEW = "invoices.view"
     INVOICES_ISSUE = "invoices.issue"
     INVOICES_VOID = "invoices.void"
+    # Company accounts (city ledger)
+    ACCOUNTS_VIEW = "accounts.view"
+    ACCOUNTS_MANAGE = "accounts.manage"
     # Restaurant & bar
     RESTAURANT_VIEW = "restaurant.view"
     RESTAURANT_ORDER = "restaurant.order"
@@ -111,6 +114,7 @@ PERMISSION_GROUPS: dict[str, list[P]] = {
     "folio": [P.FOLIO_POST, P.FOLIO_ADJUST],
     "payments": [P.PAYMENTS_VIEW, P.PAYMENTS_RECORD, P.PAYMENTS_REFUND, P.PAYMENTS_VOID],
     "invoices": [P.INVOICES_VIEW, P.INVOICES_ISSUE, P.INVOICES_VOID],
+    "accounts": [P.ACCOUNTS_VIEW, P.ACCOUNTS_MANAGE],
     "restaurant": [
         P.RESTAURANT_VIEW,
         P.RESTAURANT_ORDER,
@@ -164,8 +168,9 @@ SYSTEM_ROLES: dict[str, set[P]] = {
     "super_admin": set(P),
     "hotel_admin": set(P) - {P.BACKUPS_MANAGE},
     "manager": set(P) - {P.ROLES_MANAGE, P.BACKUPS_MANAGE, P.USERS_MANAGE},
-    # Night shift receptionists usually run the end-of-day closure.
-    "receptionist": _OPS_VIEW | _FRONT | {P.ROOMS_BLOCK, P.NIGHT_AUDIT},
+    # Night shift receptionists usually run the end-of-day closure; they see
+    # company accounts to transfer a departing guest's bill to the company.
+    "receptionist": _OPS_VIEW | _FRONT | {P.ROOMS_BLOCK, P.NIGHT_AUDIT, P.ACCOUNTS_VIEW},
     "reservation_manager": _OPS_VIEW
     | {
         P.RESERVATIONS_VIEW,
@@ -182,6 +187,7 @@ SYSTEM_ROLES: dict[str, set[P]] = {
         P.CHANNELS_VIEW,
         P.REPORTS_VIEW,
         P.PAYMENTS_VIEW,
+        P.ACCOUNTS_VIEW,
     },
     "housekeeping": _OPS_VIEW
     | {P.HOUSEKEEPING_VIEW, P.HOUSEKEEPING_UPDATE, P.MAINTENANCE_VIEW, P.MAINTENANCE_REPORT},
@@ -211,6 +217,8 @@ SYSTEM_ROLES: dict[str, set[P]] = {
         P.REPORTS_FINANCIAL,
         P.PRICING_VIEW,
         P.CONFIG_CURRENCIES,
+        P.ACCOUNTS_VIEW,
+        P.ACCOUNTS_MANAGE,
     },
     "maintenance": _OPS_VIEW
     | {P.MAINTENANCE_VIEW, P.MAINTENANCE_REPORT, P.MAINTENANCE_MANAGE, P.HOUSEKEEPING_VIEW},

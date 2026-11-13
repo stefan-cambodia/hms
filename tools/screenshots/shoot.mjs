@@ -20,6 +20,9 @@ const OUT = fileURLToPath(new URL('../../docs/images/', import.meta.url));
 const LIVE = { en: 'Live', fr: 'Connecté', km: 'បានភ្ជាប់', 'zh-CN': '在线', ru: 'В сети' };
 
 const DESKTOP = { viewport: { width: 1440, height: 900 } };
+// SHOTS_ONLY=company-account,login retakes only those pictures.
+const ONLY = process.env.SHOTS_ONLY ? new Set(process.env.SHOTS_ONLY.split(',')) : null;
+const wanted = (name) => !ONLY || ONLY.has(name);
 const IPAD = { viewport: { width: 1194, height: 834 }, hasTouch: true, isMobile: true };
 const ANDROID = { viewport: { width: 800, height: 1280 }, hasTouch: true, isMobile: true };
 
@@ -42,6 +45,7 @@ async function session(device, lang = 'en') {
 }
 
 async function shot(s, path, name, { full = false, prepare } = {}) {
+  if (!wanted(name)) return;
   await s.page.goto(path);
   await s.page.getByText(LIVE[s.lang], { exact: true }).first().waitFor({ timeout: 20_000 });
   await s.page.waitForLoadState('networkidle');
@@ -86,10 +90,50 @@ await shot(d, '/backups', 'backups-restore', {
     await page.getByRole('dialog').waitFor();
   },
 });
+// Company account: bookings of a travel agency transferred to its account at
+// departure, the first invoice already paid by bank transfer.
+if (wanted('company-account')) {
+  const agency = await d.api('POST', d.h('/company-accounts'), {
+    code: 'TONLESAP',
+    name: 'Tonle Sap Expeditions',
+    legal_name: 'Tonle Sap Expeditions Co., Ltd.',
+    tax_id: 'K007-112233445',
+    address: 'No. 25, Sivatha Blvd',
+    city: 'Siem Reap',
+    country_code: 'KH',
+    contact_name: 'Chanthy Rath',
+    email: 'accounts@tonlesap.example',
+    payment_terms_days: 30,
+    credit_limit: '5000.00',
+  });
+  const day = (n) => new Date(Date.now() + n * 86_400_000).toISOString().slice(0, 10);
+  const rooms = await d.api('GET', d.h(`/available-rooms?start=${day(20)}&end=${day(22)}`));
+  for (const [i, last] of ['Leng', 'Souza', 'Tanaka'].entries()) {
+    const res = await d.api('POST', d.h('/reservations'), {
+      arrival: day(20),
+      departure: day(22),
+      guest: { first_name: ['Kim', 'Ana', 'Yuki'][i], last_name: last },
+      rooms: [{ room_type_id: rooms[i].room_type_id, room_id: rooms[i].id, adults: 2 }],
+      source: 'email',
+      override_restrictions: true,
+    });
+    await d.api('PATCH', d.h(`/reservations/${res.id}`), { version: res.version, company_account_id: agency.id });
+    await d.api('POST', d.h(`/reservations/${res.id}/transfer-to-account`), {});
+  }
+  const detail = await d.api('GET', d.h(`/company-accounts/${agency.id}`));
+  const first = detail.items[detail.items.length - 1];
+  await d.api('POST', d.h(`/company-accounts/${agency.id}/payments`), { method: 'bank_transfer', amount: first.amount, reference: 'ABA 2611-0042' });
+  await shot(d, '/accounts', 'company-account', {
+    prepare: async (page) => {
+      await page.locator('[data-account="TONLESAP"]').click();
+      await page.getByTestId('account-detail').waitFor();
+    },
+  });
+}
 await d.ctx.close();
 
 // --- Login page --------------------------------------------------------------------
-{
+if (wanted('login')) {
   const ctx = await browser.newContext({ ...DESKTOP, baseURL: BASE, deviceScaleFactor: 1, locale: 'en-GB' });
   const page = await ctx.newPage();
   await page.goto('/');
@@ -125,7 +169,7 @@ for (const [lang, path, name] of [
 }
 
 // --- Desktop application: connection screen (bundled page, Tauri calls stubbed) ------
-{
+if (wanted('desktop-connect')) {
   const ctx = await browser.newContext({ viewport: { width: 980, height: 700 }, deviceScaleFactor: 1, locale: 'en-GB' });
   const page = await ctx.newPage();
   await page.addInitScript(() => {

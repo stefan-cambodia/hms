@@ -46,6 +46,7 @@ ENTITY_PERMISSIONS: dict[str, str] = {
     "role": P.USERS_VIEW,
     "session": P.USERS_VIEW,
     "day_closure": P.NIGHT_AUDIT,
+    "company_account": P.ACCOUNTS_VIEW,
 }
 DEFAULT_PERMISSION = P.HOTEL_VIEW
 

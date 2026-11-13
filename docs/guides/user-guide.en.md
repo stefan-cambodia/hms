@@ -78,6 +78,8 @@ The **Front desk** screen lists the day's arrivals, guests in house, departures 
 2. If a balance remains, take it or leave it open. An early departure releases the remaining nights.
 3. **Issue invoice** produces the PDF invoice, numbered without gaps. An issued invoice cannot be changed: it is voided and issued again.
 
+**Direct billing to a company** (travel agency, business): on the reservation, **Edit details**, then choose the company under **Direct billing**. At departure, **Transfer to …** (on the folio or in the check-out window) issues the invoice to the company and settles the guest's folio; the company pays later. Extras the guest pays personally are taken before the transfer.
+
 ![Front desk: today's arrivals](../images/guide/en-front-desk.png)
 
 ## 5. Housekeeping and maintenance
@@ -150,6 +152,8 @@ The **End of day** is run after midnight, for the day that just ended (usually b
 A closed day is frozen: no charge or payment can be added to it or voided. Corrections are made on the current day.
 
 ![End of day](../images/guide/en-night-audit.png)
+
+**Company accounts** (accounting): each company's balance, its open invoices and how late they are (not yet due, 1–30 days late…). When the company pays, **Record a payment**: the amount goes to the oldest invoices first. The **Statement (PDF)** is sent to the company. A transfer is not money received: it stays out of the day's cash-up, company payments count in it.
 
 ## 10. Configuration (managers)
 

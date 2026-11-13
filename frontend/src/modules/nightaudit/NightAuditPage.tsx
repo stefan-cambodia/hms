@@ -494,6 +494,14 @@ function Report({ audit: a }: { audit: NightAudit }) {
                     </Table.Td>
                   </Table.Tr>
                 )}
+                {r.transfers && r.transfers.count > 0 && (
+                  <Table.Tr data-testid="day-transfers">
+                    <Table.Td c="dimmed">{t('nightaudit.transfers', { n: r.transfers.count })}</Table.Td>
+                    <Table.Td ta="right" c="dimmed" className="hms-num">
+                      {money(r.transfers.total)}
+                    </Table.Td>
+                  </Table.Tr>
+                )}
               </Table.Tbody>
             </Table>
           )}

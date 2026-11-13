@@ -236,6 +236,7 @@ class FolioTotals(OutputModel):
     grand_total: Decimal
     paid_total: Decimal
     balance: Decimal
+    transferred: Decimal = Decimal(0)  # to company accounts (part of paid_total, not refundable)
 
 
 class FolioOut(OutputModel):

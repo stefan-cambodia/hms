@@ -1,5 +1,8 @@
 import type { ComponentType } from 'react';
 import {
+  IconAddressBook,
+  IconBrush,
+  IconBuildingBank,
   IconBuildingCommunity,
   IconCalendarMonth,
   IconChartBar,
@@ -7,18 +10,16 @@ import {
   IconCoin,
   IconDatabaseExport,
   IconDoor,
-  IconAddressBook,
-  IconBrush,
-  IconToolsKitchen2,
-  IconMotorbike,
-  IconTool,
   IconHotelService,
   IconLayoutDashboard,
   IconMoonStars,
+  IconMotorbike,
   IconPlugConnected,
   IconReceipt2,
   IconSettings,
   IconSwimming,
+  IconTool,
+  IconToolsKitchen2,
   IconUsersGroup,
 } from '@tabler/icons-react';
 
@@ -54,6 +55,7 @@ export const NAV_ITEMS: NavItem[] = [
   { key: 'reports', path: '/reports', icon: IconChartBar, permission: 'reports.view' },
   { key: 'night_audit', path: '/night-audit', icon: IconMoonStars, permission: 'nightaudit.run' },
   { key: 'billing', path: '/billing', icon: IconReceipt2, permission: 'payments.view' },
+  { key: 'accounts', path: '/accounts', icon: IconBuildingBank, permission: 'accounts.view' },
   { key: 'services', path: '/services', icon: IconSwimming, permission: 'hotel.view' },
   { key: 'users', path: '/users', icon: IconUsersGroup, permission: 'users.view' },
   { key: 'backups', path: '/backups', icon: IconDatabaseExport, permission: 'backups.manage' },

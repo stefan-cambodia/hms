@@ -63,7 +63,8 @@
     "bank_transfer": "Virement bancaire",
     "online": "Paiement en ligne",
     "other": "Autre",
-    "room_charge": "Imputé sur la chambre"
+    "room_charge": "Imputé sur la chambre",
+    "city_ledger": "Compte société (transfert)"
   },
   "card": "{brand} se terminant par {last4}",
   "card_brand": {
@@ -159,7 +160,8 @@
     "source": {
       "folio": "Réception",
       "restaurant": "Restaurant et bar",
-      "vehicles": "Location de véhicules"
+      "vehicles": "Location de véhicules",
+      "accounts": "Comptes société"
     },
     "no_payments": "Aucun encaissement",
     "net": "Net encaissé",
@@ -179,6 +181,27 @@
     "business_date": "Journée",
     "closed_at": "Clôturée le",
     "closed_by": "Clôturée par",
-    "notes": "Remarques"
+    "notes": "Remarques",
+    "transfers": "Transféré aux comptes société"
+  },
+  "account_statement": {
+    "title": "Relevé de compte",
+    "date": "Date",
+    "account": "Compte",
+    "terms": "Conditions de paiement",
+    "terms_days": "{days} jours",
+    "invoice": "Facture",
+    "invoice_date": "Date",
+    "due_date": "Échéance",
+    "open": "Restant dû",
+    "nothing_open": "Aucune facture en attente de paiement.",
+    "current": "Non échu",
+    "days_1_30": "1 à 30 j de retard",
+    "days_31_60": "31 à 60 j de retard",
+    "days_61_90": "61 à 90 j de retard",
+    "days_over_90": "Plus de 90 j de retard",
+    "credit": "Paiements non affectés (avoir)",
+    "total_due": "Total dû",
+    "please_pay": "Merci d’indiquer les numéros de facture avec votre paiement."
   }
 }

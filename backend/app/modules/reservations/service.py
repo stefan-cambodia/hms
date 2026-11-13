@@ -185,6 +185,7 @@ async def reservation_out(db: AsyncSession, res: Reservation) -> ReservationOut:
                 "internal_notes",
                 "cancelled_at",
                 "cancellation_reason",
+                "company_account_id",
                 "version",
                 "created_at",
                 "updated_at",
@@ -439,6 +440,10 @@ async def update_details(
     changes = data.model_dump(exclude_unset=True, exclude={"version"})
     if "source" in changes and changes["source"] is None:
         raise ValidationFailed(fields=[field_error("source", "REQUIRED")])
+    if changes.get("company_account_id") is not None:
+        from app.modules.accounts.service import check_assignable
+
+        await check_assignable(db, ctx.hotel_id, changes["company_account_id"])
     before = {k: getattr(res, k) for k in changes}
     for k, v in changes.items():
         setattr(res, k, v)
@@ -448,7 +453,7 @@ async def update_details(
         _event(db, ctx, res, "details_updated", fields=sorted(delta))
         await _publish(db, ctx, res, "updated", delta)
         await db.commit()
-        return await reload(db, res)
+    return await reload(db, res)
 
 
 def _find_room(res: Reservation, rr_id: uuid.UUID) -> ReservationRoom:

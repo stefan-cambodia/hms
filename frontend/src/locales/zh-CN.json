@@ -52,7 +52,8 @@
     "channels": "渠道管理",
     "reports": "报表",
     "backups": "备份",
-    "night_audit": "日结"
+    "night_audit": "日结",
+    "accounts": "公司账户"
   },
   "auth": {
     "title": "酒店管理系统",
@@ -522,7 +523,8 @@
       "administration": "系统管理",
       "folio": "客人账单",
       "restaurant": "餐厅与酒吧",
-      "vehicles": "车辆租赁"
+      "vehicles": "车辆租赁",
+      "accounts": "公司账户"
     },
     "codes": {
       "hotel_view": "查看酒店信息",
@@ -582,7 +584,9 @@
       "vehicles_view": "查看车队和租车单",
       "vehicles_rent": "租车（预订、办理取车和还车、收款）",
       "vehicles_manage": "管理车队和租金；作废收款、打折及免收逾时还车费",
-      "nightaudit_run": "营业日日结"
+      "nightaudit_run": "营业日日结",
+      "accounts_view": "查看公司账户及其发票和付款",
+      "accounts_manage": "创建和编辑公司账户（付款期限、信用额度）"
     }
   },
   "sessions": {
@@ -1000,7 +1004,19 @@
     "RECOVERY_CODE_INVALID": "此恢复码错误或已被使用。",
     "TWO_FACTOR_SETUP_REQUIRED": "请先设置双因素认证。",
     "TWO_FACTOR_REQUIRED_BY_ROLE": "您的角色要求使用双因素认证，无法停用。",
-    "ROOM_HAS_STAYS": "今晚或之后有客人入住此房间（{{count}}）：请先将他们换到其他房间。"
+    "ROOM_HAS_STAYS": "今晚或之后有客人入住此房间（{{count}}）：请先将他们换到其他房间。",
+    "ACCOUNT_CODE_EXISTS": "该代码已被其他账户使用。",
+    "ACCOUNT_NOT_FOUND": "该公司账户已不存在。",
+    "ACCOUNT_NOT_AVAILABLE": "请选择一个启用的公司账户。",
+    "ACCOUNT_INACTIVE": "该公司账户已停用。",
+    "NO_COMPANY_ACCOUNT": "此预订未挂账至公司：请在“公司挂账”中选择公司。",
+    "NOTHING_TO_TRANSFER": "没有可转账的余额。",
+    "CREDIT_LIMIT_EXCEEDED": "超出信用额度 {{limit}}：该公司已欠 {{balance}}，将再增加 {{amount}}。请提高额度或向客人收款。",
+    "INVOICE_NOT_TO_COMPANY": "发票 {{number}} 开给了客人：请先作废，再重新转账。",
+    "TRANSFER_HAS_PAYMENTS": "该公司已支付此笔转账的一部分：请先作废其付款。",
+    "NOT_AN_OPEN_ITEM": "此发票在该账户上不是未付状态。",
+    "ALLOCATION_EXCEEDS_OPEN": "超过该发票的未付金额。",
+    "ALLOCATIONS_EXCEED_PAYMENT": "核销金额超过付款金额。"
   },
   "reservations": {
     "description": "所有来源的全部预订。点击预订即可进行管理。",
@@ -1562,7 +1578,8 @@
       "card": "银行卡",
       "bank_transfer": "银行转账",
       "online": "在线支付",
-      "other": "其他"
+      "other": "其他",
+      "city_ledger": "公司挂账"
     },
     "card_brands": {
       "visa": "Visa",
@@ -2506,7 +2523,8 @@
     "sources": {
       "folio": "前台",
       "restaurant": "餐厅与酒吧",
-      "vehicles": "车辆租赁"
+      "vehicles": "车辆租赁",
+      "accounts": "公司账户"
     },
     "invoices_issued_other": "已开具 {{count}} 张发票",
     "close_title": "结 {{date}}",
@@ -2514,7 +2532,8 @@
     "accept_open_other": "在仍有 {{count}} 项未完成的情况下结账（这些事项会记录在报告中）",
     "notes": "备注",
     "notes_hint": "留给下一班和管理层（可选）。",
-    "closed_notice": "{{date}} 已结账"
+    "closed_notice": "{{date}} 已结账",
+    "transfers": "转入公司账户（{{n}}）"
   },
   "media": {
     "photos": "照片",
@@ -2541,6 +2560,83 @@
       "saved": "标志已保存",
       "removed": "标志已移除",
       "none": "暂无标志"
+    }
+  },
+  "accounts": {
+    "description": "酒店直接开票的公司：其预订在退房时转入公司账户，之后凭发票付款。",
+    "add": "新建账户",
+    "edit": "编辑账户",
+    "search": "名称、代码或税号",
+    "all": "全部",
+    "empty": "暂无公司账户",
+    "empty_hint": "为每家直接开票的公司（旅行社、非政府组织、雇主）创建一个账户。",
+    "company": "公司",
+    "contact": "联系人",
+    "terms": "付款期限",
+    "terms_days": "{{n}} 天",
+    "terms_hint": "从开票到到期的天数",
+    "days": "天",
+    "limit_short": "额度 {{amount}}",
+    "credit_limit": "信用额度",
+    "credit_limit_hint": "留空：不限额",
+    "no_limit": "不限额",
+    "balance": "应收余额",
+    "overdue": "逾期",
+    "overdue_amount": "逾期 {{amount}}",
+    "open_invoices": "{{n}} 张未付发票",
+    "record_payment": "登记付款",
+    "record_payment_for": "{{name}} 的付款",
+    "payment_hint": "优先冲抵最早的未付发票。",
+    "payment_recorded": "付款已登记",
+    "payment_voided": "付款已作废",
+    "statement": "对账单 (PDF)",
+    "invoices_tab": "发票（{{n}} 张未付）",
+    "payments_tab": "已收付款",
+    "details_tab": "详情",
+    "no_invoices": "尚无转入此账户的发票。",
+    "no_payments": "尚未收到付款。",
+    "invoice": "发票",
+    "due": "到期日",
+    "amount": "金额",
+    "open": "未付",
+    "days_late": "逾期 {{n}} 天",
+    "settled": "已付清",
+    "unallocated": "{{amount}} 未核销（贷方）",
+    "voided_reason": "已作废：{{reason}}",
+    "void_payment": "作废此付款",
+    "void_payment_hint": "用于退回的转账或录入错误：其冲抵的发票将重新变为未付。",
+    "void_reason": "原因",
+    "code": "代码",
+    "name": "名称",
+    "legal_name": "法定名称（用于发票）",
+    "tax_id": "税号",
+    "address": "地址",
+    "city": "城市",
+    "country": "国家",
+    "contact_name": "联系人",
+    "email": "账单邮箱",
+    "phone": "电话",
+    "language": "单据语言",
+    "language_hint": "发票和对账单；留空则使用酒店语言",
+    "notes": "备注",
+    "active_hint": "启用（新预订可挂账至此）",
+    "reference": "参考号",
+    "reference_placeholder": "转账编号…",
+    "equivalent": "= {{amount}}",
+    "direct_billing": "公司挂账",
+    "direct_billing_hint": "支付此次住宿的公司：退房时余额将转入该公司账户。",
+    "guest_pays": "由客人支付",
+    "billed_to": "挂账至 {{name}}",
+    "transfer": "转账",
+    "transfer_to": "转至 {{name}}",
+    "transfer_confirm": "{{amount}} 的余额将转入 {{name}} 的账户，{{days}} 天内到期。发票将开具给该公司。",
+    "transferred": "已转至 {{name}}",
+    "aging": {
+      "current": "未到期",
+      "days_1_30": "逾期 1–30 天",
+      "days_31_60": "逾期 31–60 天",
+      "days_61_90": "逾期 61–90 天",
+      "days_over_90": "逾期 90 天以上"
     }
   }
 }

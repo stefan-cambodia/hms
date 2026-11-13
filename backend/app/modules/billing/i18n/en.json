@@ -62,7 +62,8 @@
     "bank_transfer": "Bank transfer",
     "online": "Online payment",
     "other": "Other",
-    "room_charge": "Charged to room"
+    "room_charge": "Charged to room",
+    "city_ledger": "Company account (transfer)"
   },
   "card": "{brand} ending {last4}",
   "card_brand": {
@@ -158,7 +159,8 @@
     "source": {
       "folio": "Front desk",
       "restaurant": "Restaurant & bar",
-      "vehicles": "Vehicle rental"
+      "vehicles": "Vehicle rental",
+      "accounts": "Company accounts"
     },
     "no_payments": "No payment received",
     "net": "Net received",
@@ -178,6 +180,27 @@
     "business_date": "Business date",
     "closed_at": "Closed on",
     "closed_by": "Closed by",
-    "notes": "Notes"
+    "notes": "Notes",
+    "transfers": "Transferred to company accounts"
+  },
+  "account_statement": {
+    "title": "Statement of account",
+    "date": "Date",
+    "account": "Account",
+    "terms": "Payment terms",
+    "terms_days": "{days} days",
+    "invoice": "Invoice",
+    "invoice_date": "Date",
+    "due_date": "Due date",
+    "open": "Open",
+    "nothing_open": "No open invoice.",
+    "current": "Not yet due",
+    "days_1_30": "1–30 days late",
+    "days_31_60": "31–60 days late",
+    "days_61_90": "61–90 days late",
+    "days_over_90": "Over 90 days late",
+    "credit": "Unapplied payments (credit)",
+    "total_due": "Total due",
+    "please_pay": "Please quote the invoice numbers with your payment."
   }
 }

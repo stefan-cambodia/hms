@@ -68,6 +68,8 @@ class ReservationUpdate(UpdateModel):
     external_ref: str | None = Field(None, max_length=100)
     special_requests: Notes | None = None
     internal_notes: Notes | None = None
+    # Direct billing: the balance may be transferred to this company account.
+    company_account_id: uuid.UUID | None = None
 
 
 class AssignRoomIn(UpdateModel):
@@ -198,6 +200,7 @@ class ReservationOut(OutputModel):
     internal_notes: str | None
     cancelled_at: datetime | None
     cancellation_reason: str | None
+    company_account_id: uuid.UUID | None
     booker: BookerOut
     rooms: list[ReservationRoomOut]
     version: int

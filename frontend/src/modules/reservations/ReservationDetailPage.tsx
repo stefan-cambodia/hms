@@ -29,18 +29,19 @@ import {
   IconArrowLeft,
   IconArrowsExchange,
   IconBed,
-  IconCash,
-  IconDoorEnter,
-  IconDoorExit,
-  IconFileInvoice,
-  IconReceipt,
+  IconBuildingBank,
   IconCalendarEvent,
+  IconCash,
   IconCheck,
   IconChevronDown,
   IconCirclePlus,
-  IconEdit,
-  IconPencil,
   IconCurrencyDollar,
+  IconDoorEnter,
+  IconDoorExit,
+  IconEdit,
+  IconFileInvoice,
+  IconPencil,
+  IconReceipt,
   IconStatusChange,
   IconX,
 } from '@tabler/icons-react';
@@ -59,6 +60,7 @@ import { countryName, formatDate, formatDateTime, formatMoney } from '@/lib/form
 import { pickLocalized } from '@/lib/localized';
 import { issueLabel, policySummary, usePricingLookups } from '@/modules/pricing/shared';
 import { addDays } from '@/lib/dates';
+import { useCompanyAccounts } from '@/modules/accounts/shared';
 import { FolioSection } from '@/modules/billing/FolioSection';
 import { useStayActions } from '@/modules/frontdesk/actions';
 import { FlagBadges, SOURCES, StatusBadge, useHotelToday, useInventory } from './shared';
@@ -77,6 +79,7 @@ export default function ReservationDetailPage() {
   const [cancelling, setCancelling] = useState<'cancel' | 'no_show' | null>(null);
   const [editing, setEditing] = useState(false);
   const stayActions = useStayActions();
+  const companies = useCompanyAccounts();
 
   const action = useHotelMutation<{ path: string; body: Record<string, unknown> }, Reservation>(
     (h, { path, body }) => api.post<Reservation>(h(`/reservations/${id}/${path}`), body),
@@ -86,6 +89,7 @@ export default function ReservationDetailPage() {
   if (res.isPending) return <PageLoader />;
   if (!res.data) return <EmptyState title={t('reservations.not_found')} action={<Anchor component={Link} to="/reservations">{t('reservations.back')}</Anchor>} />;
   const r = res.data;
+  const billedTo = companies.byId(r.company_account_id);
   const open = r.status === 'pending' || r.status === 'confirmed';
   const canEdit = can('reservations.edit') && (open || r.status === 'checked_in');
   const run = (path: string, body: Record<string, unknown>, done: string) =>
@@ -226,6 +230,11 @@ export default function ReservationDetailPage() {
                 <Anchor component={Link} to={`/guests?id=${r.booker.id}`} size="sm" mt="xs" display="inline-block">
                   {t('reservations.open_guest')}
                 </Anchor>
+              )}
+              {billedTo && (
+                <Badge mt="sm" variant="light" color="indigo" leftSection={<IconBuildingBank size={12} />} data-testid="billed-to">
+                  {t('accounts.billed_to', { name: billedTo.name })}
+                </Badge>
               )}
             </Card>
             <Card>
@@ -690,6 +699,9 @@ function EditDetailsModal({ reservation: r, onClose }: { reservation: Reservatio
   const [externalRef, setExternalRef] = useState(r.external_ref ?? '');
   const [requests, setRequests] = useState(r.special_requests ?? '');
   const [notes, setNotes] = useState(r.internal_notes ?? '');
+  const { can } = useAuth();
+  const companies = useCompanyAccounts();
+  const [company, setCompany] = useState<string | null>(r.company_account_id);
   const save = useHotelMutation<Record<string, unknown>, Reservation>((h, body) => api.patch<Reservation>(h(`/reservations/${r.id}`), body), INVALIDATES);
   return (
     <Modal opened onClose={onClose} title={t('reservations.actions.edit')} size="lg">
@@ -697,7 +709,14 @@ function EditDetailsModal({ reservation: r, onClose }: { reservation: Reservatio
         onSubmit={(e) => {
           e.preventDefault();
           void save
-            .mutateAsync({ version: r.version, source, external_ref: externalRef.trim() || null, special_requests: requests.trim() || null, internal_notes: notes.trim() || null })
+            .mutateAsync({
+              version: r.version,
+              source,
+              external_ref: externalRef.trim() || null,
+              special_requests: requests.trim() || null,
+              internal_notes: notes.trim() || null,
+              ...(can('accounts.view') ? { company_account_id: company } : {}),
+            })
             .then(() => {
               notifySuccess(t('common.saved'));
               onClose();
@@ -715,6 +734,18 @@ function EditDetailsModal({ reservation: r, onClose }: { reservation: Reservatio
             />
             <TextInput label={t('reservations.external_ref')} value={externalRef} onChange={(e) => setExternalRef(e.currentTarget.value)} />
           </SimpleGrid>
+          {can('accounts.view') && (
+            <Select
+              label={t('accounts.direct_billing')}
+              description={t('accounts.direct_billing_hint')}
+              placeholder={t('accounts.guest_pays')}
+              clearable
+              searchable
+              data={companies.list.filter((a) => a.is_active || a.id === company).map((a) => ({ value: a.id, label: `${a.name} · ${a.code}` }))}
+              value={company}
+              onChange={setCompany}
+            />
+          )}
           <Textarea label={t('reservations.special_requests')} autosize minRows={2} value={requests} onChange={(e) => setRequests(e.currentTarget.value)} />
           <Textarea label={t('reservations.internal_notes')} autosize minRows={2} value={notes} onChange={(e) => setNotes(e.currentTarget.value)} />
           <Group justify="flex-end">

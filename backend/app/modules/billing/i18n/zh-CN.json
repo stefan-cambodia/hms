@@ -61,7 +61,8 @@
     "bank_transfer": "银行转账",
     "online": "在线支付",
     "other": "其他",
-    "room_charge": "挂房账"
+    "room_charge": "挂房账",
+    "city_ledger": "公司挂账"
   },
   "card": "{brand}（尾号 {last4}）",
   "card_brand": {
@@ -157,7 +158,8 @@
     "source": {
       "folio": "前台",
       "restaurant": "餐厅与酒吧",
-      "vehicles": "车辆租赁"
+      "vehicles": "车辆租赁",
+      "accounts": "公司账户"
     },
     "no_payments": "无收款",
     "net": "净收款",
@@ -177,6 +179,27 @@
     "business_date": "营业日",
     "closed_at": "结账时间",
     "closed_by": "结账人",
-    "notes": "备注"
+    "notes": "备注",
+    "transfers": "转入公司账户"
+  },
+  "account_statement": {
+    "title": "对账单",
+    "date": "日期",
+    "account": "账户",
+    "terms": "付款期限",
+    "terms_days": "{days} 天",
+    "invoice": "发票",
+    "invoice_date": "日期",
+    "due_date": "到期日",
+    "open": "未付",
+    "nothing_open": "没有未付发票。",
+    "current": "未到期",
+    "days_1_30": "逾期 1–30 天",
+    "days_31_60": "逾期 31–60 天",
+    "days_61_90": "逾期 61–90 天",
+    "days_over_90": "逾期 90 天以上",
+    "credit": "未核销付款（贷方）",
+    "total_due": "应付总额",
+    "please_pay": "付款时请注明发票号码。"
   }
 }

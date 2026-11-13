@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="{{ doc.language }}">
+<head>
+<meta charset="utf-8">
+<title>{{ doc.title }}</title>
+<style>
+  @page { size: A4; margin: 16mm 16mm 18mm 16mm;
+          @bottom-center { content: {{ page_css }}; font-size: 8pt; color: #6b7280; } }
+  html { font-family: {{ fonts }}; font-size: 9.5pt; color: #111827; line-height: {{ line_height }}; }
+  body { margin: 0; }
+  .header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12mm; }
+  .hotel-name { font-size: 14pt; font-weight: 700; margin: 0 0 1mm; }
+  .logo { display: block; max-height: 15mm; max-width: 50mm; margin-bottom: 2mm; }
+  .muted { color: #4b5563; }
+  .small { font-size: 8.5pt; }
+  h1 { font-size: 17pt; margin: 0 0 2mm; color: #0f4c5c; text-align: right; }
+  table.meta td { padding: 0.4mm 0 0.4mm 4mm; text-align: right; }
+  table.meta td:first-child { color: #4b5563; }
+  .box { border: 0.3mm solid #d1d5db; border-radius: 1.5mm; padding: 3mm 4mm; margin: 7mm 0 5mm; width: 48%; }
+  .box div:first-child { font-weight: 600; }
+  table.lines { width: 100%; border-collapse: collapse; }
+  table.lines th { text-align: left; font-size: 8pt; color: #374151; border-bottom: 0.4mm solid #111827; padding: 1.5mm 2mm; }
+  table.lines td { border-bottom: 0.2mm solid #e5e7eb; padding: 1.6mm 2mm; vertical-align: top; }
+  table.lines .num { text-align: right; white-space: nowrap; }
+  table.lines tr { page-break-inside: avoid; }
+  .late { color: #b91c1c; }
+  table.aging { width: 100%; border-collapse: collapse; margin-top: 6mm; }
+  table.aging th { font-size: 8pt; color: #374151; text-align: right; padding: 1mm 2mm; border-bottom: 0.3mm solid #d1d5db; }
+  table.aging td { text-align: right; padding: 1.4mm 2mm; white-space: nowrap; }
+  .totals { margin-left: auto; width: 46%; border-collapse: collapse; margin-top: 5mm; }
+  .totals td { padding: 1.2mm 2mm; }
+  .totals td.num { text-align: right; white-space: nowrap; }
+  .totals tr.strong td { font-weight: 700; border-top: 0.3mm solid #111827; font-size: 10.5pt; }
+  .notes { margin-top: 8mm; color: #4b5563; font-size: 8.5pt; }
+</style>
+</head>
+<body>
+<div class="header">
+  <div>
+    {% if logo_src %}<img class="logo" src="{{ logo_src }}" alt="">{% endif %}
+    <p class="hotel-name">{{ doc.hotel.name }}</p>
+    {% if doc.hotel.legal_name %}<div class="muted">{{ doc.hotel.legal_name }}</div>{% endif %}
+    {% for line in doc.hotel.address %}<div class="muted small">{{ line }}</div>{% endfor %}
+    {% if doc.hotel.contact %}<div class="muted small">{{ doc.hotel.contact | join(" · ") }}</div>{% endif %}
+    {% if doc.hotel.tax_id %}<div class="muted small">{{ doc.hotel.tax_id }}</div>{% endif %}
+  </div>
+  <div>
+    <h1>{{ doc.title }}</h1>
+    <table class="meta">{% for label, value in doc.meta %}<tr><td>{{ label }}</td><td><strong>{{ value }}</strong></td></tr>{% endfor %}</table>
+  </div>
+</div>
+<div class="box">
+  {% for line in doc.company %}<div>{{ line }}</div>{% endfor %}
+</div>
+{% if doc.lines %}
+<table class="lines">
+  <tr>{% for h in doc.columns %}<th{% if loop.index > 4 %} class="num"{% endif %}>{{ h }}</th>{% endfor %}</tr>
+  {% for row in doc.lines %}
+  <tr{% if row.late %} class="late"{% endif %}>
+    <td>{{ row.invoice }}</td><td>{{ row.date }}</td><td>{{ row.guest }}</td><td>{{ row.due }}</td>
+    <td class="num">{{ row.amount }}</td><td class="num">{{ row.paid }}</td><td class="num">{{ row.open }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p class="muted">{{ doc.nothing_open }}</p>
+{% endif %}
+<table class="aging">
+  <tr>{% for label, _ in doc.aging %}<th>{{ label }}</th>{% endfor %}</tr>
+  <tr>{% for _, value in doc.aging %}<td>{{ value }}</td>{% endfor %}</tr>
+</table>
+<table class="totals">
+  {% for label, value in doc.totals[:-1] %}<tr><td>{{ label }}</td><td class="num">{{ value }}</td></tr>{% endfor %}
+  {% set last = doc.totals[-1] %}<tr class="strong"><td>{{ last[0] }}</td><td class="num">{{ last[1] }}</td></tr>
+</table>
+{% if doc.notes %}<div class="notes">{% for n in doc.notes %}<div>{{ n }}</div>{% endfor %}</div>{% endif %}
+</body>
+</html>
