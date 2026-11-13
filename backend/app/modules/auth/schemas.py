@@ -13,6 +13,8 @@ class LoginIn(InputModel):
     email: str = Field(min_length=1, max_length=320)
     password: str = Field(min_length=1, max_length=200)
     totp_code: str | None = Field(None, pattern=r"^\d{6}$")
+    # Instead of totp_code when the phone is lost ("abcde-fghjk", case and dashes ignored).
+    recovery_code: str | None = Field(None, min_length=10, max_length=20)
     device_label: str | None = Field(None, max_length=100)
 
 
@@ -41,6 +43,11 @@ class MeOut(OutputModel):
     hotels: list[HotelAccess]
     csrf_token: str
     session_id: uuid.UUID
+    # A role of this user requires two-factor; while it is not set up, the
+    # session may only set it up (TWO_FACTOR_SETUP_REQUIRED elsewhere).
+    two_factor_required: bool = False
+    two_factor_setup_required: bool = False
+    recovery_codes_left: int | None = None
 
 
 class LoginOut(MeOut):
@@ -60,6 +67,15 @@ class PasswordChange(InputModel):
 class TotpSetupOut(OutputModel):
     secret: str
     otpauth_uri: str
+    qr_svg: str  # data: URI of the link as a QR code
+
+
+class RecoveryCodesOut(OutputModel):
+    codes: list[str]
+
+
+class PasswordConfirm(InputModel):
+    password: str = Field(max_length=200)
 
 
 class TotpCode(InputModel):

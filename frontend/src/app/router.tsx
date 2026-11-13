@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { AppLayout, PageLoader } from '@/app/AppLayout';
 import { useAuth } from '@/auth/AuthProvider';
 import { LoginPage } from '@/auth/LoginPage';
+import { TwoFactorRequiredPage } from '@/modules/account/TwoFactor';
 
 const DashboardPage = lazy(() => import('@/modules/dashboard/DashboardPage'));
 const RoomsPage = lazy(() => import('@/modules/rooms/RoomsPage'));
@@ -96,6 +97,7 @@ export function AppRouter() {
   const { status, me } = useAuth();
   if (status === 'loading') return <PageLoader />;
   if (status === 'anonymous') return <LoginPage />;
+  if (me?.two_factor_setup_required) return <TwoFactorRequiredPage />;
   if (me && me.hotels.length === 0) return <NoHotelAccess />;
   return <RouterProvider router={router} />;
 }

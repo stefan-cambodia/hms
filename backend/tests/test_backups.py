@@ -9,6 +9,8 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
+from alembic.config import Config
+from alembic.script import ScriptDirectory
 from sqlalchemy import select
 
 from app.core.audit import AuditLog
@@ -17,7 +19,10 @@ from app.core.db import owner_sessionmaker
 from tests.conftest import ADMIN_PASSWORD, Api, error_code
 from tests.test_tenancy import other_organisation
 
-SCHEMA = "0012"  # current migration head
+BACKEND = Path(__file__).resolve().parents[1]
+_alembic = Config(str(BACKEND / "alembic.ini"))
+_alembic.set_main_option("script_location", str(BACKEND / "migrations"))
+SCHEMA = ScriptDirectory.from_config(_alembic).get_current_head()  # this software's schema version
 
 
 def iso(dt: datetime) -> str:

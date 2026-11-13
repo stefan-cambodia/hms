@@ -29,11 +29,21 @@
   per-IP counters are stored in PostgreSQL (an unlogged table), so the limit
   holds across several API processes or servers. Every attempt goes to
   `login_events`.
-* **2FA.** Optional TOTP (RFC 6238) per user; the secret is encrypted at
-  rest. A user who lost their phone is helped by an administrator
-  (`users.manage`): *Reset two-factor authentication* switches it off and ends
-  all of that user's sessions, and is audited. Not built yet: recovery codes,
-  and making 2FA mandatory per role.
+* **2FA.** TOTP (RFC 6238) per user, set up from a QR code; the secret is
+  encrypted at rest. Each code is accepted once: the last accepted 30-second
+  step is stored, so a code read over a shoulder cannot be replayed within its
+  minute. Turning it on gives ten one-time **recovery codes** (about 50 bits
+  each), shown once and stored only as HMAC-SHA256 keyed with a key derived
+  from `HMS_DATA_KEY`; new codes (password required) replace all the old ones.
+  A sign-in with a recovery code is marked in the login history. A **role can
+  require 2FA** (system roles included): its holders who have not set it up
+  can sign in with their password, but every API operation except "who am I",
+  the language, set-up and sign-out answers `403 TWO_FACTOR_SETUP_REQUIRED`,
+  and the real-time connection is refused, until it is set up; they cannot
+  turn it off while the role requires it. A user who lost their phone and
+  their codes is helped by an administrator (`users.manage`): *Reset
+  two-factor authentication* switches it off, deletes the recovery codes and
+  ends all of that user's sessions, and is audited.
 
 ## 4.2 Authorisation (RBAC)
 

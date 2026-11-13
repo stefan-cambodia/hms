@@ -24,6 +24,7 @@ from app.core.config import get_settings
 from app.core.db import sessionmaker
 from app.core.tenancy import tenant_scope
 from app.modules.auth import service as auth_service
+from app.modules.auth import twofactor
 from app.modules.auth.deps import SESSION_COOKIE
 from app.modules.realtime.hub import Client, hub
 
@@ -73,6 +74,9 @@ async def websocket_endpoint(ws: WebSocket) -> None:
                 await ws.close(code=4401)
                 return
             session, user = resolved
+            if not user.totp_enabled and await twofactor.required_for(db, user):
+                await ws.close(code=4403)  # two-factor must be set up first
+                return
             perms = await auth_service.hotel_permissions(db, user)
     except (TimeoutError, ValueError, WebSocketDisconnect):
         with contextlib.suppress(Exception):

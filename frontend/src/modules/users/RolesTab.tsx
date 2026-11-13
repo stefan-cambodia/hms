@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Accordion, ActionIcon, Badge, Button, Card, Checkbox, Drawer, Group, SimpleGrid, Stack, Text, Textarea, TextInput } from '@mantine/core';
+import { Accordion, ActionIcon, Badge, Button, Card, Checkbox, Drawer, Group, SimpleGrid, Stack, Switch, Text, Textarea, TextInput } from '@mantine/core';
 import { useForm } from '@mantine/form';
-import { IconCopy, IconEdit, IconLock, IconPlus, IconTrash } from '@tabler/icons-react';
+import { IconCopy, IconEdit, IconLock, IconPlus, IconShieldLock, IconTrash } from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
@@ -20,6 +20,7 @@ interface Draft {
   name: string;
   description: string;
   permissions: string[];
+  require_2fa: boolean;
 }
 
 export default function RolesTab() {
@@ -38,7 +39,7 @@ export default function RolesTab() {
           {t('roles.hint')}
         </Text>
         {canManage && (
-          <Button leftSection={<IconPlus size={16} />} onClick={() => setDraft({ code: '', name: '', description: '', permissions: [] })}>
+          <Button leftSection={<IconPlus size={16} />} onClick={() => setDraft({ code: '', name: '', description: '', permissions: [], require_2fa: false })}>
             {t('roles.add')}
           </Button>
         )}
@@ -65,7 +66,7 @@ export default function RolesTab() {
                   <ActionIcon
                     variant="subtle"
                     aria-label={t('roles.duplicate')}
-                    onClick={() => setDraft({ code: `${r.code}_copy`, name: `${roleName(r)} (2)`, description: r.description ?? '', permissions: r.permissions })}
+                    onClick={() => setDraft({ code: `${r.code}_copy`, name: `${roleName(r)} (2)`, description: r.description ?? '', permissions: r.permissions, require_2fa: r.require_2fa })}
                   >
                     <IconCopy size={16} />
                   </ActionIcon>
@@ -97,6 +98,25 @@ export default function RolesTab() {
                 {r.description}
               </Text>
             )}
+            {canManage ? (
+              <Switch
+                mt="sm"
+                size="sm"
+                label={t('roles.require_2fa')}
+                checked={r.require_2fa}
+                onChange={(e) =>
+                  void crud.update
+                    .mutateAsync({ id: r.id, body: { version: r.version, require_2fa: e.currentTarget.checked } })
+                    .then(() => notifySuccess(t('common.saved')), notifyError)
+                }
+              />
+            ) : (
+              r.require_2fa && (
+                <Badge mt="sm" size="sm" variant="light" color="lagoon" leftSection={<IconShieldLock size={12} />}>
+                  {t('roles.require_2fa')}
+                </Badge>
+              )
+            )}
           </Card>
         ))}
       </SimpleGrid>
@@ -124,7 +144,7 @@ function RoleDrawer({ draft, crud, onClose }: { draft: Draft; crud: ReturnType<t
   const submit = form.onSubmit(async ({ id, version, ...values }) => {
     const body = { ...values, description: values.description || null };
     try {
-      if (id) await crud.update.mutateAsync({ id, body: { name: body.name, description: body.description, permissions: body.permissions, version } });
+      if (id) await crud.update.mutateAsync({ id, body: { name: body.name, description: body.description, permissions: body.permissions, require_2fa: body.require_2fa, version } });
       else await crud.create.mutateAsync(body as never);
       notifySuccess(t('common.saved'));
       onClose();
@@ -142,6 +162,7 @@ function RoleDrawer({ draft, crud, onClose }: { draft: Draft; crud: ReturnType<t
             <TextInput label={t('common.name')} required {...form.getInputProps('name')} />
           </SimpleGrid>
           <Textarea label={t('common.description')} autosize minRows={2} {...form.getInputProps('description')} />
+          <Switch label={t('roles.require_2fa')} description={t('roles.require_2fa_hint')} {...form.getInputProps('require_2fa', { type: 'checkbox' })} />
           <Text fw={600} size="sm">
             {t('roles.permissions', { count: selected.size })}
           </Text>

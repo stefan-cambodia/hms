@@ -37,8 +37,8 @@ export default function LoginHistoryTab() {
                 <Table.Td>{e.email}</Table.Td>
                 <Table.Td>
                   {e.success ? (
-                    <Badge color="lagoon" variant="light" radius="sm">
-                      {t('logins.success')}
+                    <Badge color={e.reason === 'recovery_code' ? 'orange' : 'lagoon'} variant="light" radius="sm">
+                      {e.reason === 'recovery_code' ? t('logins.reasons.recovery_code') : t('logins.success')}
                     </Badge>
                   ) : (
                     <Badge color="red" variant="light" radius="sm">

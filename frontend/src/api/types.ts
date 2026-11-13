@@ -28,6 +28,11 @@ export interface Me {
   hotels: HotelAccess[];
   csrf_token: string;
   session_id: UUID;
+  /** A role of this user requires two-factor authentication. */
+  two_factor_required: boolean;
+  /** ...and it is not set up yet: the session may only set it up. */
+  two_factor_setup_required: boolean;
+  recovery_codes_left: number | null;
 }
 
 export interface Hotel {
@@ -215,6 +220,7 @@ export interface Role {
   name: string;
   description: string | null;
   is_system: boolean;
+  require_2fa: boolean;
   version: number;
   permissions: string[];
   user_count: number;

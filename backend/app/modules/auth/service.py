@@ -22,7 +22,6 @@ from app.core.errors import (
 from app.core.permissions import ALL_PERMISSIONS
 from app.core.ratelimit import DbRateLimiter
 from app.core.security import (
-    decrypt_secret,
     encrypt_secret,
     hash_password,
     hash_token,
@@ -32,6 +31,7 @@ from app.core.security import (
     verify_password,
 )
 from app.core.tenancy import set_tenant
+from app.modules.auth import twofactor
 from app.modules.auth.models import LoginEvent, RolePermission, User, UserHotelRole, UserSession
 from app.modules.hotels.models import Hotel
 
@@ -106,6 +106,7 @@ async def login(
     ip: str | None,
     user_agent: str | None,
     device_label: str | None,
+    recovery_code: str | None = None,
 ) -> LoginResult:
     if not await login_limiter.hit(ip or "unknown"):
         raise AppError("TOO_MANY_ATTEMPTS", "Too many login attempts", status_code=429)
@@ -153,13 +154,19 @@ async def login(
         await fail("bad_password")
     if not user.is_active:
         await fail("inactive", count=False)
+    method = "password"
     if user.totp_enabled:
-        if not totp_code:
+        if totp_code:
+            if not twofactor.accept_totp(user, totp_code):
+                await fail("bad_totp", code="TOTP_INVALID")
+            method = "totp"
+        elif recovery_code:
+            if not await twofactor.use_recovery_code(db, user, recovery_code):
+                await fail("bad_recovery_code", code="RECOVERY_CODE_INVALID")
+            method = "recovery_code"
+        else:
             # Password was right: don't count, but don't create a session either.
             raise Unauthorized("TOTP_REQUIRED", "Two-factor code required")
-        secret = decrypt_secret(user.totp_secret) if user.totp_secret else ""
-        if not pyotp.TOTP(secret).verify(totp_code, valid_window=1):
-            await fail("bad_totp", code="TOTP_INVALID")
 
     if needs_rehash(user.password_hash):
         user.password_hash = hash_password(password)
@@ -180,11 +187,19 @@ async def login(
         device_label=(device_label or "")[:100] or None,
     )
     db.add(session)
+    # A sign-in with a recovery code is shown in the login history: the
+    # phone may be lost, or someone else may have the codes.
     await _login_event(
-        db, user_id=user.id, email=email, success=True, reason=None, ip=ip, user_agent=user_agent
+        db,
+        user_id=user.id,
+        email=email,
+        success=True,
+        reason="recovery_code" if method == "recovery_code" else None,
+        ip=ip,
+        user_agent=user_agent,
     )
     actor = Actor(user_id=user.id, organization_id=user.organization_id, session_id=session.id, ip=ip)
-    audit.record(db, actor, "login", "user", user.id)
+    audit.record(db, actor, "login", "user", user.id, changes={"method": [None, method]})
     await db.commit()
     return LoginResult(user=user, session=session, token=token)
 
@@ -294,22 +309,40 @@ async def totp_begin(db: AsyncSession, actor: Actor, user: User) -> tuple[str, s
     return secret, uri
 
 
-async def totp_enable(db: AsyncSession, actor: Actor, user: User, code: str) -> None:
+async def totp_enable(db: AsyncSession, actor: Actor, user: User, code: str) -> list[str]:
+    """Turn two-factor on; returns the recovery codes (shown once)."""
     if user.totp_enabled or not user.totp_secret:
         raise AppError("TOTP_NOT_STARTED", "Start two-factor setup first", status_code=409)
-    if not pyotp.TOTP(decrypt_secret(user.totp_secret)).verify(code, valid_window=1):
+    if not twofactor.accept_totp(user, code):
         raise ValidationFailed("TOTP_INVALID", "Invalid code", fields=[field_error("code", "TOTP_INVALID")])
     user.totp_enabled = True
+    codes = await twofactor.replace_recovery_codes(db, user)
     audit.record(db, actor, "user.totp_enable", "user", user.id)
     await db.commit()
+    return codes
 
 
 async def totp_disable(db: AsyncSession, actor: Actor, user: User, password: str) -> None:
+    if await twofactor.required_for(db, user):
+        raise Forbidden("TWO_FACTOR_REQUIRED_BY_ROLE", "A role of this user requires two-factor")
     await check_current_password(user, password, "password")
     user.totp_enabled = False
     user.totp_secret = None
+    user.totp_last_step = None
+    await twofactor.clear_recovery_codes(db, user)
     audit.record(db, actor, "user.totp_disable", "user", user.id)
     await db.commit()
+
+
+async def regenerate_recovery_codes(db: AsyncSession, actor: Actor, user: User, password: str) -> list[str]:
+    """New recovery codes (the old ones stop working), after the password."""
+    if not user.totp_enabled:
+        raise AppError("TOTP_NOT_ENABLED", "Two-factor is not enabled", status_code=409)
+    await check_current_password(user, password, "password")
+    codes = await twofactor.replace_recovery_codes(db, user)
+    audit.record(db, actor, "user.recovery_codes_regenerate", "user", user.id)
+    await db.commit()
+    return codes
 
 
 # --- Authorisation ----------------------------------------------------------

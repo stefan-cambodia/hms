@@ -51,12 +51,14 @@ class RoleIn(InputModel):
     name: str = Field(min_length=1, max_length=100)
     description: str | None = Field(None, max_length=1000)
     permissions: list[str] = Field(default_factory=list, max_length=200)
+    require_2fa: bool = False
 
 
 class RoleUpdate(UpdateModel):
     name: str | None = Field(None, min_length=1, max_length=100)
     description: str | None = Field(None, max_length=1000)
     permissions: list[str] | None = Field(None, max_length=200)
+    require_2fa: bool | None = None
 
 
 class RoleOut(OutputModel):
@@ -65,6 +67,7 @@ class RoleOut(OutputModel):
     name: str
     description: str | None
     is_system: bool
+    require_2fa: bool
     version: int
     permissions: list[str] = Field(default_factory=list)
     user_count: int = 0

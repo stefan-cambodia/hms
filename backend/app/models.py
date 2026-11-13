@@ -3,6 +3,7 @@
 from app.core.audit import AuditLog  # noqa: F401
 from app.modules.auth.models import (  # noqa: F401
     LoginEvent,
+    RecoveryCode,
     Role,
     RolePermission,
     User,

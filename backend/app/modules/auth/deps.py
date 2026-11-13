@@ -15,12 +15,21 @@ from app.core.db import get_db
 from app.core.errors import Forbidden, NotFound, Unauthorized
 from app.core.security import constant_time_equals
 from app.core.tenancy import set_tenant
-from app.modules.auth import service
+from app.modules.auth import service, twofactor
 from app.modules.auth.models import User, UserSession
 
 SESSION_COOKIE = "hms_session"
 CSRF_HEADER = "x-csrf-token"
 _SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
+# All a session may do while its user must set up two-factor (a role requires
+# it) and has not: see who they are, choose the language, set it up, leave.
+_TWO_FACTOR_SETUP_ROUTES = {
+    ("GET", "/api/v1/auth/me"),
+    ("PATCH", "/api/v1/auth/me"),
+    ("POST", "/api/v1/auth/logout"),
+    ("POST", "/api/v1/auth/me/totp/setup"),
+    ("POST", "/api/v1/auth/me/totp/enable"),
+}
 
 DB = Annotated[AsyncSession, Depends(get_db)]
 
@@ -62,6 +71,12 @@ async def get_auth(request: Request, db: DB) -> AuthState:
         sent = request.headers.get(CSRF_HEADER, "")
         if not sent or not constant_time_equals(sent, session.csrf_token):
             raise Forbidden("CSRF_FAILED", "Missing or invalid CSRF token")
+    if (
+        not user.totp_enabled
+        and (request.method, request.url.path) not in _TWO_FACTOR_SETUP_ROUTES
+        and await twofactor.required_for(db, user)
+    ):
+        raise Forbidden("TWO_FACTOR_SETUP_REQUIRED", "Set up two-factor authentication first")
     actor = Actor(
         user_id=user.id,
         organization_id=user.organization_id,

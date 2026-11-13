@@ -1,7 +1,7 @@
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
-import { api, ApiError, setCsrfToken, setUnauthorizedHandler } from '@/api/client';
+import { api, ApiError, setCsrfToken, setTwoFactorRequiredHandler, setUnauthorizedHandler } from '@/api/client';
 import type { HotelAccess, Me } from '@/api/types';
 import { applyLanguage, isLanguage, type LanguageCode } from '@/i18n';
 
@@ -13,6 +13,7 @@ interface LoginInput {
   email: string;
   password: string;
   totp_code?: string;
+  recovery_code?: string;
 }
 
 interface AuthContextValue {
@@ -78,8 +79,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     setUnauthorizedHandler(reset);
+    // A role now requires two-factor: reload the session, the app then shows its set-up.
+    setTwoFactorRequiredHandler(() => void refresh().catch(() => undefined));
     refresh().catch(() => setStatus('anonymous'));
-    return () => setUnauthorizedHandler(null);
+    return () => {
+      setUnauthorizedHandler(null);
+      setTwoFactorRequiredHandler(null);
+    };
   }, [refresh, reset]);
 
   const login = useCallback(

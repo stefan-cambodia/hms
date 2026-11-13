@@ -24,7 +24,8 @@ Last updated: 2026-11-13. Test counts: backend 163 passed + 1 opt-in live test s
 | Authentication: Argon2id, opaque sessions, httpOnly cookie or bearer token | ✅ | test_auth.py |
 | CSRF protection (per-session token) | ✅ | |
 | Brute-force protection: per-IP rate limit and account lockout | ✅ | |
-| Optional TOTP two-factor authentication (secret encrypted at rest) | ✅ | Administrator reset for a lost phone (phase 10, ends the user's sessions, audited). Recovery codes and mandatory 2FA per role ⬜ |
+| Optional TOTP two-factor authentication (secret encrypted at rest) | ✅ | QR code set-up; each code accepted once (no replay); administrator reset for a lost phone (ends the user's sessions, audited) |
+| 2FA recovery codes; 2FA required per role | ✅ | Ten one-time codes (keyed hashes), new codes with the password, sign-in with a code flagged in the login history; a role (system roles too) can require 2FA: its holders may only set it up until then (API and real-time). `test_twofactor.py` (incl. every API operation refused), E2E `two-factor.spec.ts` |
 | Session management: list, revoke (own and admin), idle and absolute expiry | ✅ | |
 | Login history | ✅ | |
 | RBAC: permission catalog, 8 seeded system roles, custom roles | ✅ | test_rbac.py |

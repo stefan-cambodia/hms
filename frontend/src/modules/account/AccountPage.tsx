@@ -1,7 +1,5 @@
-import { useState } from 'react';
-import { Alert, Badge, Button, Card, Code, Group, PasswordInput, PinInput, Select, SimpleGrid, Stack, Table, Text, TextInput } from '@mantine/core';
+import { Badge, Button, Card, Group, PasswordInput, Select, SimpleGrid, Stack, Table, Text, TextInput } from '@mantine/core';
 import { useForm } from '@mantine/form';
-import { IconShieldCheck } from '@tabler/icons-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
@@ -12,6 +10,7 @@ import { PageHeader, SectionTitle, SubmitButton } from '@/components/ui';
 import { LANGUAGES, type LanguageCode } from '@/i18n';
 import { applyFieldErrors, notifyError, notifySuccess } from '@/lib/errors';
 import { formatDateTime, formatRelative } from '@/lib/format';
+import { TwoFactorCard } from '@/modules/account/TwoFactor';
 import { describeAgent } from '@/modules/users/SessionsTab';
 
 export default function AccountPage() {
@@ -102,90 +101,6 @@ function PasswordCard() {
           </Group>
         </Stack>
       </form>
-    </Card>
-  );
-}
-
-function TwoFactorCard() {
-  const { t } = useTranslation();
-  const { me, refresh } = useAuth();
-  const [setup, setSetup] = useState<{ secret: string; otpauth_uri: string } | null>(null);
-  const [code, setCode] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const enabled = me?.user.totp_enabled;
-
-  const begin = async () => {
-    try {
-      setSetup(await api.post('/auth/me/totp/setup'));
-    } catch (err) {
-      notifyError(err);
-    }
-  };
-  const enable = async () => {
-    try {
-      await api.post('/auth/me/totp/enable', { code });
-      setSetup(null);
-      setCode('');
-      await refresh();
-      notifySuccess(t('account.2fa_enabled'));
-    } catch {
-      setError(t('errors.TOTP_INVALID'));
-    }
-  };
-  const disable = async () => {
-    try {
-      await api.post('/auth/me/totp/disable', { password });
-      setPassword('');
-      await refresh();
-      notifySuccess(t('account.2fa_disabled'));
-    } catch (err) {
-      notifyError(err);
-    }
-  };
-
-  return (
-    <Card>
-      <Group justify="space-between" align="flex-start">
-        <SectionTitle description={t('account.2fa_hint')}>{t('account.2fa')}</SectionTitle>
-        <Badge color={enabled ? 'lagoon' : 'gray'} variant="light" leftSection={enabled ? <IconShieldCheck size={12} /> : null}>
-          {enabled ? t('account.2fa_on') : t('account.2fa_off')}
-        </Badge>
-      </Group>
-      {enabled ? (
-        <Group align="flex-end">
-          <PasswordInput label={t('account.current_password')} value={password} onChange={(e) => setPassword(e.currentTarget.value)} style={{ flex: 1 }} />
-          <Button color="red" variant="light" onClick={disable} disabled={!password}>
-            {t('account.2fa_disable')}
-          </Button>
-        </Group>
-      ) : setup ? (
-        <Stack>
-          <Text size="sm">{t('account.2fa_step1')}</Text>
-          <Code block style={{ wordBreak: 'break-all' }}>
-            {setup.secret}
-          </Code>
-          <Text size="xs" c="dimmed" style={{ wordBreak: 'break-all' }}>
-            {setup.otpauth_uri}
-          </Text>
-          <Text size="sm">{t('account.2fa_step2')}</Text>
-          {error && (
-            <Alert color="red" variant="light">
-              {error}
-            </Alert>
-          )}
-          <Group>
-            <PinInput length={6} type="number" oneTimeCode value={code} onChange={(v) => { setCode(v); setError(null); }} />
-            <Button onClick={enable} disabled={code.length !== 6}>
-              {t('account.2fa_confirm')}
-            </Button>
-          </Group>
-        </Stack>
-      ) : (
-        <Button variant="light" onClick={begin}>
-          {t('account.2fa_enable')}
-        </Button>
-      )}
     </Card>
   );
 }

@@ -7,7 +7,7 @@ from sqlalchemy import select
 
 from app.core import audit
 from app.core.config import get_settings
-from app.modules.auth import service
+from app.modules.auth import service, twofactor
 from app.modules.auth.deps import DB, SESSION_COOKIE, Auth, client_ip
 from app.modules.auth.models import UserSession
 from app.modules.auth.schemas import (
@@ -17,6 +17,8 @@ from app.modules.auth.schemas import (
     MeOut,
     MeUpdate,
     PasswordChange,
+    PasswordConfirm,
+    RecoveryCodesOut,
     SessionOut,
     TotpCode,
     TotpDisable,
@@ -45,11 +47,15 @@ async def _me(db, user, session) -> dict:
                     permissions=sorted(perms[h.id]),
                 )
             )
+    required = await twofactor.required_for(db, user)
     return {
         "user": UserOut.model_validate(user),
         "hotels": hotels,
         "csrf_token": session.csrf_token,
         "session_id": session.id,
+        "two_factor_required": required,
+        "two_factor_setup_required": required and not user.totp_enabled,
+        "recovery_codes_left": await twofactor.recovery_codes_left(db, user) if user.totp_enabled else None,
     }
 
 
@@ -73,6 +79,7 @@ async def login(body: LoginIn, request: Request, response: Response, db: DB) -> 
         email=str(body.email),
         password=body.password,
         totp_code=body.totp_code,
+        recovery_code=body.recovery_code,
         ip=client_ip(request),
         user_agent=request.headers.get("user-agent"),
         device_label=body.device_label,
@@ -144,12 +151,21 @@ async def revoke_my_session(session_id: uuid.UUID, auth: Auth, db: DB) -> None:
 @router.post("/me/totp/setup", response_model=TotpSetupOut)
 async def totp_setup(auth: Auth, db: DB) -> TotpSetupOut:
     secret, uri = await service.totp_begin(db, auth.actor, auth.user)
-    return TotpSetupOut(secret=secret, otpauth_uri=uri)
+    return TotpSetupOut(secret=secret, otpauth_uri=uri, qr_svg=twofactor.qr_svg(uri))
 
 
-@router.post("/me/totp/enable", status_code=status.HTTP_204_NO_CONTENT)
-async def totp_enable(body: TotpCode, auth: Auth, db: DB) -> None:
-    await service.totp_enable(db, auth.actor, auth.user, body.code)
+@router.post("/me/totp/enable", response_model=RecoveryCodesOut)
+async def totp_enable(body: TotpCode, auth: Auth, db: DB) -> RecoveryCodesOut:
+    """Turns two-factor on and returns the recovery codes, shown this once."""
+    return RecoveryCodesOut(codes=await service.totp_enable(db, auth.actor, auth.user, body.code))
+
+
+@router.post("/me/recovery-codes", response_model=RecoveryCodesOut)
+async def regenerate_recovery_codes(body: PasswordConfirm, auth: Auth, db: DB) -> RecoveryCodesOut:
+    """New recovery codes; the earlier ones stop working."""
+    return RecoveryCodesOut(
+        codes=await service.regenerate_recovery_codes(db, auth.actor, auth.user, body.password)
+    )
 
 
 @router.post("/me/totp/disable", status_code=status.HTTP_204_NO_CONTENT)

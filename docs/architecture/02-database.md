@@ -262,6 +262,7 @@ restaurant (`billing/pos.py`).
 | `user_hotel_roles` | (user_id, hotel_id, role_id) |
 | `user_sessions` | id, user_id, token_hash UNIQUE (SHA-256 of a 256-bit random token), created_at, last_seen_at, expires_at, ip, user_agent, device_label, revoked_at, revoked_by, revoke_reason |
 | `login_events` | id, user_id NULL, email, success, reason, ip, user_agent, at |
+| `user_recovery_codes` | id, user_id, code_hash (HMAC-SHA256, key derived from `HMS_DATA_KEY`), created_at, used_at | Migration 0013. Ten per user while two-factor is on; row-level security through the user. `roles.require_2fa` and `users.totp_last_step` (no TOTP code replay) came with it. |
 | `audit_logs` | id bigserial, organization_id, hotel_id, user_id, session_id, action, entity_type, entity_id, changes jsonb, ip, request_id, at. A trigger rejects `UPDATE`/`DELETE`, so the log is append-only. |
 
 ### Channel manager (implemented in phase 7)

@@ -15,7 +15,7 @@ This guide explains, screen by screen, how to use HMS every day: reservations, f
 
 HMS opens in the browser at the hotel server's address (for example `https://hms.lan`), on a computer, a tablet or in the desktop application. Every staff member has their own account.
 
-1. Enter your **Email** and **Password**, then click **Sign in**. If two-factor authentication is on, enter the 6-digit code from your app.
+1. Enter your **Email** and **Password**, then click **Sign in**. If two-factor authentication is on, enter the 6-digit code from your app. Lost your phone? Choose **Lost your phone? Use a recovery code** and type one of your recovery codes (each works once).
 2. Change the language with the language button at the top right (English, Français, 简体中文, Русский, ខ្មែរ). Your choice follows you on every device.
 3. The menu on the left opens each module. On a tablet, open it with the ☰ button.
 4. The **Live** indicator at the top confirms the real-time link: what a colleague saves appears on your screen without reloading.
@@ -158,7 +158,7 @@ A closed day is frozen: no charge or payment can be added to it or voided. Corre
 - **Hotel profile**: name, address, contacts, time zone, currency, languages, check-in and check-out times, policies and invoice details. The **Logo** (button **Upload a logo**) appears in the header and on every PDF document; it is saved as soon as you choose it.
 - **Room categories**: occupancy, beds, base price, amenities and up to 20 photos (**Add photos**, order can be changed). Rooms are created one by one or as a range (101 to 120).
 - **Hotel services**: facilities (pool, spa…) with opening hours and photos, and the extras you sell.
-- **Users & permissions**: **Add user** and give them a role (front desk, housekeeping, maintenance, restaurant, accountant…). Connected devices, sign-in history and the audit trail are here too.
+- **Users & permissions**: **Add user** and give them a role (front desk, housekeeping, maintenance, restaurant, accountant…). Connected devices, sign-in history and the audit trail are here too. A role can require two-factor authentication (switch on its card): its holders set it up at their next sign-in.
 - **Backups**: the state of the automatic backups, **Back up now** and restore (password and the hotel's code required). Photos and the logo are included in the backups.
 
 ![Configuration: hotel profile and logo](../images/guide/en-settings.png)

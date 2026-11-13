@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import time
+
 import pyotp
 from sqlalchemy import select, text
 
@@ -143,12 +145,13 @@ async def test_totp_two_factor_flow(admin: Api, installation):
     totp = pyotp.TOTP(setup["secret"])
     r = await admin.post("/api/v1/auth/me/totp/enable", {"code": "000000"})
     assert r.status_code == 422 and error_code(r) == "TOTP_INVALID"
-    assert (await admin.post("/api/v1/auth/me/totp/enable", {"code": totp.now()})).status_code == 204
+    assert (await admin.post("/api/v1/auth/me/totp/enable", {"code": totp.now()})).status_code == 200
     async with new_client() as client:
         api = Api(client)
         r = await api.login(ADMIN_EMAIL, ADMIN_PASSWORD)
         assert r.status_code == 401 and error_code(r) == "TOTP_REQUIRED"
-        r = await api.login(ADMIN_EMAIL, ADMIN_PASSWORD, totp_code=totp.now())
+        # The code just used to turn it on is spent; the next one is accepted.
+        r = await api.login(ADMIN_EMAIL, ADMIN_PASSWORD, totp_code=totp.at(time.time() + 30))
         assert r.status_code == 200
     # The secret is stored encrypted, never in clear text.
     async with owner_sessionmaker()() as db:
@@ -160,7 +163,7 @@ async def test_admin_resets_a_lost_authenticator(admin: Api, user_factory):
     clerk = await user_factory("receptionist", "clerk@example.com")
     secret = (await clerk.post("/api/v1/auth/me/totp/setup")).json()["secret"]
     enabled = await clerk.post("/api/v1/auth/me/totp/enable", {"code": pyotp.TOTP(secret).now()})
-    assert enabled.status_code == 204
+    assert enabled.status_code == 200
     target = next(u for u in (await admin.get(admin.h("/users"))).json() if u["email"] == "clerk@example.com")
     assert target["totp_enabled"] is True
 

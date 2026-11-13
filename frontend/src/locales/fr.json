@@ -25,7 +25,8 @@
     "stale_body": "Une autre personne a modifié cette fiche. Rechargez pour voir ses changements ; vos modifications non enregistrées seront perdues.",
     "stale_title": "Modifié sur un autre appareil",
     "status": "Statut",
-    "no_results": "Aucun résultat"
+    "no_results": "Aucun résultat",
+    "done": "Terminé"
   },
   "nav": {
     "dashboard": "Tableau de bord",
@@ -62,7 +63,11 @@
     "logout": "Se déconnecter",
     "totp_prompt": "Saisissez le code à 6 chiffres de votre application d’authentification",
     "no_hotel_title": "Aucun accès à un hôtel",
-    "no_hotel_body": "Votre compte n’est encore rattaché à aucun hôtel. Demandez à un administrateur de vous attribuer un rôle."
+    "no_hotel_body": "Votre compte n’est encore rattaché à aucun hôtel. Demandez à un administrateur de vous attribuer un rôle.",
+    "recovery_code": "Code de secours",
+    "recovery_code_hint": "L’un des codes enregistrés lors de l’activation de la double authentification. Chaque code ne sert qu’une fois.",
+    "use_recovery_code": "Téléphone perdu ? Utiliser un code de secours",
+    "use_authenticator": "Utiliser le code de l’application"
   },
   "connection": {
     "online": "Connecté",
@@ -510,7 +515,9 @@
       "restaurant_manager": "Responsable de la restauration",
       "waiter": "Serveur",
       "kitchen": "Cuisine"
-    }
+    },
+    "require_2fa": "Double authentification obligatoire",
+    "require_2fa_hint": "Les titulaires de ce rôle doivent l’activer avant de pouvoir utiliser l’hôtel."
   },
   "permissions": {
     "groups": {
@@ -616,7 +623,9 @@
       "bad_password": "Mot de passe erroné",
       "inactive": "Compte inactif",
       "bad_totp": "Code 2FA erroné",
-      "locked": "Compte verrouillé"
+      "locked": "Compte verrouillé",
+      "recovery_code": "Connexion avec un code de secours",
+      "bad_recovery_code": "Code de secours erroné"
     }
   },
   "audit": {
@@ -695,13 +704,31 @@
     "2fa_off": "Désactivée",
     "2fa_enable": "Activer l’authentification à deux facteurs",
     "2fa_disable": "Désactiver",
-    "2fa_step1": "1. Ajoutez cette clé à votre application d’authentification (Google Authenticator, Microsoft Authenticator, 2FAS…) :",
+    "2fa_step1": "1. Scannez ce QR code avec votre application d’authentification (Google Authenticator, Microsoft Authenticator, 2FAS…), ou saisissez la clé affichée à côté :",
     "2fa_step2": "2. Saisissez le code à 6 chiffres affiché par l’application :",
     "2fa_confirm": "Confirmer",
     "2fa_enabled": "Authentification à deux facteurs activée",
     "2fa_disabled": "Authentification à deux facteurs désactivée",
     "sessions": "Appareils connectés",
-    "sessions_hint": "Déconnectez les appareils que vous n’utilisez plus."
+    "sessions_hint": "Déconnectez les appareils que vous n’utilisez plus.",
+    "2fa_qr": "QR code pour l’application d’authentification",
+    "2fa_manual_key": "Clé, si l’application ne peut pas scanner :",
+    "2fa_required_by_role": "Votre rôle exige la double authentification : elle ne peut pas être désactivée.",
+    "2fa_required_title": "Activez la double authentification",
+    "2fa_required_body": "Votre rôle exige, à chaque connexion, un code donné par une application d’authentification sur votre téléphone. Activez-la maintenant pour continuer ; cela prend une minute.",
+    "recovery_title": "Vos codes de secours",
+    "recovery_hint": "Si vous perdez votre téléphone, connectez-vous avec l’un de ces codes au lieu du code de l’application. Chacun ne sert qu’une fois. Gardez-les en lieu sûr, loin du téléphone : ils ne sont affichés qu’une seule fois.",
+    "recovery_copy": "Copier",
+    "recovery_copied": "Copié",
+    "recovery_download": "Télécharger (.txt)",
+    "recovery_print": "Imprimer",
+    "recovery_saved": "J’ai conservé ces codes en lieu sûr",
+    "recovery_file_title": "Codes de secours HMS pour {{email}}",
+    "recovery_file_hint": "Chaque code ne sert qu’une fois, à la place du code de l’application d’authentification.",
+    "recovery_left": "Codes de secours restants : {{n}} sur 10",
+    "recovery_left_hint": "Pour vous connecter si vous perdez votre téléphone. De nouveaux codes remplacent tous les anciens.",
+    "recovery_low": "Il reste peu de codes : générez-en de nouveaux et conservez-les en lieu sûr.",
+    "recovery_regenerate": "Nouveaux codes de secours"
   },
   "validation": {
     "required": "Obligatoire",
@@ -983,7 +1010,10 @@
     "MEDIA_NOT_FOUND": "Cette photo n'existe plus.",
     "MEDIA_OWNER_NOT_FOUND": "L'élément auquel cette photo était destinée n'existe plus.",
     "MEDIA_OWNER_REQUIRED": "Indiquez à quoi se rapporte la photo.",
-    "MEDIA_ORDER_MISMATCH": "Les photos ont été modifiées entre-temps. Réessayez."
+    "MEDIA_ORDER_MISMATCH": "Les photos ont été modifiées entre-temps. Réessayez.",
+    "RECOVERY_CODE_INVALID": "Ce code de secours est erroné ou a déjà servi.",
+    "TWO_FACTOR_SETUP_REQUIRED": "Activez d’abord la double authentification.",
+    "TWO_FACTOR_REQUIRED_BY_ROLE": "Votre rôle exige la double authentification : elle ne peut pas être désactivée."
   },
   "reservations": {
     "description": "Toutes les réservations, quelle que soit leur origine. Cliquez sur une réservation pour la gérer.",

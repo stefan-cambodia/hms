@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert, Box, Button, Center, Group, Paper, PasswordInput, PinInput, Stack, Text, TextInput, Title } from '@mantine/core';
+import { Alert, Anchor, Box, Button, Center, Group, Paper, PasswordInput, PinInput, Stack, Text, TextInput, Title } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { IconAlertCircle, IconLock } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
@@ -14,10 +14,11 @@ export function LoginPage() {
   const { t } = useTranslation();
   const { login } = useAuth();
   const [needTotp, setNeedTotp] = useState(false);
+  const [useRecovery, setUseRecovery] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const form = useForm({
-    initialValues: { email: '', password: '', totp_code: '' },
+    initialValues: { email: '', password: '', totp_code: '', recovery_code: '' },
     validate: {
       email: (v) => (/^\S+@\S+\.\S+$/.test(v) ? null : t('validation.email')),
       password: (v) => (v ? null : t('validation.required')),
@@ -28,12 +29,18 @@ export function LoginPage() {
     setBusy(true);
     setError(null);
     try {
-      await login({ email: values.email.trim(), password: values.password, totp_code: needTotp ? values.totp_code : undefined });
+      await login({
+        email: values.email.trim(),
+        password: values.password,
+        totp_code: needTotp && !useRecovery ? values.totp_code : undefined,
+        recovery_code: needTotp && useRecovery ? values.recovery_code.trim() : undefined,
+      });
     } catch (err) {
       if (err instanceof ApiError && err.code === 'TOTP_REQUIRED') {
         setNeedTotp(true);
       } else {
         if (err instanceof ApiError && err.code === 'TOTP_INVALID') form.setFieldValue('totp_code', '');
+        if (err instanceof ApiError && err.code === 'RECOVERY_CODE_INVALID') form.setFieldValue('recovery_code', '');
         setError(errorMessage(err));
       }
     } finally {
@@ -67,13 +74,31 @@ export function LoginPage() {
               <Stack gap="md">
                 <TextInput label={t('auth.email')} type="email" autoComplete="username" autoFocus size="md" {...form.getInputProps('email')} disabled={needTotp} />
                 <PasswordInput label={t('auth.password')} autoComplete="current-password" size="md" {...form.getInputProps('password')} disabled={needTotp} />
-                {needTotp && (
+                {needTotp && !useRecovery && (
                   <Stack gap={6} align="center">
                     <Text size="sm" fw={500}>
                       {t('auth.totp_prompt')}
                     </Text>
                     <PinInput length={6} type="number" oneTimeCode autoFocus size="md" {...form.getInputProps('totp_code')} />
                   </Stack>
+                )}
+                {needTotp && useRecovery && (
+                  <TextInput
+                    label={t('auth.recovery_code')}
+                    description={t('auth.recovery_code_hint')}
+                    placeholder="abcde-fghjk"
+                    autoComplete="off"
+                    autoCapitalize="none"
+                    spellCheck={false}
+                    autoFocus
+                    size="md"
+                    {...form.getInputProps('recovery_code')}
+                  />
+                )}
+                {needTotp && (
+                  <Anchor component="button" type="button" size="sm" ta="center" onClick={() => { setUseRecovery(!useRecovery); setError(null); }}>
+                    {useRecovery ? t('auth.use_authenticator') : t('auth.use_recovery_code')}
+                  </Anchor>
                 )}
                 <Button type="submit" size="md" loading={busy} leftSection={<IconLock size={18} />} fullWidth>
                   {t('auth.sign_in')}

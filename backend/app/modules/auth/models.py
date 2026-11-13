@@ -37,6 +37,8 @@ class User(UUIDPk, Timestamps, Versioned, Base):
     is_superadmin: Mapped[bool] = mapped_column(Boolean, server_default=text("false"))
     totp_secret: Mapped[bytes | None] = mapped_column(LargeBinary)
     totp_enabled: Mapped[bool] = mapped_column(Boolean, server_default=text("false"))
+    # Last 30-second time step accepted: a code is valid once, never replayed.
+    totp_last_step: Mapped[int | None] = mapped_column(BigInteger)
     failed_logins: Mapped[int] = mapped_column(Integer, server_default="0")
     locked_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     password_changed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
@@ -51,8 +53,23 @@ class Role(UUIDPk, Timestamps, Versioned, Base):
     name: Mapped[str] = mapped_column(String(100))
     description: Mapped[str | None] = mapped_column(Text)
     is_system: Mapped[bool] = mapped_column(Boolean, server_default=text("false"))
+    # Holders of this role must sign in with two-factor authentication.
+    require_2fa: Mapped[bool] = mapped_column(Boolean, server_default=text("false"))
 
     __table_args__ = (UniqueConstraint("organization_id", "code"),)
+
+
+class RecoveryCode(UUIDPk, Base):
+    """One-time codes to sign in when the authenticator phone is lost. Only a
+    keyed hash is stored (HMAC-SHA256 with a key derived from HMS_DATA_KEY):
+    a copy of the database alone cannot be used to guess them."""
+
+    __tablename__ = "user_recovery_codes"
+
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    code_hash: Mapped[str] = mapped_column(String(64))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class RolePermission(Base):

@@ -25,7 +25,8 @@
     "stale_body": "Someone else saved changes to this record. Reload to see them; your unsaved edits will be discarded.",
     "stale_title": "Updated on another device",
     "status": "Status",
-    "no_results": "No results"
+    "no_results": "No results",
+    "done": "Done"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -62,7 +63,11 @@
     "logout": "Sign out",
     "totp_prompt": "Enter the 6-digit code from your authenticator app",
     "no_hotel_title": "No hotel access",
-    "no_hotel_body": "Your account is not assigned to any hotel yet. Ask an administrator to grant you a role."
+    "no_hotel_body": "Your account is not assigned to any hotel yet. Ask an administrator to grant you a role.",
+    "recovery_code": "Recovery code",
+    "recovery_code_hint": "One of the codes you saved when you turned on two-factor authentication. Each code works once.",
+    "use_recovery_code": "Lost your phone? Use a recovery code",
+    "use_authenticator": "Use the code from the authenticator app"
   },
   "connection": {
     "online": "Live",
@@ -503,7 +508,9 @@
       "restaurant_manager": "Restaurant manager",
       "waiter": "Waiter",
       "kitchen": "Kitchen"
-    }
+    },
+    "require_2fa": "Two-factor authentication required",
+    "require_2fa_hint": "Holders of this role must set it up before they can use the hotel."
   },
   "permissions": {
     "groups": {
@@ -609,7 +616,9 @@
       "bad_password": "Wrong password",
       "inactive": "Account inactive",
       "bad_totp": "Wrong 2FA code",
-      "locked": "Account locked"
+      "locked": "Account locked",
+      "recovery_code": "Signed in with a recovery code",
+      "bad_recovery_code": "Wrong recovery code"
     }
   },
   "audit": {
@@ -688,13 +697,31 @@
     "2fa_off": "Disabled",
     "2fa_enable": "Enable two-factor authentication",
     "2fa_disable": "Disable",
-    "2fa_step1": "1. Add this key to your authenticator app (Google Authenticator, Microsoft Authenticator, 2FAS…):",
+    "2fa_step1": "1. Scan this QR code with your authenticator app (Google Authenticator, Microsoft Authenticator, 2FAS…), or type the key shown beside it:",
     "2fa_step2": "2. Enter the 6-digit code shown by the app:",
     "2fa_confirm": "Confirm",
     "2fa_enabled": "Two-factor authentication enabled",
     "2fa_disabled": "Two-factor authentication disabled",
     "sessions": "Signed-in devices",
-    "sessions_hint": "Sign out devices you no longer use."
+    "sessions_hint": "Sign out devices you no longer use.",
+    "2fa_qr": "QR code for the authenticator app",
+    "2fa_manual_key": "Key, if the app cannot scan:",
+    "2fa_required_by_role": "Your role requires two-factor authentication: it cannot be turned off.",
+    "2fa_required_title": "Set up two-factor authentication",
+    "2fa_required_body": "Your role requires a code from an authenticator app on your phone each time you sign in. Set it up now to continue; it takes a minute.",
+    "recovery_title": "Your recovery codes",
+    "recovery_hint": "If you lose your phone, sign in with one of these codes instead of the app’s code. Each works once. Keep them somewhere safe, away from your phone: they are shown only now.",
+    "recovery_copy": "Copy",
+    "recovery_copied": "Copied",
+    "recovery_download": "Download (.txt)",
+    "recovery_print": "Print",
+    "recovery_saved": "I have kept these codes somewhere safe",
+    "recovery_file_title": "HMS recovery codes for {{email}}",
+    "recovery_file_hint": "Each code works once, instead of the authenticator app’s code.",
+    "recovery_left": "Recovery codes left: {{n}} of 10",
+    "recovery_left_hint": "For signing in if you lose your phone. New codes replace all the old ones.",
+    "recovery_low": "Few codes left: generate new ones and keep them safe.",
+    "recovery_regenerate": "New recovery codes"
   },
   "validation": {
     "required": "Required",
@@ -976,7 +1003,10 @@
     "MEDIA_NOT_FOUND": "This photo no longer exists.",
     "MEDIA_OWNER_NOT_FOUND": "What this photo was for no longer exists.",
     "MEDIA_OWNER_REQUIRED": "Choose what the photo is for.",
-    "MEDIA_ORDER_MISMATCH": "The photos were changed meanwhile. Try again."
+    "MEDIA_ORDER_MISMATCH": "The photos were changed meanwhile. Try again.",
+    "RECOVERY_CODE_INVALID": "This recovery code is wrong or has already been used.",
+    "TWO_FACTOR_SETUP_REQUIRED": "Set up two-factor authentication first.",
+    "TWO_FACTOR_REQUIRED_BY_ROLE": "Your role requires two-factor authentication: it cannot be turned off."
   },
   "reservations": {
     "description": "Every booking, whatever its source. Click a reservation to manage it.",

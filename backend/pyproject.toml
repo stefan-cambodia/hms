@@ -15,6 +15,8 @@ dependencies = [
   "argon2-cffi>=23.1",
   "cryptography>=43",
   "pyotp>=2.9",
+  # QR code of the authenticator set-up link (pure Python, no dependencies).
+  "segno>=1.6",
   "python-multipart>=0.0.17",
   "tzdata>=2024.2",
   "pillow>=11.0",

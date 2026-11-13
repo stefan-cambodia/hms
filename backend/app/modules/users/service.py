@@ -25,6 +25,7 @@ from app.core.errors import (
 )
 from app.core.permissions import ALL_PERMISSIONS
 from app.core.security import hash_password
+from app.modules.auth import twofactor
 from app.modules.auth.models import Role, RolePermission, User, UserHotelRole, UserSession
 from app.modules.auth.service import check_password_policy, revoke_all_sessions, utcnow
 from app.modules.users.schemas import (
@@ -293,6 +294,8 @@ async def reset_totp(db: AsyncSession, ctx: HotelContext, user_id: uuid.UUID) ->
         raise Conflict("TOTP_NOT_ENABLED")
     user.totp_enabled = False
     user.totp_secret = None
+    user.totp_last_step = None
+    await twofactor.clear_recovery_codes(db, user)
     await revoke_all_sessions(db, ctx.actor, user.id, "totp_reset")
     audit.record(db, ctx.actor, "user.totp_reset", "user", user.id, hotel_id=ctx.hotel_id)
     await db.commit()
@@ -353,6 +356,7 @@ async def create_role(db: AsyncSession, ctx: HotelContext, data: RoleIn) -> Role
         name=data.name,
         description=data.description,
         is_system=False,
+        require_2fa=data.require_2fa,
         version=1,
     )
     db.add(role)
@@ -365,7 +369,11 @@ async def create_role(db: AsyncSession, ctx: HotelContext, data: RoleIn) -> Role
         "role",
         role.id,
         hotel_id=ctx.hotel_id,
-        changes={"code": [None, role.code], "permissions": [None, sorted(perms)]},
+        changes={
+            "code": [None, role.code],
+            "permissions": [None, sorted(perms)],
+            "require_2fa": [None, role.require_2fa],
+        },
     )
     await events.emit(
         db, hotel_id=ctx.hotel_id, entity="role", action="created", entity_id=role.id, actor=ctx.actor
@@ -383,11 +391,16 @@ async def _get_role(db: AsyncSession, ctx: HotelContext, role_id: uuid.UUID) -> 
 
 async def update_role(db: AsyncSession, ctx: HotelContext, role_id: uuid.UUID, data: RoleUpdate) -> RoleOut:
     role = await _get_role(db, ctx, role_id)
-    if role.is_system:
+    # A system role's name and permissions are fixed (clone it instead); whether
+    # it requires two-factor is the organisation's policy, so that may change.
+    if role.is_system and data.model_fields_set - {"version", "require_2fa"}:
         raise Forbidden("SYSTEM_ROLE_READONLY", "System roles cannot be modified; clone them")
     if role.version != data.version:
         raise Conflict("VERSION_CONFLICT", params={"current_version": role.version})
     changes: dict = {}
+    if data.require_2fa is not None and data.require_2fa != role.require_2fa:
+        changes["require_2fa"] = [role.require_2fa, data.require_2fa]
+        role.require_2fa = data.require_2fa
     if data.name is not None and data.name != role.name:
         changes["name"] = [role.name, data.name]
         role.name = data.name

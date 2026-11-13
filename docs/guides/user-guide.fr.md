@@ -15,7 +15,7 @@ Ce guide explique, écran par écran, comment utiliser HMS au quotidien : réser
 
 HMS s'ouvre dans le navigateur à l'adresse du serveur de l'hôtel (par exemple `https://hms.lan`), sur ordinateur, tablette ou dans l'application de bureau. Chaque employé a son propre compte.
 
-1. Saisissez votre **E-mail** et votre **Mot de passe**, puis cliquez **Se connecter**. Si la double authentification est activée, saisissez le code à 6 chiffres de votre application.
+1. Saisissez votre **E-mail** et votre **Mot de passe**, puis cliquez **Se connecter**. Si la double authentification est activée, saisissez le code à 6 chiffres de votre application. Téléphone perdu : choisissez **Téléphone perdu ? Utiliser un code de secours** et saisissez l'un de vos codes de secours (chacun ne sert qu'une fois).
 2. Changez la langue avec le bouton de langue en haut à droite (English, Français, 简体中文, Русский, ខ្មែរ). Le choix vous suit sur tous vos appareils.
 3. Le menu de gauche donne accès aux modules. Sur tablette, ouvrez-le avec le bouton ☰.
 4. L'indicateur **Connecté** en haut confirme la liaison en temps réel : ce qu'un collègue enregistre apparaît chez vous sans recharger la page.
@@ -158,7 +158,7 @@ La **Configuration** décrit l'hôtel ; elle est réservée aux administrateurs 
 - **Profil de l'hôtel** : nom, adresse, contacts, fuseau horaire, devise, langues, heures d'arrivée et de départ, politiques et mentions des factures. Le **Logo** (bouton **Ajouter un logo**) apparaît dans l'en-tête et sur tous les documents PDF ; il est enregistré dès qu'on le choisit.
 - **Catégories de chambres** : occupation, lits, prix de base, équipements et jusqu'à 20 photos (**Ajouter des photos**, ordre modifiable). Les chambres se créent une par une ou par série (101 à 120).
 - **Services de l'hôtel** : installations (piscine, spa…) avec horaires et photos, et prestations vendues.
-- **Utilisateurs et droits** : **Ajouter un utilisateur**, lui donner un rôle (réception, ménage, maintenance, restaurant, comptable…). On y voit aussi les appareils connectés, l'historique des connexions et le journal des modifications.
+- **Utilisateurs et droits** : **Ajouter un utilisateur**, lui donner un rôle (réception, ménage, maintenance, restaurant, comptable…). On y voit aussi les appareils connectés, l'historique des connexions et le journal des modifications. Un rôle peut exiger la double authentification (interrupteur sur sa fiche) : ses titulaires l'activent à leur prochaine connexion.
 - **Sauvegardes** : l'état des sauvegardes automatiques, **Sauvegarder maintenant** et la restauration (mot de passe et code de l'hôtel demandés). Photos et logo sont inclus dans les sauvegardes.
 
 ![Configuration : profil de l'hôtel et logo](../images/guide/fr-settings.png)

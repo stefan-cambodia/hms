@@ -36,6 +36,7 @@ export class ApiError extends Error {
 
 let csrfToken: string | null = null;
 let onUnauthorized: (() => void) | null = null;
+let onTwoFactorRequired: (() => void) | null = null;
 
 export function setCsrfToken(token: string | null): void {
   csrfToken = token;
@@ -43,6 +44,11 @@ export function setCsrfToken(token: string | null): void {
 
 export function setUnauthorizedHandler(handler: (() => void) | null): void {
   onUnauthorized = handler;
+}
+
+/** Called when the server says two-factor must be set up first (a role now requires it). */
+export function setTwoFactorRequiredHandler(handler: (() => void) | null): void {
+  onTwoFactorRequired = handler;
 }
 
 type Method = 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
@@ -82,6 +88,7 @@ async function request<T>(method: Method, path: string, body?: unknown, signal?:
       e.fields ?? [],
     );
     if (response.status === 401 && path !== '/auth/login' && onUnauthorized) onUnauthorized();
+    if (response.status === 403 && error.code === 'TWO_FACTOR_SETUP_REQUIRED' && onTwoFactorRequired) onTwoFactorRequired();
     throw error;
   }
   return data as T;
