@@ -83,7 +83,9 @@
   receipt numbers are gapless. Waiving fees, discounts, voiding charges and
   checking out with money owed need `folio.adjust`; refunds and payment voids
   need their own permissions. Every financial action is in the reservation
-  history and the audit log.
+  history and the audit log. Once a business day is closed (end of day), its
+  charges and the payments received that day can no longer be posted, voided
+  or changed; the closure record itself is append-only.
 * **Documents:** PDFs are rendered server-side from escaped templates; the
   renderer is not allowed to fetch any URL (no SSRF through documents).
 * **Channel manager:** provider credentials are encrypted at rest, write-only

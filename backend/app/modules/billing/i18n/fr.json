@@ -127,5 +127,58 @@
     "passport": "Passeport conservé",
     "id_card": "Pièce d’identité conservée",
     "other": "Autre"
+  },
+  "day_report": {
+    "title": "Rapport de clôture de journée",
+    "rooms": "Chambres",
+    "available": "Chambres disponibles",
+    "out_of_service": "Hors service",
+    "sold": "Nuitées vendues",
+    "occupancy": "Taux d’occupation",
+    "room_revenue": "Chiffre d’affaires hébergement",
+    "movements": "Mouvements",
+    "arrivals": "Arrivées enregistrées",
+    "departures": "Départs enregistrés",
+    "walk_ins": "Clients de passage",
+    "no_shows": "Non-présentations",
+    "bookings_made": "Réservations prises",
+    "cancellations": "Annulations",
+    "arrivals_tomorrow": "Arrivées demain",
+    "occupancy_tomorrow": "Occupation demain",
+    "revenue": "Chiffre d’affaires (hors taxes ajoutées)",
+    "dept": {
+      "rooms": "Hébergement",
+      "restaurant": "Restaurant et bar",
+      "vehicles": "Location de véhicules",
+      "services": "Prestations sur folio",
+      "fees": "Frais",
+      "adjustments": "Ajustements"
+    },
+    "total": "Total",
+    "payments": "Encaissements",
+    "source": {
+      "folio": "Réception",
+      "restaurant": "Restaurant et bar",
+      "vehicles": "Location de véhicules"
+    },
+    "no_payments": "Aucun encaissement",
+    "net": "Net encaissé",
+    "invoices": "Factures",
+    "issued": "Émises",
+    "voided": "Annulées",
+    "open_items": "Restant ouvert à la clôture",
+    "open": {
+      "not_arrived": "Attendu, non arrivé",
+      "not_departed": "Départ prévu, toujours en séjour",
+      "unassigned_tomorrow": "Arrivée demain sans chambre",
+      "open_checks": "Addition ouverte",
+      "overdue_rentals": "Véhicule non rendu",
+      "balances_due": "Soldes dus des clients en séjour"
+    },
+    "nothing_open": "Rien n’est resté ouvert.",
+    "business_date": "Journée",
+    "closed_at": "Clôturée le",
+    "closed_by": "Clôturée par",
+    "notes": "Remarques"
   }
 }

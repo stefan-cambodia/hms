@@ -39,6 +39,7 @@ from app.modules.billing import folio, pos
 from app.modules.facilities.models import Facility
 from app.modules.guests.models import Guest
 from app.modules.hotels.models import Hotel
+from app.modules.nightaudit import lock
 from app.modules.pricing import service as pricing
 from app.modules.pricing.models import RatePlan
 from app.modules.reservations import idempotency
@@ -739,6 +740,9 @@ async def void_payment(
         raise NotFound("PAYMENT_NOT_FOUND")
     if payment.is_void:
         raise Conflict("ALREADY_VOID")
+    hotel = await db.get(Hotel, ctx.hotel_id)
+    assert hotel is not None
+    await lock.ensure_received_on_open_day(db, ctx.hotel_id, payment.received_at, hotel.timezone)
     now = datetime.now(UTC)
     if payment.folio_charge_id:
         await pos.void_room_charge(db, ctx, payment.folio_charge_id, f"{order.number}: {reason}")

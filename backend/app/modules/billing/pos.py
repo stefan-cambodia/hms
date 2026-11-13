@@ -30,6 +30,7 @@ from app.modules.billing import service as billing
 from app.modules.billing.models import FolioCharge
 from app.modules.guests.models import Guest
 from app.modules.hotels.models import Hotel
+from app.modules.nightaudit import lock
 from app.modules.reservations.models import Reservation, ReservationRoom
 from app.modules.rooms.models import Room
 
@@ -94,6 +95,9 @@ async def charge_to_room(
 ) -> FolioCharge:
     """Post a whole sale (total incl. exclusive taxes) to the guest's folio."""
     res = await billing.load_reservation(db, ctx.hotel_id, rr.reservation_id, for_update=True)
+    hotel = await db.get(Hotel, ctx.hotel_id)
+    assert hotel is not None
+    service_date = await lock.open_service_date(db, ctx.hotel_id, service_date, hotel.today())
     return await billing.post_outlet_charge(
         db,
         ctx,

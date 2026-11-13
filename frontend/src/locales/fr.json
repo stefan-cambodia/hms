@@ -50,7 +50,8 @@
     "vehicles": "Location de véhicules",
     "channels": "Channel manager",
     "reports": "Rapports",
-    "backups": "Sauvegardes"
+    "backups": "Sauvegardes",
+    "night_audit": "Clôture de journée"
   },
   "auth": {
     "title": "Système de gestion hôtelière",
@@ -587,7 +588,8 @@
       "restaurant_manage": "Configurer les points de vente, les cartes et les tables ; consulter les ventes",
       "vehicles_view": "Consulter la flotte et les locations",
       "vehicles_rent": "Louer des véhicules : réserver, remettre et reprendre les véhicules, encaisser les paiements",
-      "vehicles_manage": "Gérer la flotte et les tarifs ; annuler des paiements, accorder des remises, renoncer aux frais de retard"
+      "vehicles_manage": "Gérer la flotte et les tarifs ; annuler des paiements, accorder des remises, renoncer aux frais de retard",
+      "nightaudit_run": "Clôturer la journée"
     }
   },
   "sessions": {
@@ -646,7 +648,8 @@
       "pricing_rule": "Règle tarifaire",
       "cancellation_policy": "Politique d’annulation",
       "rate": "Tarifs",
-      "backup": "Sauvegarde"
+      "backup": "Sauvegarde",
+      "day_closure": "Clôture de journée"
     },
     "actions": {
       "create": "Création",
@@ -670,7 +673,8 @@
       "request": "Sauvegarde demandée",
       "restore_request": "Restauration demandée",
       "restore": "Données restaurées depuis cette sauvegarde",
-      "totp_reset": "Authentification à deux facteurs réinitialisée par un administrateur"
+      "totp_reset": "Authentification à deux facteurs réinitialisée par un administrateur",
+      "close": "Clôturée"
     }
   },
   "account": {
@@ -964,7 +968,13 @@
     "BACKUP_NOT_FOUND": "Cette sauvegarde n'existe plus.",
     "BACKUP_SCHEMA_MISMATCH": "Cette sauvegarde a été faite par une autre version du logiciel : utilisez la procédure en ligne de commande.",
     "USE_MY_ACCOUNT": "Modifiez vos propres réglages dans Mon compte.",
-    "TOTP_NOT_ENABLED": "L'authentification à deux facteurs n'est pas activée pour cet utilisateur."
+    "TOTP_NOT_ENABLED": "L'authentification à deux facteurs n'est pas activée pour cet utilisateur.",
+    "DAY_CLOSED": "Le {{date}} est clôturé (clôtures faites jusqu’au {{closed_until}}). Faites la correction sur la journée en cours : un ajustement ou un remboursement.",
+    "DAY_NOT_OVER": "Cette journée n’est pas terminée : clôturez-la après minuit.",
+    "PREVIOUS_DAY_OPEN": "Clôturez d’abord les journées précédentes, dans l’ordre.",
+    "ALREADY_CLOSED": "Cette journée est déjà clôturée.",
+    "OPEN_ITEMS": "Des points restent ouverts ({{count}}) : réglez-les, ou confirmez la clôture avec eux.",
+    "DAY_NOT_CLOSED": "Cette journée n’a pas été clôturée."
   },
   "reservations": {
     "description": "Toutes les réservations, quelle que soit leur origine. Cliquez sur une réservation pour la gérer.",
@@ -2465,5 +2475,89 @@
     "type_code": "Saisissez le code de l'hôtel {{code}} pour confirmer",
     "restore_confirm": "Restaurer cette sauvegarde",
     "restore_requested": "Restauration demandée"
+  },
+  "nightaudit": {
+    "description": "Clôturez chaque journée après minuit : réglez ce qui reste ouvert, vérifiez les chiffres et les encaissements du jour, puis clôturez. Une journée clôturée ne peut plus être modifiée.",
+    "day": "Journée",
+    "next_to_close": "Prochaine journée à clôturer",
+    "history": "Journées clôturées",
+    "no_history": "Aucune journée clôturée pour l’instant",
+    "closed_by": "Clôturée par",
+    "revenue": "Chiffre d’affaires (hors taxes ajoutées)",
+    "net_received": "Net encaissé",
+    "open_at_close": "Ouvert à la clôture",
+    "closed_title": "Le {{date}} est clôturé",
+    "closed_by_at": "Clôturée par {{name}} le {{at}}.",
+    "closed_frozen": "Les prestations datées de ce jour et les paiements reçus ce jour-là ne peuvent plus être modifiés : les corrections se font sur la journée en cours.",
+    "report_pdf": "Rapport du jour (PDF)",
+    "not_over_title": "Le {{date}} n’est pas terminé",
+    "not_over_body": "Une journée se clôture après minuit, une fois terminée. D’ici là, cette page montre ses chiffres en l’état.",
+    "previous_open_title": "Une journée précédente est encore ouverte",
+    "previous_open_body": "Les journées se clôturent dans l’ordre : clôturez d’abord le {{date}}.",
+    "go_to": "Aller au {{date}}",
+    "ready_title": "Prêt à clôturer le {{date}}",
+    "ready_open_one": "{{count}} point reste ouvert : réglez-le ci-dessous, ou clôturez et il sera consigné dans le rapport.",
+    "ready_open_many": "{{count}} points restent ouverts : réglez-les ci-dessous, ou clôturez et ils seront consignés dans le rapport.",
+    "ready_open_other": "{{count}} points restent ouverts : réglez-les ci-dessous, ou clôturez et ils seront consignés dans le rapport.",
+    "ready_clear": "Rien ne reste ouvert. Vérifiez les chiffres ci-dessous, puis clôturez la journée.",
+    "close_day": "Clôturer la journée",
+    "no_show_title": "Passer {{name}} en non-présentation ?",
+    "no_show_body": "La chambre est libérée et les frais de non-présentation de la politique d’annulation du tarif sont portés au folio.",
+    "mark_no_show": "Non-présentation",
+    "marked_no_show": "Passé en non-présentation",
+    "recorded_hint": "Ces points étaient encore ouverts à la clôture de la journée.",
+    "open_hint": "Réglez ces points avant de clôturer, ou clôturez en les consignant.",
+    "before_closing": "Avant de clôturer",
+    "nothing_open": "Rien ne reste ouvert pour cette journée.",
+    "items": {
+      "not_arrived": "Attendus, non arrivés",
+      "not_arrived_hint": "Clients attendus ce jour ou avant, sans arrivée enregistrée : passez-les en non-présentation, ou gardez la réservation pour une arrivée tardive.",
+      "not_departed": "Départ prévu, toujours en séjour",
+      "not_departed_hint": "Enregistrez leur départ, ou prolongez leur séjour.",
+      "open_checks": "Additions restaurant ouvertes",
+      "open_checks_hint": "Additions de ce jour ou antérieures encore ouvertes.",
+      "overdue_rentals": "Véhicules non rendus",
+      "overdue_rentals_hint": "Locations qui devaient se terminer avant la fin de ce jour.",
+      "unassigned_tomorrow": "Arrivées du lendemain sans chambre",
+      "unassigned_tomorrow_hint": "Attribuez les chambres pour que le ménage puisse les préparer.",
+      "balances_due": "Soldes dus des clients en séjour",
+      "balances_due_hint_one": "{{count}} client en séjour doit de l’argent (information, non bloquant).",
+      "balances_due_hint_many": "{{count}} clients en séjour doivent de l’argent (information, non bloquant).",
+      "balances_due_hint_other": "{{count}} clients en séjour doivent de l’argent (information, non bloquant)."
+    },
+    "report_closed_hint": "Tels qu’enregistrés à la clôture.",
+    "report_live_hint": "En l’état actuel ; enregistrés à la clôture.",
+    "report_title": "Chiffres du {{date}}",
+    "movements": "Mouvements",
+    "mv": {
+      "arrivals": "Arrivées enregistrées",
+      "departures": "Départs enregistrés",
+      "walk_ins": "Clients de passage",
+      "no_shows": "Non-présentations",
+      "bookings_made": "Réservations prises",
+      "cancellations": "Annulations",
+      "arrivals_tomorrow": "Arrivées du lendemain",
+      "occupancy_tomorrow": "Occupation de la nuit suivante"
+    },
+    "total": "Total",
+    "payments": "Caisse : encaissements",
+    "no_payments_permission": "Les encaissements nécessitent le droit de consulter les paiements.",
+    "no_payments": "Aucun encaissement.",
+    "sources": {
+      "folio": "Réception",
+      "restaurant": "Restaurant et bar",
+      "vehicles": "Location de véhicules"
+    },
+    "invoices_issued_one": "{{count}} facture émise",
+    "invoices_issued_many": "{{count}} factures émises",
+    "invoices_issued_other": "{{count}} factures émises",
+    "close_title": "Clôturer le {{date}}",
+    "close_body": "Les chiffres et les encaissements du jour sont enregistrés en l’état et la journée est figée : les prestations de ce jour et les paiements reçus ce jour-là ne peuvent plus être ajoutés, annulés ni modifiés. Les corrections se font alors sur la journée en cours (un ajustement, un remboursement).",
+    "accept_open_one": "Clôturer avec {{count}} point encore ouvert (il est consigné dans le rapport)",
+    "accept_open_many": "Clôturer avec {{count}} points encore ouverts (ils sont consignés dans le rapport)",
+    "accept_open_other": "Clôturer avec {{count}} points encore ouverts (ils sont consignés dans le rapport)",
+    "notes": "Remarques",
+    "notes_hint": "Pour l’équipe suivante et la direction (facultatif).",
+    "closed_notice": "Le {{date}} est clôturé"
   }
 }

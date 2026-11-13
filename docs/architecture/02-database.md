@@ -176,6 +176,12 @@ Integrity: a trigger (`hms_guard_financial_row`) on `folio_charges`,
 lock the reservation row (`SELECT … FOR UPDATE`) so concurrent postings from
 several desks keep the totals exact (tested with parallel payments).
 
+### End of day (night audit, migration 0011)
+
+| Table | Notes |
+|-------|-------|
+| `day_closures` | id, hotel_id, business_date (unique per hotel), closed_at, closed_by, report jsonb (the day's figures and cash-up as recorded), open_items jsonb (what was still open), notes. Append-only: the API's role has no UPDATE/DELETE. The latest closed date freezes charges dated up to it and payments received up to it (`app/modules/nightaudit/lock.py`). |
+
 ### Operations (implemented in phase 5)
 
 | Table | Notes |
@@ -303,7 +309,7 @@ scope; a hotel of another organisation named in the scope is ignored).
 
 | Tables | Rows visible and writable |
 |--------|---------------------------|
-| the 47 tables with `hotel_id` | `hotel_id = ANY ((SELECT hms_hotels())::uuid[])`: an init-plan computed once per statement, compatible with the `hotel_id` indexes |
+| the tables with `hotel_id` (48 with `day_closures`, migration 0011) | `hotel_id = ANY ((SELECT hms_hotels())::uuid[])`: an init-plan computed once per statement, compatible with the `hotel_id` indexes |
 | `users`, `roles` | `organization_id = (SELECT hms_org())` |
 | `organizations` | `id = (SELECT hms_org())` |
 | `hotels` | the organisation's, narrowed to the hotel scope |

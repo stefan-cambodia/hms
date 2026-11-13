@@ -76,6 +76,7 @@ await shot(d, '/pricing/calendar', 'pricing-calendar');
 await shot(d, '/channels?tab=mapping', 'channels-mapping', { full: true });
 await shot(d, '/reports', 'reports-performance', { full: true });
 await shot(d, '/reports/forecast', 'reports-forecast', { full: true });
+await shot(d, '/night-audit', 'night-audit', { full: true });
 await shot(d, '/billing/payments', 'billing-payments');
 await shot(d, '/users/list', 'users');
 await shot(d, '/backups', 'backups', { full: true });

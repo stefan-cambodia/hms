@@ -127,7 +127,7 @@ Last updated: 2026-11-13. Test counts: backend 163 passed + 1 opt-in live test s
 | Cancellation fees from the policy (free window, nights/percent, non-refundable), no-show fees; preview; waive needs folio.adjust | ✅ | |
 | Payments & invoices page: cash-up totals per method/currency, net received, invoice search, void | ✅ | E2E |
 | City-ledger / company accounts, split folios, credit notes | ⬜ | Invoices are corrected by void + reissue |
-| Night audit (automatic no-show, daily room revenue posting) | ⬜ | Accommodation is billed from fixed nightly prices |
+| End-of-day closure (night audit): open items (expected not arrived, due out not departed, open checks, overdue rentals, next day without room, balances due), no-show from the list, day report with cash-up, closure record + PDF, closed days frozen | ✅ | `test_nightaudit.py`, E2E `night-audit.spec.ts`. Run after midnight, days in order. No-shows are confirmed by the auditor, not automatic. No daily room revenue posting: accommodation is billed from fixed nightly prices |
 | Payment terminal / online payment gateway integration | ⬜ | Card payments are recorded, not processed |
 
 ### Housekeeping and maintenance ✅
@@ -228,7 +228,7 @@ Definitions: [`docs/guides/reports.md`](guides/reports.md). The formulas live in
 | CSV exports readable by Excel in every language (BOM, `;` and decimal comma where the locale uses them, formula injection neutralised) | ✅ | Unit tests |
 | Charts: one axis, accessible (keyboard, table view, legend), colours checked for colour blindness in light and dark mode | ✅ | |
 | Historic room count (rooms taken out of service permanently) | 🟡 | Rooms count from their creation (or from an earlier night on which they were sold); deactivation history is not kept, so a deactivated room disappears from past periods too |
-| PDF reports, scheduled e-mail reports, night audit | ⬜ | |
+| PDF reports, scheduled e-mail reports | 🟡 | End-of-day report as PDF (night audit); performance reports export CSV only; no e-mail |
 
 ## Phase 9 — Cross-platform ✅ (installers built in CI; physical devices to try)
 

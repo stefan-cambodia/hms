@@ -41,6 +41,7 @@ from app.modules.billing.schemas import (
 from app.modules.facilities.models import Service
 from app.modules.guests.models import Guest
 from app.modules.hotels.models import Hotel
+from app.modules.nightaudit import lock
 from app.modules.pricing import service as pricing
 from app.modules.reservations import idempotency
 from app.modules.reservations.history import event, publish
@@ -304,6 +305,8 @@ async def post_charge(
     if res.status in CLOSED:
         # Late charges (e.g. minibar found after departure) need a supervisor.
         _require(ctx, P.FOLIO_ADJUST)
+    hotel = await _hotel(db, ctx.hotel_id)
+    await lock.ensure_open(db, ctx.hotel_id, data.service_date or hotel_today(hotel))
     charge = await add_charge(db, ctx, res, data)
     if idempotency_key:
         await idempotency.bind(db, ctx, idempotency_key, charge.id)
@@ -345,6 +348,7 @@ async def void_charge(
         # A restaurant check charged to the room is voided from the restaurant,
         # so the check and the folio always agree.
         raise Conflict("VOID_FROM_OUTLET")
+    await lock.ensure_open(db, ctx.hotel_id, charge.service_date)
     await void_charge_tx(db, ctx, res, charge, reason)
     await db.commit()
     return await load_reservation(db, ctx.hotel_id, res_id)
@@ -491,6 +495,8 @@ async def void_payment(
         raise NotFound("PAYMENT_NOT_FOUND")
     if payment.is_void:
         raise Conflict("ALREADY_VOID")
+    hotel = await _hotel(db, ctx.hotel_id)
+    await lock.ensure_received_on_open_day(db, ctx.hotel_id, payment.received_at, hotel.timezone)
     payment.is_void = True
     payment.void_reason = reason
     payment.voided_at = datetime.now(UTC)

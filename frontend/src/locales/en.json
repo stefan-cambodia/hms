@@ -50,7 +50,8 @@
     "vehicles": "Vehicle rental",
     "channels": "Channel manager",
     "reports": "Reports",
-    "backups": "Backups"
+    "backups": "Backups",
+    "night_audit": "End of day"
   },
   "auth": {
     "title": "Hotel Management System",
@@ -580,7 +581,8 @@
       "restaurant_manage": "Set up outlets, menus and tables; see sales",
       "vehicles_view": "See the fleet and rentals",
       "vehicles_rent": "Rent vehicles: book, hand over, take back, take payment",
-      "vehicles_manage": "Manage the fleet and rates; void payments, discounts, waive late fees"
+      "vehicles_manage": "Manage the fleet and rates; void payments, discounts, waive late fees",
+      "nightaudit_run": "Close the business day (end of day)"
     }
   },
   "sessions": {
@@ -639,7 +641,8 @@
       "pricing_rule": "Pricing rule",
       "cancellation_policy": "Cancellation policy",
       "rate": "Rates",
-      "backup": "Backup"
+      "backup": "Backup",
+      "day_closure": "End of day"
     },
     "actions": {
       "create": "Created",
@@ -663,7 +666,8 @@
       "request": "Backup requested",
       "restore_request": "Restore requested",
       "restore": "Data restored from this backup",
-      "totp_reset": "2FA reset by an administrator"
+      "totp_reset": "2FA reset by an administrator",
+      "close": "Closed"
     }
   },
   "account": {
@@ -957,7 +961,13 @@
     "BACKUP_NOT_FOUND": "This backup no longer exists.",
     "BACKUP_SCHEMA_MISMATCH": "This backup was made by another software version: use the command-line procedure.",
     "USE_MY_ACCOUNT": "Change your own settings in My account.",
-    "TOTP_NOT_ENABLED": "Two-factor authentication is not enabled for this user."
+    "TOTP_NOT_ENABLED": "Two-factor authentication is not enabled for this user.",
+    "DAY_CLOSED": "{{date}} is closed (end of day done up to {{closed_until}}). Make the correction on the current day: an adjustment or a refund.",
+    "DAY_NOT_OVER": "This day is not over yet: close it after midnight.",
+    "PREVIOUS_DAY_OPEN": "Close the earlier days first, in order.",
+    "ALREADY_CLOSED": "This day is already closed.",
+    "OPEN_ITEMS": "Items are still open ({{count}}): settle them, or confirm that the day is closed with them.",
+    "DAY_NOT_CLOSED": "This day has not been closed."
   },
   "reservations": {
     "description": "Every booking, whatever its source. Click a reservation to manage it.",
@@ -2433,5 +2443,85 @@
     "type_code": "Type the hotel code {{code}} to confirm",
     "restore_confirm": "Restore this backup",
     "restore_requested": "Restore requested"
+  },
+  "nightaudit": {
+    "description": "Close each business day after midnight: settle what is still open, check the day's figures and the cash-up, then close. A closed day can no longer be changed.",
+    "day": "Business day",
+    "next_to_close": "Next day to close",
+    "history": "Closed days",
+    "no_history": "No day has been closed yet",
+    "closed_by": "Closed by",
+    "revenue": "Revenue (before taxes added on top)",
+    "net_received": "Net received",
+    "open_at_close": "Open at closing",
+    "closed_title": "{{date}} is closed",
+    "closed_by_at": "Closed by {{name}} on {{at}}.",
+    "closed_frozen": "Charges of that day and payments received that day can no longer be changed: corrections are made on the current day.",
+    "report_pdf": "Day report (PDF)",
+    "not_over_title": "{{date}} is not over",
+    "not_over_body": "A day is closed after midnight, once it has ended. Until then, this page shows its figures as they stand.",
+    "previous_open_title": "An earlier day is still open",
+    "previous_open_body": "Days are closed in order: close {{date}} first.",
+    "go_to": "Go to {{date}}",
+    "ready_title": "Ready to close {{date}}",
+    "ready_open_one": "{{count}} item is still open: settle it below, or close and it is recorded in the report.",
+    "ready_open_other": "{{count}} items are still open: settle them below, or close and they are recorded in the report.",
+    "ready_clear": "Nothing is left open. Check the figures below, then close the day.",
+    "close_day": "Close the day",
+    "no_show_title": "Mark {{name}} as a no-show?",
+    "no_show_body": "The room is released and the no-show fee of the rate's cancellation policy is charged to the folio.",
+    "mark_no_show": "No-show",
+    "marked_no_show": "Marked as no-show",
+    "recorded_hint": "These items were still open when the day was closed.",
+    "open_hint": "Settle these items before closing, or close with them recorded.",
+    "before_closing": "Before closing",
+    "nothing_open": "Nothing is left open for this day.",
+    "items": {
+      "not_arrived": "Expected, not arrived",
+      "not_arrived_hint": "Guests due on or before this day who have not checked in: mark a no-show, or keep the booking for a late arrival.",
+      "not_departed": "Due out, still in house",
+      "not_departed_hint": "Check them out, or extend their stay.",
+      "open_checks": "Open restaurant checks",
+      "open_checks_hint": "Checks of this day or earlier still open.",
+      "overdue_rentals": "Vehicles not returned",
+      "overdue_rentals_hint": "Rentals that should have ended by the end of this day.",
+      "unassigned_tomorrow": "Next day's arrivals without a room",
+      "unassigned_tomorrow_hint": "Assign rooms so that housekeeping can prepare them.",
+      "balances_due": "Balances due in house",
+      "balances_due_hint_one": "{{count}} guest in house owes money (information, not blocking).",
+      "balances_due_hint_other": "{{count}} guests in house owe money (information, not blocking)."
+    },
+    "report_closed_hint": "As recorded when the day was closed.",
+    "report_live_hint": "As they stand now; recorded when the day is closed.",
+    "report_title": "Figures of {{date}}",
+    "movements": "Movements",
+    "mv": {
+      "arrivals": "Check-ins",
+      "departures": "Check-outs",
+      "walk_ins": "Walk-ins",
+      "no_shows": "No-shows",
+      "bookings_made": "Bookings made",
+      "cancellations": "Cancellations",
+      "arrivals_tomorrow": "Arrivals the next day",
+      "occupancy_tomorrow": "Occupancy the next night"
+    },
+    "total": "Total",
+    "payments": "Cash-up: payments received",
+    "no_payments_permission": "The cash-up needs the permission to view payments.",
+    "no_payments": "No payment received.",
+    "sources": {
+      "folio": "Front desk",
+      "restaurant": "Restaurant & bar",
+      "vehicles": "Vehicle rental"
+    },
+    "invoices_issued_one": "{{count}} invoice issued",
+    "invoices_issued_other": "{{count}} invoices issued",
+    "close_title": "Close {{date}}",
+    "close_body": "The day's figures and cash-up are recorded as they stand and the day is frozen: charges of that day and payments received that day can no longer be posted, voided or changed. Corrections are then made on the current day (an adjustment, a refund).",
+    "accept_open_one": "Close with {{count}} item still open (it is recorded in the report)",
+    "accept_open_other": "Close with {{count}} items still open (they are recorded in the report)",
+    "notes": "Notes",
+    "notes_hint": "For the next shift and the management (optional).",
+    "closed_notice": "{{date}} closed"
   }
 }

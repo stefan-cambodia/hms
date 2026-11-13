@@ -36,6 +36,8 @@ class P(StrEnum):
     # Front desk
     FRONTDESK_CHECKIN = "frontdesk.checkin"
     FRONTDESK_CHECKOUT = "frontdesk.checkout"
+    # End-of-day closure (night audit)
+    NIGHT_AUDIT = "nightaudit.run"
     # Guest folio
     FOLIO_POST = "folio.post"
     FOLIO_ADJUST = "folio.adjust"
@@ -105,7 +107,7 @@ PERMISSION_GROUPS: dict[str, list[P]] = {
         P.RESERVATIONS_OVERRIDE,
     ],
     "guests": [P.GUESTS_VIEW, P.GUESTS_EDIT, P.GUESTS_VIEW_SENSITIVE, P.GUESTS_EXPORT, P.GUESTS_MERGE],
-    "frontdesk": [P.FRONTDESK_CHECKIN, P.FRONTDESK_CHECKOUT],
+    "frontdesk": [P.FRONTDESK_CHECKIN, P.FRONTDESK_CHECKOUT, P.NIGHT_AUDIT],
     "folio": [P.FOLIO_POST, P.FOLIO_ADJUST],
     "payments": [P.PAYMENTS_VIEW, P.PAYMENTS_RECORD, P.PAYMENTS_REFUND, P.PAYMENTS_VOID],
     "invoices": [P.INVOICES_VIEW, P.INVOICES_ISSUE, P.INVOICES_VOID],
@@ -162,7 +164,8 @@ SYSTEM_ROLES: dict[str, set[P]] = {
     "super_admin": set(P),
     "hotel_admin": set(P) - {P.BACKUPS_MANAGE},
     "manager": set(P) - {P.ROLES_MANAGE, P.BACKUPS_MANAGE, P.USERS_MANAGE},
-    "receptionist": _OPS_VIEW | _FRONT | {P.ROOMS_BLOCK},
+    # Night shift receptionists usually run the end-of-day closure.
+    "receptionist": _OPS_VIEW | _FRONT | {P.ROOMS_BLOCK, P.NIGHT_AUDIT},
     "reservation_manager": _OPS_VIEW
     | {
         P.RESERVATIONS_VIEW,

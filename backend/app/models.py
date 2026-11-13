@@ -26,6 +26,7 @@ from app.modules.guests.models import Guest  # noqa: F401
 from app.modules.hotels.models import Building, Floor, Hotel, Organization  # noqa: F401
 from app.modules.housekeeping.models import HousekeepingTask, RoomStatusChange  # noqa: F401
 from app.modules.maintenance.models import MaintenanceRequest, MaintenanceUpdate  # noqa: F401
+from app.modules.nightaudit.models import DayClosure  # noqa: F401
 from app.modules.pricing.models import CancellationPolicy, DailyRate, PricingRule, RatePlan  # noqa: F401
 from app.modules.reservations.models import (  # noqa: F401
     DocumentSequence,

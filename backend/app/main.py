@@ -24,6 +24,7 @@ from app.modules.guests.router import router as guests_router
 from app.modules.hotels.router import router as hotels_router
 from app.modules.housekeeping.router import router as housekeeping_router
 from app.modules.maintenance.router import router as maintenance_router
+from app.modules.nightaudit.router import router as nightaudit_router
 from app.modules.pricing.router import router as pricing_router
 from app.modules.realtime.hub import hub
 from app.modules.realtime.router import router as realtime_router
@@ -121,6 +122,7 @@ def create_app() -> FastAPI:
     api.include_router(vehicles_router)
     api.include_router(channels_router)
     api.include_router(reports_router)
+    api.include_router(nightaudit_router)
     api.include_router(backups_router)
     api.include_router(realtime_router)
     app.include_router(api)

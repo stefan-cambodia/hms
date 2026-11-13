@@ -126,5 +126,58 @@
     "passport": "Passport held",
     "id_card": "ID card held",
     "other": "Other"
+  },
+  "day_report": {
+    "title": "End of day report",
+    "rooms": "Rooms",
+    "available": "Rooms available",
+    "out_of_service": "Out of service",
+    "sold": "Room nights sold",
+    "occupancy": "Occupancy",
+    "room_revenue": "Room revenue",
+    "movements": "Movements",
+    "arrivals": "Check-ins",
+    "departures": "Check-outs",
+    "walk_ins": "Walk-ins",
+    "no_shows": "No-shows",
+    "bookings_made": "Bookings made",
+    "cancellations": "Cancellations",
+    "arrivals_tomorrow": "Arrivals tomorrow",
+    "occupancy_tomorrow": "Occupancy tomorrow",
+    "revenue": "Revenue (before taxes added on top)",
+    "dept": {
+      "rooms": "Rooms",
+      "restaurant": "Restaurant & bar",
+      "vehicles": "Vehicle rental",
+      "services": "Services on the folio",
+      "fees": "Fees",
+      "adjustments": "Adjustments"
+    },
+    "total": "Total",
+    "payments": "Payments received",
+    "source": {
+      "folio": "Front desk",
+      "restaurant": "Restaurant & bar",
+      "vehicles": "Vehicle rental"
+    },
+    "no_payments": "No payment received",
+    "net": "Net received",
+    "invoices": "Invoices",
+    "issued": "Issued",
+    "voided": "Voided",
+    "open_items": "Open at closing",
+    "open": {
+      "not_arrived": "Expected, not arrived",
+      "not_departed": "Due out, still in house",
+      "unassigned_tomorrow": "Arriving tomorrow, no room",
+      "open_checks": "Open check",
+      "overdue_rentals": "Vehicle not returned",
+      "balances_due": "Balances due in house"
+    },
+    "nothing_open": "Nothing was left open.",
+    "business_date": "Business date",
+    "closed_at": "Closed on",
+    "closed_by": "Closed by",
+    "notes": "Notes"
   }
 }

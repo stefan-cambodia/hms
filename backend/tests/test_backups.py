@@ -17,7 +17,7 @@ from app.core.db import owner_sessionmaker
 from tests.conftest import ADMIN_PASSWORD, Api, error_code
 from tests.test_tenancy import other_organisation
 
-SCHEMA = "0010"
+SCHEMA = "0011"  # current migration head
 
 
 def iso(dt: datetime) -> str:
@@ -101,7 +101,7 @@ async def test_status_and_backup_request(admin: Api, control: Path):
         "file": GOOD,
         "bytes": 123456,
     }
-    publish(control, backup(GOOD), backup(OLD, schema="0009"), backup("../../etc/passwd"), runs=[run])
+    publish(control, backup(GOOD), backup(OLD, schema="0010"), backup("../../etc/passwd"), runs=[run])
     body = (await admin.get(admin.h("/backups"))).json()
     assert body["service"]["running"] is True and body["service"]["interval_hours"] == 6
     # Unknown names are never listed; only same-schema backups are restorable here.
@@ -141,7 +141,7 @@ async def test_stale_service_refuses_requests(admin: Api, control: Path):
 
 async def test_restore_request_checks(admin: Api, control: Path):
     service_alive(control)
-    publish(control, backup(GOOD), backup(OLD, schema="0009"))
+    publish(control, backup(GOOD), backup(OLD, schema="0010"))
     good = {"file": GOOD, "password": ADMIN_PASSWORD, "confirmation": "test"}
 
     r = await admin.post(admin.h("/backups/restore"), {**good, "password": "wrong"})

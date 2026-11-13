@@ -21,8 +21,9 @@ from tests.conftest import Api, Installation, new_client
 
 # Tables without tenant data (no row-level security, by design).
 NO_RLS = {"alembic_version", "rate_limit_buckets"}
-APPEND_ONLY_NO_UPDATE = {"audit_logs", "login_events"}
+APPEND_ONLY_NO_UPDATE = {"audit_logs", "login_events", "day_closures"}
 APPEND_ONLY_NO_DELETE = {
+    "day_closures",
     "audit_logs",
     "login_events",
     "folio_charges",

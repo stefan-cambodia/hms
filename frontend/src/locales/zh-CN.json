@@ -50,7 +50,8 @@
     "vehicles": "车辆租赁",
     "channels": "渠道管理",
     "reports": "报表",
-    "backups": "备份"
+    "backups": "备份",
+    "night_audit": "日结"
   },
   "auth": {
     "title": "酒店管理系统",
@@ -573,7 +574,8 @@
       "restaurant_manage": "管理营业点、菜单和桌台，查看销售",
       "vehicles_view": "查看车队和租车单",
       "vehicles_rent": "租车（预订、办理取车和还车、收款）",
-      "vehicles_manage": "管理车队和租金；作废收款、打折及免收逾时还车费"
+      "vehicles_manage": "管理车队和租金；作废收款、打折及免收逾时还车费",
+      "nightaudit_run": "营业日日结"
     }
   },
   "sessions": {
@@ -632,7 +634,8 @@
       "pricing_rule": "定价规则",
       "cancellation_policy": "取消政策",
       "rate": "房价",
-      "backup": "备份"
+      "backup": "备份",
+      "day_closure": "日结"
     },
     "actions": {
       "create": "创建",
@@ -656,7 +659,8 @@
       "request": "已请求备份",
       "restore_request": "已请求还原",
       "restore": "已从此备份还原数据",
-      "totp_reset": "管理员已重置双因素认证"
+      "totp_reset": "管理员已重置双因素认证",
+      "close": "已结账"
     }
   },
   "account": {
@@ -950,7 +954,13 @@
     "BACKUP_NOT_FOUND": "该备份已不存在。",
     "BACKUP_SCHEMA_MISMATCH": "该备份由其他版本的软件生成：请使用命令行流程。",
     "USE_MY_ACCOUNT": "请在“我的账户”中更改您自己的设置。",
-    "TOTP_NOT_ENABLED": "该用户未启用双因素认证。"
+    "TOTP_NOT_ENABLED": "该用户未启用双因素认证。",
+    "DAY_CLOSED": "{{date}} 已结账（日结已完成至 {{closed_until}}）。请在当前营业日进行更正：调整或退款。",
+    "DAY_NOT_OVER": "该营业日尚未结束：请在午夜后结账。",
+    "PREVIOUS_DAY_OPEN": "请先按顺序结之前的营业日。",
+    "ALREADY_CLOSED": "该营业日已结账。",
+    "OPEN_ITEMS": "仍有未完成事项（{{count}}）：请处理，或确认在此情况下结账。",
+    "DAY_NOT_CLOSED": "该营业日尚未结账。"
   },
   "reservations": {
     "description": "所有来源的全部预订。点击预订即可进行管理。",
@@ -2388,5 +2398,81 @@
     "type_code": "输入酒店代码 {{code}} 以确认",
     "restore_confirm": "还原此备份",
     "restore_requested": "已请求还原"
+  },
+  "nightaudit": {
+    "description": "每天午夜后进行日结：处理仍未完成的事项，核对当日数据和收款，然后结账。已结的营业日不能再修改。",
+    "day": "营业日",
+    "next_to_close": "下一个待结的营业日",
+    "history": "已结营业日",
+    "no_history": "尚未进行过日结",
+    "closed_by": "结账人",
+    "revenue": "收入（不含另加税费）",
+    "net_received": "净收款",
+    "open_at_close": "结账时未完成",
+    "closed_title": "{{date}} 已结账",
+    "closed_by_at": "由 {{name}} 于 {{at}} 结账。",
+    "closed_frozen": "该日的费用和当天收到的付款不能再修改：更正在当前营业日进行。",
+    "report_pdf": "日结报告 (PDF)",
+    "not_over_title": "{{date}} 尚未结束",
+    "not_over_body": "营业日在午夜后、结束之后才能结账。在此之前，本页显示其当前数据。",
+    "previous_open_title": "之前的营业日尚未结账",
+    "previous_open_body": "营业日须按顺序结账：请先结 {{date}}。",
+    "go_to": "前往 {{date}}",
+    "ready_title": "可以结 {{date}}",
+    "ready_open_other": "还有 {{count}} 项未完成：请在下方处理，或直接结账，这些事项会记录在报告中。",
+    "ready_clear": "没有未完成事项。请核对下方数据，然后结账。",
+    "close_day": "日结",
+    "no_show_title": "将 {{name}} 标记为未到店？",
+    "no_show_body": "客房将被释放，并按房价取消政策将未到店费用记入账单。",
+    "mark_no_show": "未到店",
+    "marked_no_show": "已标记为未到店",
+    "recorded_hint": "这些事项在日结时仍未完成。",
+    "open_hint": "请在结账前处理这些事项，或在结账时将其记录。",
+    "before_closing": "结账前",
+    "nothing_open": "该营业日没有未完成事项。",
+    "items": {
+      "not_arrived": "应到未到",
+      "not_arrived_hint": "应于当日或之前到店但尚未办理入住的客人：标记为未到店，或保留预订等待晚到。",
+      "not_departed": "应离未离",
+      "not_departed_hint": "为其办理退房，或延长住宿。",
+      "open_checks": "未结的餐厅账单",
+      "open_checks_hint": "当日或更早仍未结的账单。",
+      "overdue_rentals": "车辆未归还",
+      "overdue_rentals_hint": "本应在当日结束前归还的租赁。",
+      "unassigned_tomorrow": "次日到店未分房",
+      "unassigned_tomorrow_hint": "请分配客房，以便客房部准备。",
+      "balances_due": "在住客人欠款",
+      "balances_due_hint_other": "{{count}} 位在住客人有欠款（仅供参考，不影响结账）。"
+    },
+    "report_closed_hint": "为日结时记录的数据。",
+    "report_live_hint": "为当前数据；日结时记录。",
+    "report_title": "{{date}} 的数据",
+    "movements": "动态",
+    "mv": {
+      "arrivals": "入住办理",
+      "departures": "退房办理",
+      "walk_ins": "上门散客",
+      "no_shows": "未到店",
+      "bookings_made": "新增预订",
+      "cancellations": "取消",
+      "arrivals_tomorrow": "次日到店",
+      "occupancy_tomorrow": "次晚出租率"
+    },
+    "total": "合计",
+    "payments": "收银：收款",
+    "no_payments_permission": "查看收款需要付款查看权限。",
+    "no_payments": "没有收款。",
+    "sources": {
+      "folio": "前台",
+      "restaurant": "餐厅与酒吧",
+      "vehicles": "车辆租赁"
+    },
+    "invoices_issued_other": "已开具 {{count}} 张发票",
+    "close_title": "结 {{date}}",
+    "close_body": "当日数据和收款将按现状记录，该营业日将被冻结：该日的费用和当天收到的付款不能再录入、作废或修改。之后的更正在当前营业日进行（调整或退款）。",
+    "accept_open_other": "在仍有 {{count}} 项未完成的情况下结账（这些事项会记录在报告中）",
+    "notes": "备注",
+    "notes_hint": "留给下一班和管理层（可选）。",
+    "closed_notice": "{{date}} 已结账"
   }
 }

@@ -1365,3 +1365,78 @@ export interface BackupsStatus {
   schema_version: string | null;
   restore: { allowed: boolean; reason: 'NOT_SUPERADMIN' | 'MULTI_ORGANIZATION' | null };
 }
+
+// --- End of day (night audit) ------------------------------------------------------
+
+export interface AuditStay {
+  reservation_id: UUID;
+  code: string;
+  version: number;
+  status: string;
+  source: string;
+  guest_name: string;
+  room_number: string | null;
+  arrival: string;
+  departure: string;
+  balance: string;
+  currency: string;
+}
+
+export interface NightAuditItems {
+  not_arrived: AuditStay[];
+  not_departed: AuditStay[];
+  open_checks: { order_id: UUID; number: string; outlet: LocalizedText; table: string | null; order_type: string; business_date: string; total: string }[];
+  overdue_rentals: { rental_id: UUID; number: string; vehicle: string; end_at: string }[];
+  unassigned_tomorrow: AuditStay[];
+  balances_due: { count: number; total: string; stays: AuditStay[] };
+}
+
+export interface DayReport {
+  date: string;
+  currency: string;
+  rooms: { rooms: number; out_of_service: number; available: number; sold: number; occupancy: string | null; revenue: string | null; adr: string | null; revpar: string | null };
+  movements: {
+    arrivals: number;
+    departures: number;
+    walk_ins: number;
+    no_shows: number;
+    bookings_made: number;
+    cancellations: number;
+    arrivals_tomorrow: number;
+    occupancy_tomorrow: string | null;
+  };
+  revenue: { rooms: string; restaurant: string; vehicles: string; services: string; fees: string; adjustments: string; total: string } | null;
+  payments: { source: 'folio' | 'restaurant' | 'vehicles'; kind: string; method: string; currency: string; count: number; amount: string; amount_base: string }[];
+  payments_by_method: { method: string; amount_base: string }[];
+  payments_net: string | null;
+  invoices: { issued: number; total: string; voided: number } | null;
+}
+
+export interface DayClosureInfo {
+  id: UUID;
+  date: string;
+  closed_at: string;
+  closed_by_name: string | null;
+  notes: string | null;
+  open_items: number;
+}
+
+export interface NightAudit {
+  date: string;
+  today: string;
+  last_closed: string | null;
+  can_close: boolean;
+  blocker: 'ALREADY_CLOSED' | 'DAY_NOT_OVER' | 'PREVIOUS_DAY_OPEN' | null;
+  closure: DayClosureInfo | null;
+  report: DayReport;
+  open_items: NightAuditItems;
+  open_count: number;
+}
+
+export interface DayClosureRow extends DayClosureInfo {
+  occupancy: string | null;
+  sold: number | null;
+  revenue: string | null;
+  payments_net: string | null;
+  currency: string;
+}

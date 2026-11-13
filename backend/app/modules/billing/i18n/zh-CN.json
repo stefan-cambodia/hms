@@ -125,5 +125,58 @@
     "passport": "押护照",
     "id_card": "押身份证",
     "other": "其他"
+  },
+  "day_report": {
+    "title": "日结报告",
+    "rooms": "客房",
+    "available": "可售客房",
+    "out_of_service": "停用",
+    "sold": "已售间夜",
+    "occupancy": "出租率",
+    "room_revenue": "客房收入",
+    "movements": "动态",
+    "arrivals": "入住办理",
+    "departures": "退房办理",
+    "walk_ins": "上门散客",
+    "no_shows": "未到店",
+    "bookings_made": "新增预订",
+    "cancellations": "取消",
+    "arrivals_tomorrow": "明日到店",
+    "occupancy_tomorrow": "明日出租率",
+    "revenue": "收入（不含另加税费）",
+    "dept": {
+      "rooms": "客房",
+      "restaurant": "餐厅与酒吧",
+      "vehicles": "车辆租赁",
+      "services": "账单上的服务",
+      "fees": "费用",
+      "adjustments": "调整"
+    },
+    "total": "合计",
+    "payments": "收款",
+    "source": {
+      "folio": "前台",
+      "restaurant": "餐厅与酒吧",
+      "vehicles": "车辆租赁"
+    },
+    "no_payments": "无收款",
+    "net": "净收款",
+    "invoices": "发票",
+    "issued": "已开具",
+    "voided": "已作废",
+    "open_items": "结账时未完成事项",
+    "open": {
+      "not_arrived": "应到未到",
+      "not_departed": "应离未离",
+      "unassigned_tomorrow": "明日到店未分房",
+      "open_checks": "未结账单",
+      "overdue_rentals": "车辆未归还",
+      "balances_due": "在住客人欠款"
+    },
+    "nothing_open": "没有未完成事项。",
+    "business_date": "营业日",
+    "closed_at": "结账时间",
+    "closed_by": "结账人",
+    "notes": "备注"
   }
 }

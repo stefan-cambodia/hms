@@ -148,7 +148,24 @@ the API and checks the result (results in `docs/qa/phase10-report.md`).
 
 **Full server loss:** install a new server (section 2) with the **same `HMS_DATA_KEY`**, copy a backup file into `deploy/backups/`, start the stack, then run `restore.sh`. Test this procedure at least once a year on a spare machine. A backup that has never been restored should not be trusted.
 
-## 7. Channel manager (SiteMinder)
+## 7. End of day (night audit)
+
+Every night after midnight, someone with the *Close the business day*
+permission (receptionists, managers, administrators) opens **End of day**. The
+screen proposes the day that just ended and lists what is still open: guests
+expected who did not arrive (mark them as no-shows there, or keep a booking
+for a late arrival), guests due out still in house, open restaurant checks,
+vehicles not returned, the next day's arrivals without a room, balances due.
+It shows the day's figures and the cash-up by payment method, to compare with
+the cash drawer and the card terminal.
+
+**Close the day** records the report (available as PDF afterwards) and freezes
+the day: charges dated that day and payments received that day can no longer
+be posted, voided or changed. A correction is then made on the current day
+(an adjustment on the folio, a refund). Days are closed in order; a day that
+has not ended cannot be closed.
+
+## 8. Channel manager (SiteMinder)
 
 Optional. Without it the PMS works fully, and OTA bookings are entered by hand
 with their source.
@@ -172,7 +189,7 @@ with their source.
 5. The *Activity log* tab shows every exchange (passwords and card numbers
    removed). Errors are retried automatically with increasing delays.
 
-## 8. Troubleshooting
+## 9. Troubleshooting
 
 | Symptom | Check |
 |---------|-------|

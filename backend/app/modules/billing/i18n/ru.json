@@ -128,5 +128,58 @@
     "passport": "Паспорт в залоге",
     "id_card": "Удостоверение в залоге",
     "other": "Другое"
+  },
+  "day_report": {
+    "title": "Отчёт о закрытии дня",
+    "rooms": "Номера",
+    "available": "Доступно номеров",
+    "out_of_service": "Вне эксплуатации",
+    "sold": "Продано номеро-ночей",
+    "occupancy": "Загрузка",
+    "room_revenue": "Доход от номеров",
+    "movements": "Движение",
+    "arrivals": "Заселения",
+    "departures": "Выезды",
+    "walk_ins": "Гости с улицы",
+    "no_shows": "Незаезды",
+    "bookings_made": "Новые бронирования",
+    "cancellations": "Отмены",
+    "arrivals_tomorrow": "Заезды завтра",
+    "occupancy_tomorrow": "Загрузка завтра",
+    "revenue": "Доход (без налогов сверх цены)",
+    "dept": {
+      "rooms": "Номера",
+      "restaurant": "Ресторан и бар",
+      "vehicles": "Аренда транспорта",
+      "services": "Услуги по счёту",
+      "fees": "Сборы",
+      "adjustments": "Корректировки"
+    },
+    "total": "Итого",
+    "payments": "Поступления",
+    "source": {
+      "folio": "Ресепшен",
+      "restaurant": "Ресторан и бар",
+      "vehicles": "Аренда транспорта"
+    },
+    "no_payments": "Поступлений нет",
+    "net": "Чистые поступления",
+    "invoices": "Счета",
+    "issued": "Выставлено",
+    "voided": "Аннулировано",
+    "open_items": "Открыто на момент закрытия",
+    "open": {
+      "not_arrived": "Ожидался, не заехал",
+      "not_departed": "Должен выехать, ещё проживает",
+      "unassigned_tomorrow": "Заезд завтра без номера",
+      "open_checks": "Открытый счёт",
+      "overdue_rentals": "Транспорт не возвращён",
+      "balances_due": "Задолженность проживающих"
+    },
+    "nothing_open": "Открытых вопросов не осталось.",
+    "business_date": "Операционный день",
+    "closed_at": "Закрыт",
+    "closed_by": "Закрыл(а)",
+    "notes": "Примечания"
   }
 }

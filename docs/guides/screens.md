@@ -126,6 +126,18 @@ here in the test environment, with sending and receiving switched off.
 
 The definitions of every figure are in [reports.md](reports.md).
 
+## End of day
+
+![End of day: open items, the day's figures and cash-up, closed days](../images/night-audit.png)
+
+Run after midnight for the day that ended: guests expected who did not arrive
+(mark a no-show), guests due out still in house, open restaurant checks,
+vehicles not returned, the next day's arrivals without a room and balances
+due; then the day's figures and the cash-up by payment method. Closing records
+the day's report (PDF) and freezes the day: charges of that day and payments
+received that day can no longer be posted, voided or changed; corrections are
+made on the current day.
+
 ## Payments & invoices
 
 ![Payments received, with totals per method](../images/billing-payments.png)
