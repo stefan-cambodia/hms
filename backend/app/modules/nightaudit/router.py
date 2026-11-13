@@ -11,6 +11,7 @@ from app.core.permissions import P
 from app.core.schemas import LanguageCode
 from app.modules.auth.deps import DB, Auth, hotel_ctx
 from app.modules.auth.models import User
+from app.modules.media.service import current_logo_id
 from app.modules.nightaudit import pdf, service
 from app.modules.nightaudit.schemas import CloseIn
 
@@ -57,7 +58,8 @@ async def report_pdf(
     )
     report = service._hide_money(closure.report, ctx)
     lang = language or auth.user.preferred_language or hotel.default_language
-    content = await pdf.render_pdf(pdf.document(hotel, closure, report, name, lang))
+    logo_id = await current_logo_id(db, hotel.id)
+    content = await pdf.render_pdf(db, pdf.document(hotel, closure, report, name, lang, logo_id))
     return Response(
         content=content,
         media_type="application/pdf",

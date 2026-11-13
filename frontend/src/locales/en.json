@@ -967,7 +967,16 @@
     "PREVIOUS_DAY_OPEN": "Close the earlier days first, in order.",
     "ALREADY_CLOSED": "This day is already closed.",
     "OPEN_ITEMS": "Items are still open ({{count}}): settle them, or confirm that the day is closed with them.",
-    "DAY_NOT_CLOSED": "This day has not been closed."
+    "DAY_NOT_CLOSED": "This day has not been closed.",
+    "FILE_TOO_LARGE": "This file is too large (maximum {{max_mb}} MB).",
+    "IMAGE_TYPE_NOT_SUPPORTED": "Only JPEG, PNG and WebP images are accepted.",
+    "IMAGE_UNREADABLE": "This image cannot be read; the file may be damaged.",
+    "IMAGE_DIMENSIONS_TOO_LARGE": "This image is too large (maximum {{max_megapixels}} megapixels).",
+    "MEDIA_LIMIT_REACHED": "No more than {{limit}} photos here.",
+    "MEDIA_NOT_FOUND": "This photo no longer exists.",
+    "MEDIA_OWNER_NOT_FOUND": "What this photo was for no longer exists.",
+    "MEDIA_OWNER_REQUIRED": "Choose what the photo is for.",
+    "MEDIA_ORDER_MISMATCH": "The photos were changed meanwhile. Try again."
   },
   "reservations": {
     "description": "Every booking, whatever its source. Click a reservation to manage it.",
@@ -1778,7 +1787,8 @@
       "back_in_service": "Room back in service",
       "comment": "Comment"
     },
-    "details": "Details"
+    "details": "Details",
+    "attach_photos": "Add photos"
   },
   "restaurant": {
     "description": "Tables, orders, kitchen, payment (including charging the guest's room), breakfasts and sales.",
@@ -2523,5 +2533,32 @@
     "notes": "Notes",
     "notes_hint": "For the next shift and the management (optional).",
     "closed_notice": "{{date}} closed"
+  },
+  "media": {
+    "photos": "Photos",
+    "count": "{{n}} of {{limit}}",
+    "add_photos": "Add photos",
+    "empty": "No photos yet.",
+    "uploading": "Sending {{done}} of {{total}}…",
+    "added": "Photos added",
+    "formats_hint": "JPEG, PNG or WebP, up to 15 MB each. Photos are resized and their location data is removed.",
+    "delete_title": "Delete this photo?",
+    "move_earlier": "Move left",
+    "move_later": "Move right",
+    "view": "View {{name}}",
+    "previous": "Previous",
+    "next": "Next",
+    "save_first": "Save first, then open it again to add photos.",
+    "logo": {
+      "title": "Logo",
+      "hint": "Shown in the application header and on invoices, receipts, rental contracts and day reports. Saved as soon as you choose it. A PNG with a transparent background works best.",
+      "upload": "Upload a logo",
+      "replace": "Replace the logo",
+      "remove": "Remove the logo",
+      "remove_confirm": "The logo will no longer appear on new documents. Invoices already issued keep their logo.",
+      "saved": "Logo saved",
+      "removed": "Logo removed",
+      "none": "No logo"
+    }
   }
 }

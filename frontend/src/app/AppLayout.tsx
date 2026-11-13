@@ -28,6 +28,7 @@ import type { Outlet as SalesOutlet } from '@/api/types';
 import { HotelIcon, NAV_ITEMS } from '@/app/navigation';
 import { useAuth } from '@/auth/AuthProvider';
 import { ConnectionBanner, ConnectionIndicator } from '@/components/ConnectionIndicator';
+import { HeaderLogo } from '@/components/HotelLogo';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 
 export function PageLoader() {
@@ -92,7 +93,7 @@ export function AppLayout() {
         <Group h="100%" px="md" justify="space-between" wrap="nowrap">
           <Group gap="sm" wrap="nowrap" style={{ minWidth: 0 }}>
             <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" aria-label={t('nav.toggle')} />
-            <HotelIcon size={26} stroke={1.6} />
+            <HeaderLogo fallback={<HotelIcon size={26} stroke={1.6} />} />
             {me.hotels.length > 1 ? (
               <Select
                 aria-label={t('nav.hotel')}

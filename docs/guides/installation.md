@@ -99,6 +99,9 @@ The `backup` service runs every `BACKUP_INTERVAL_HOURS` (default 6). For each ba
 3. keeps it only if verification succeeded, with a SHA-256 checksum,
 4. deletes backups older than `BACKUP_RETENTION_DAYS`, always keeping the three newest.
 
+Photos and the hotel logo are stored in the database, so every backup and
+every restore includes them; there is no separate folder to save.
+
 The **Backups** screen (menu *Backups*, permission `backups.manage`, given to
 super administrators) shows whether the backup service is running, when the
 last backup was made and when the next one is due, every backup kept on the

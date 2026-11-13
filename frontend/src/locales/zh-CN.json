@@ -960,7 +960,16 @@
     "PREVIOUS_DAY_OPEN": "请先按顺序结之前的营业日。",
     "ALREADY_CLOSED": "该营业日已结账。",
     "OPEN_ITEMS": "仍有未完成事项（{{count}}）：请处理，或确认在此情况下结账。",
-    "DAY_NOT_CLOSED": "该营业日尚未结账。"
+    "DAY_NOT_CLOSED": "该营业日尚未结账。",
+    "FILE_TOO_LARGE": "文件过大（最大 {{max_mb}} MB）。",
+    "IMAGE_TYPE_NOT_SUPPORTED": "仅接受 JPEG、PNG 和 WebP 图片。",
+    "IMAGE_UNREADABLE": "无法读取该图片，文件可能已损坏。",
+    "IMAGE_DIMENSIONS_TOO_LARGE": "图片尺寸过大（最大 {{max_megapixels}} 百万像素）。",
+    "MEDIA_LIMIT_REACHED": "此处最多 {{limit}} 张照片。",
+    "MEDIA_NOT_FOUND": "该照片已不存在。",
+    "MEDIA_OWNER_NOT_FOUND": "该照片所属的项目已不存在。",
+    "MEDIA_OWNER_REQUIRED": "请选择照片所属的项目。",
+    "MEDIA_ORDER_MISMATCH": "照片已被他人修改，请重试。"
   },
   "reservations": {
     "description": "所有来源的全部预订。点击预订即可进行管理。",
@@ -1748,7 +1757,8 @@
       "back_in_service": "房间已恢复使用",
       "comment": "备注"
     },
-    "details": "详细说明"
+    "details": "详细说明",
+    "attach_photos": "添加照片"
   },
   "restaurant": {
     "description": "桌台、点单、厨房、结账（含挂房账）、早餐及销售统计。",
@@ -2474,5 +2484,32 @@
     "notes": "备注",
     "notes_hint": "留给下一班和管理层（可选）。",
     "closed_notice": "{{date}} 已结账"
+  },
+  "media": {
+    "photos": "照片",
+    "count": "{{n}} / {{limit}}",
+    "add_photos": "添加照片",
+    "empty": "暂无照片。",
+    "uploading": "正在上传 {{done}} / {{total}}…",
+    "added": "照片已添加",
+    "formats_hint": "JPEG、PNG 或 WebP 格式，每个文件不超过 15 MB。照片会被缩小，并删除其中的位置信息。",
+    "delete_title": "删除这张照片？",
+    "move_earlier": "左移",
+    "move_later": "右移",
+    "view": "查看 {{name}}",
+    "previous": "上一张",
+    "next": "下一张",
+    "save_first": "请先保存，然后重新打开以添加照片。",
+    "logo": {
+      "title": "标志",
+      "hint": "显示在应用顶部以及发票、收据、租赁合同和日结报告上。选择后立即保存。建议使用透明背景的 PNG。",
+      "upload": "上传标志",
+      "replace": "更换标志",
+      "remove": "移除标志",
+      "remove_confirm": "新文档将不再显示该标志。已开具的发票保留原有标志。",
+      "saved": "标志已保存",
+      "removed": "标志已移除",
+      "none": "暂无标志"
+    }
   }
 }

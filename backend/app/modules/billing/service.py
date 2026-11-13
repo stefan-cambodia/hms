@@ -757,7 +757,7 @@ async def invoice_pdf(db: AsyncSession, hotel_id: uuid.UUID, invoice_id: uuid.UU
     from app.modules.billing import pdf
 
     inv = await get_invoice(db, hotel_id, invoice_id)
-    return await pdf.render_pdf(inv.document, void=inv.status == "void"), inv.number
+    return await pdf.render_pdf(db, inv.document, void=inv.status == "void"), inv.number
 
 
 async def statement_pdf(
@@ -778,7 +778,7 @@ async def statement_pdf(
         bill_to=documents.guest_bill_to(guest),
         issue_date=hotel_today(hotel),
     )
-    return await pdf.render_pdf(doc), f"folio-{res.code}"
+    return await pdf.render_pdf(db, doc), f"folio-{res.code}"
 
 
 async def receipt_pdf(
@@ -806,4 +806,4 @@ async def receipt_pdf(
         issue_date=payment.received_at.astimezone(hotel.zone).date(),
         payment=payment,
     )
-    return await pdf.render_pdf(doc), payment.number
+    return await pdf.render_pdf(db, doc), payment.number

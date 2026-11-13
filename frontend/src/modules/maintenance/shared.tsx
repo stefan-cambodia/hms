@@ -1,12 +1,14 @@
-import { useState } from 'react';
-import { Alert, Badge, type BadgeProps, Button, Checkbox, Group, Modal, SegmentedControl, Select, SimpleGrid, Stack, Textarea, TextInput } from '@mantine/core';
+import { useEffect, useMemo, useState } from 'react';
+import { ActionIcon, Alert, Badge, type BadgeProps, Box, Button, Checkbox, FileButton, Group, Image, Modal, SegmentedControl, Select, SimpleGrid, Stack, Text, Textarea, TextInput } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
+import { IconCamera, IconX } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 
 import { api } from '@/api/client';
 import { useHotelMutation } from '@/api/hooks';
 import type { MaintenanceCategory, MaintenanceDetail, MaintenanceStatus, Priority } from '@/api/types';
-import { useAuth } from '@/auth/AuthProvider';
+import { useAuth, useHotel } from '@/auth/AuthProvider';
+import { IMAGE_ACCEPT, uploadImages, useInvalidateMedia } from '@/components/MediaGallery';
 import { SubmitButton } from '@/components/ui';
 import { addDays } from '@/lib/dates';
 import { errorMessage, notifySuccess } from '@/lib/errors';
@@ -36,6 +38,23 @@ export function MaintenanceStatusBadge({ status, ...props }: { status: Maintenan
 }
 
 /** Report a problem on a room or anywhere in the hotel (maintenance.report). */
+const MAX_PHOTOS = 10;
+
+/** A chosen photo before it is sent, with a button to drop it. */
+function PhotoPreview({ file, onRemove }: { file: File; onRemove: () => void }) {
+  const { t } = useTranslation();
+  const url = useMemo(() => URL.createObjectURL(file), [file]);
+  useEffect(() => () => URL.revokeObjectURL(url), [url]);
+  return (
+    <Box pos="relative" data-testid="photo-preview">
+      <Image src={url} alt={file.name} w={48} h={48} radius="sm" fit="cover" />
+      <ActionIcon size={18} radius="xl" color="dark" pos="absolute" top={-6} right={-6} aria-label={t('common.remove')} onClick={onRemove}>
+        <IconX size={12} />
+      </ActionIcon>
+    </Box>
+  );
+}
+
 export function ReportIssueModal({ roomId, onClose, onCreated }: { roomId?: string; onClose: () => void; onCreated?: (r: MaintenanceDetail) => void }) {
   const { t } = useTranslation();
   const { can } = useAuth();
@@ -51,6 +70,10 @@ export function ReportIssueModal({ roomId, onClose, onCreated }: { roomId?: stri
   const [block, setBlock] = useState(false);
   const [dates, setDates] = useState<[string | null, string | null]>([today, addDays(today, 1)]);
   const [error, setError] = useState<string | null>(null);
+  const hotel = useHotel();
+  const [photos, setPhotos] = useState<File[]>([]);
+  const [sendingPhotos, setSendingPhotos] = useState(false);
+  const invalidateMedia = useInvalidateMedia();
   const create = useHotelMutation<Record<string, unknown>, MaintenanceDetail>((h, body) => api.post<MaintenanceDetail>(h('/maintenance-requests'), body), [
     'maintenance_request',
     'room_board',
@@ -70,7 +93,14 @@ export function ReportIssueModal({ roomId, onClose, onCreated }: { roomId?: stri
         out_of_service: where === 'room' && block ? { start_date: dates[0], end_date: dates[1] } : undefined,
       })
       .then(
-        (r) => {
+        async (r) => {
+          // The report is saved first; a refused photo never loses it.
+          if (photos.length) {
+            setSendingPhotos(true);
+            await uploadImages(hotel.id, 'maintenance_request', r.id, photos);
+            setSendingPhotos(false);
+            void invalidateMedia();
+          }
           notifySuccess(t('maintenance.reported_done', { number: r.number }));
           onCreated?.(r);
           onClose();
@@ -126,6 +156,23 @@ export function ReportIssueModal({ roomId, onClose, onCreated }: { roomId?: stri
           </SimpleGrid>
           <TextInput label={t('maintenance.title')} placeholder={t('maintenance.title_placeholder')} required maxLength={200} value={title} onChange={(e) => setTitle(e.currentTarget.value)} data-autofocus />
           <Textarea label={t('maintenance.details')} autosize minRows={2} maxLength={5000} value={description} onChange={(e) => setDescription(e.currentTarget.value)} />
+          <Stack gap={6}>
+            <Group gap="xs" wrap="wrap">
+              <FileButton onChange={(files) => setPhotos((p) => [...p, ...files].slice(0, MAX_PHOTOS))} accept={IMAGE_ACCEPT} multiple>
+                {(props) => (
+                  <Button {...props} variant="default" size="xs" leftSection={<IconCamera size={16} />} disabled={photos.length >= MAX_PHOTOS}>
+                    {t('maintenance.attach_photos')}
+                  </Button>
+                )}
+              </FileButton>
+              {photos.map((file, i) => (
+                <PhotoPreview key={`${file.name}-${file.size}-${i}`} file={file} onRemove={() => setPhotos((p) => p.filter((_, j) => j !== i))} />
+              ))}
+            </Group>
+            <Text size="xs" c="dimmed">
+              {t('media.formats_hint')}
+            </Text>
+          </Stack>
           {where === 'room' && can('maintenance.manage') && (
             <>
               <Checkbox label={t('maintenance.take_out_of_service')} description={t('maintenance.take_out_hint')} checked={block} onChange={(e) => setBlock(e.currentTarget.checked)} />
@@ -145,7 +192,7 @@ export function ReportIssueModal({ roomId, onClose, onCreated }: { roomId?: stri
             <Button variant="default" onClick={onClose}>
               {t('common.cancel')}
             </Button>
-            <SubmitButton loading={create.isPending} disabled={!valid}>
+            <SubmitButton loading={create.isPending || sendingPhotos} disabled={!valid}>
               {t('maintenance.send_report')}
             </SubmitButton>
           </Group>

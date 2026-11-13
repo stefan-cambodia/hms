@@ -33,6 +33,7 @@ import { useHotelMutation, useHotelQuery } from '@/api/hooks';
 import type { MaintenanceDetail, MaintenanceRequest, MaintenanceStatus, Page, Priority, StaffMember } from '@/api/types';
 import { useAuth, useHotel } from '@/auth/AuthProvider';
 import { EmptyState, PageHeader, SubmitButton } from '@/components/ui';
+import { MediaGallery } from '@/components/MediaGallery';
 import { addDays } from '@/lib/dates';
 import { errorMessage, notifyError, notifySuccess } from '@/lib/errors';
 import { formatDate, formatDateTime } from '@/lib/format';
@@ -180,7 +181,7 @@ const NEXT: Record<MaintenanceStatus, MaintenanceStatus[]> = {
 function RequestDetail({ id }: { id: string }) {
   const { t, i18n } = useTranslation();
   const hotel = useHotel();
-  const { can } = useAuth();
+  const { can, me } = useAuth();
   const where = useWhere();
   const today = useHotelToday();
   const manage = can('maintenance.manage');
@@ -226,6 +227,14 @@ function RequestDetail({ id }: { id: string }) {
           <Text size="sm">{r.resolution}</Text>
         </Alert>
       )}
+
+      <MediaGallery
+        ownerType="maintenance_request"
+        ownerId={r.id}
+        canEdit={can('maintenance.report')}
+        canDelete={(m) => manage || (can('maintenance.report') && m.uploaded_by === me?.user.id)}
+        limit={10}
+      />
 
       {r.room_id && (
         <Card withBorder padding="sm">

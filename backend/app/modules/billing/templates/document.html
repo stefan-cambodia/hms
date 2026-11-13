@@ -13,6 +13,7 @@
   body { margin: 0; }
   .header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12mm; }
   .hotel-name { font-size: 15pt; font-weight: 700; margin: 0 0 1mm; }
+  .logo { display: block; max-height: 18mm; max-width: 60mm; margin-bottom: 2.5mm; }
   .muted { color: #4b5563; }
   .small { font-size: 8.5pt; }
   .doc-title { text-align: right; }
@@ -50,6 +51,7 @@
 {% if doc.is_void or void %}<div class="stamp">{{ doc.labels.void_stamp }}</div>{% endif %}
 <div class="header">
   <div>
+    {% if logo_src %}<img class="logo" src="{{ logo_src }}" alt="">{% endif %}
     <p class="hotel-name">{{ doc.hotel.name }}</p>
     {% if doc.hotel.legal_name %}<div class="muted">{{ doc.hotel.legal_name }}</div>{% endif %}
     {% for line in doc.hotel.address %}<div class="muted small">{{ line }}</div>{% endfor %}

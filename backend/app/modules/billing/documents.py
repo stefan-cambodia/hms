@@ -115,6 +115,15 @@ def _hotel_block(hotel: Hotel, tr: Tr) -> dict[str, Any]:
     }
 
 
+async def hotel_block(db: AsyncSession, hotel: Hotel, tr: Tr) -> dict[str, Any]:
+    """The hotel's identity on a document, with its current logo. The logo is
+    referenced by id, so an issued invoice keeps the logo it was issued with."""
+    from app.modules.media.service import current_logo_id
+
+    logo_id = await current_logo_id(db, hotel.id)
+    return {**_hotel_block(hotel, tr), "logo_id": str(logo_id) if logo_id else None}
+
+
 def _country(code: str, tr: Tr) -> str:
     return Locale.parse(tr.locale).territories.get(code, code)
 
@@ -197,7 +206,7 @@ async def build(
         "title": tr("title." + kind),
         "number": number,
         "issue_date": tr.date(issue_date),
-        "hotel": _hotel_block(hotel, tr),
+        "hotel": await hotel_block(db, hotel, tr),
         "bill_to_label": tr("received_from" if kind == "receipt" else "bill_to"),
         "bill_to": _bill_to_block(bill_to, tr),
         "meta": meta,

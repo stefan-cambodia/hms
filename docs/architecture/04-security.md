@@ -103,11 +103,23 @@
   `HMS_DATA_KEY` environment variable or a secrets file, and never in the
   database or its backups. Backups are therefore useless without the key, and
   the key must be backed up separately, as the disaster recovery runbook states.
-* **Uploads (not built yet):** the API accepts no file upload today. When
-  photos and logos are added: size limits; type checked from magic bytes and
-  whitelisted (JPEG, PNG, WebP, PDF); images re-encoded server-side (strips
-  EXIF location data); stored outside the web root under random names; served
-  with `Content-Disposition` and `X-Content-Type-Options: nosniff`.
+* **Uploads (photos and logos, `media` module):** one image per request,
+  at most 15 MB (bodies over 16 MB are refused by the API before they are
+  read, and by Caddy above 20 MB). The type comes from the file's first bytes
+  (JPEG, PNG or WebP; the name and declared type are ignored; SVG, PDF, GIF
+  and HEIC are refused). Images over 64 megapixels are refused before
+  decoding (decompression bombs), truncated or damaged files are refused
+  (never completed with grey, even though the PDF library switches Pillow's
+  process-wide tolerance on), and decoding runs in a worker thread, two at a
+  time per API process. Every image is decoded and encoded again
+  (JPEG, or PNG for a logo with transparency), turned upright, converted to
+  sRGB and scaled down (photos 2048 px, logos 1024 px): the stored file has
+  no EXIF, GPS position, comments or embedded profile. Files are kept in
+  PostgreSQL under row-level security and served only to staff who may see
+  their owner (maintenance photos need `maintenance.view`), as `image/jpeg`
+  or `image/png` with `nosniff`, `Content-Disposition: inline` and a private
+  cache. PDF rendering may load only `data:` URLs (the logo), never a file
+  or the network.
 * **Retention (not built yet):** planned configurable purge or anonymisation
   of guest PII after N years, per-guest export and erasure, financial records
   kept as tax law requires with the guest identity anonymised.

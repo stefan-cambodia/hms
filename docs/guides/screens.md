@@ -84,6 +84,9 @@ upright:
 
 ![Maintenance requests](../images/maintenance.png)
 
+Whoever reports a problem can attach photos taken with the tablet; they
+appear on the request for the technicians.
+
 ## Restaurant & bar
 
 ![Tables with their open checks](../images/restaurant-floor.png)
@@ -141,6 +144,14 @@ made on the current day.
 ## Payments & invoices
 
 ![Payments received, with totals per method](../images/billing-payments.png)
+
+## Photos and logo
+
+*Configuration → Hotel profile* holds the logo. It appears in the header and
+on every document: invoices, receipts, folios, restaurant bills, rental
+contracts and day reports. Room categories and facilities have photos, up to
+20 each, in the order you choose. Every image is resized when it is uploaded
+and loses its location data.
 
 ## Users & permissions
 

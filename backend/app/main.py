@@ -6,6 +6,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import APIRouter, FastAPI, Request, Response
+from fastapi.responses import JSONResponse
 from sqlalchemy import text
 
 import app.models  # noqa: F401  (register all ORM models)
@@ -24,6 +25,8 @@ from app.modules.guests.router import router as guests_router
 from app.modules.hotels.router import router as hotels_router
 from app.modules.housekeeping.router import router as housekeeping_router
 from app.modules.maintenance.router import router as maintenance_router
+from app.modules.media.images import MAX_UPLOAD_BYTES
+from app.modules.media.router import router as media_router
 from app.modules.nightaudit.router import router as nightaudit_router
 from app.modules.pricing.router import router as pricing_router
 from app.modules.realtime.hub import hub
@@ -36,6 +39,8 @@ from app.modules.users.router import router as users_router
 from app.modules.vehicles.router import router as vehicles_router
 
 API_PREFIX = "/api/v1"
+# One photo upload plus the multipart envelope.
+MAX_REQUEST_BYTES = MAX_UPLOAD_BYTES + 1024 * 1024
 
 
 logger = logging.getLogger("hms")
@@ -90,6 +95,22 @@ def create_app() -> FastAPI:
     @app.middleware("http")
     async def request_context(request: Request, call_next) -> Response:  # type: ignore[no-untyped-def]
         request_id = request.headers.get("x-request-id") or uuid.uuid4().hex
+        # Refuse oversized bodies before they are read (the largest legitimate
+        # request is one photo upload); Caddy enforces the same in production.
+        length = request.headers.get("content-length", "")
+        if length.isdigit() and int(length) > MAX_REQUEST_BYTES:
+            return JSONResponse(
+                status_code=413,
+                content={
+                    "error": {
+                        "code": "FILE_TOO_LARGE",
+                        "message": "Request body too large",
+                        "params": {"max_mb": MAX_UPLOAD_BYTES // (1024 * 1024)},
+                        "fields": [],
+                    }
+                },
+                headers={"X-Request-ID": request_id, "X-Content-Type-Options": "nosniff"},
+            )
         response: Response = await call_next(request)
         response.headers["X-Request-ID"] = request_id
         response.headers.setdefault("X-Content-Type-Options", "nosniff")
@@ -123,6 +144,7 @@ def create_app() -> FastAPI:
     api.include_router(channels_router)
     api.include_router(reports_router)
     api.include_router(nightaudit_router)
+    api.include_router(media_router)
     api.include_router(backups_router)
     api.include_router(realtime_router)
     app.include_router(api)

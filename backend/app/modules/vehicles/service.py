@@ -1006,7 +1006,7 @@ async def contract_pdf(
         "title": tr("title.rental_contract"),
         "number": rental.number,
         "issue_date": tr.date(rental.start_at.astimezone(hotel.zone).date()),
-        "hotel": documents._hotel_block(hotel, tr),
+        "hotel": await documents.hotel_block(db, hotel, tr),
         "bill_to_label": tr("renter"),
         "bill_to": [
             x
@@ -1050,7 +1050,7 @@ async def contract_pdf(
         "signatures": [tr("signature_renter"), tr("signature_hotel")],
         "is_void": rental.status in ("cancelled", "no_show"),
     }
-    return await pdf.render_pdf(doc), rental.number
+    return await pdf.render_pdf(db, doc), rental.number
 
 
 def _line(description: str, detail: str, quantity: int, unit: Decimal, tr: Any, cur: str) -> dict[str, Any]:

@@ -974,7 +974,16 @@
     "PREVIOUS_DAY_OPEN": "Clôturez d’abord les journées précédentes, dans l’ordre.",
     "ALREADY_CLOSED": "Cette journée est déjà clôturée.",
     "OPEN_ITEMS": "Des points restent ouverts ({{count}}) : réglez-les, ou confirmez la clôture avec eux.",
-    "DAY_NOT_CLOSED": "Cette journée n’a pas été clôturée."
+    "DAY_NOT_CLOSED": "Cette journée n’a pas été clôturée.",
+    "FILE_TOO_LARGE": "Ce fichier est trop volumineux ({{max_mb}} Mo maximum).",
+    "IMAGE_TYPE_NOT_SUPPORTED": "Seules les images JPEG, PNG et WebP sont acceptées.",
+    "IMAGE_UNREADABLE": "Cette image est illisible ; le fichier est peut-être endommagé.",
+    "IMAGE_DIMENSIONS_TOO_LARGE": "Cette image est trop grande ({{max_megapixels}} mégapixels maximum).",
+    "MEDIA_LIMIT_REACHED": "{{limit}} photos au maximum ici.",
+    "MEDIA_NOT_FOUND": "Cette photo n'existe plus.",
+    "MEDIA_OWNER_NOT_FOUND": "L'élément auquel cette photo était destinée n'existe plus.",
+    "MEDIA_OWNER_REQUIRED": "Indiquez à quoi se rapporte la photo.",
+    "MEDIA_ORDER_MISMATCH": "Les photos ont été modifiées entre-temps. Réessayez."
   },
   "reservations": {
     "description": "Toutes les réservations, quelle que soit leur origine. Cliquez sur une réservation pour la gérer.",
@@ -1802,7 +1811,8 @@
       "back_in_service": "Chambre remise en service",
       "comment": "Commentaire"
     },
-    "details": "Détails"
+    "details": "Détails",
+    "attach_photos": "Ajouter des photos"
   },
   "restaurant": {
     "description": "Tables, commandes, cuisine, encaissement (y compris l’imputation sur la chambre du client), petits-déjeuners et ventes.",
@@ -2559,5 +2569,32 @@
     "notes": "Remarques",
     "notes_hint": "Pour l’équipe suivante et la direction (facultatif).",
     "closed_notice": "Le {{date}} est clôturé"
+  },
+  "media": {
+    "photos": "Photos",
+    "count": "{{n}} sur {{limit}}",
+    "add_photos": "Ajouter des photos",
+    "empty": "Aucune photo pour l'instant.",
+    "uploading": "Envoi {{done}} sur {{total}}…",
+    "added": "Photos ajoutées",
+    "formats_hint": "JPEG, PNG ou WebP, 15 Mo maximum par fichier. Les photos sont redimensionnées et leurs données de localisation supprimées.",
+    "delete_title": "Supprimer cette photo ?",
+    "move_earlier": "Déplacer à gauche",
+    "move_later": "Déplacer à droite",
+    "view": "Voir {{name}}",
+    "previous": "Précédente",
+    "next": "Suivante",
+    "save_first": "Enregistrez d'abord, puis rouvrez la fiche pour ajouter des photos.",
+    "logo": {
+      "title": "Logo",
+      "hint": "Affiché dans l'en-tête de l'application et sur les factures, reçus, contrats de location et rapports du jour. Enregistré dès que vous le choisissez. Un PNG à fond transparent donne le meilleur résultat.",
+      "upload": "Ajouter un logo",
+      "replace": "Remplacer le logo",
+      "remove": "Retirer le logo",
+      "remove_confirm": "Le logo n'apparaîtra plus sur les nouveaux documents. Les factures déjà émises conservent leur logo.",
+      "saved": "Logo enregistré",
+      "removed": "Logo retiré",
+      "none": "Aucun logo"
+    }
   }
 }

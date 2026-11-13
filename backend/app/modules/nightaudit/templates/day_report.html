@@ -10,6 +10,7 @@
   body { margin: 0; }
   .header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12mm; }
   .hotel-name { font-size: 14pt; font-weight: 700; margin: 0 0 1mm; }
+  .logo { display: block; max-height: 15mm; max-width: 50mm; margin-bottom: 2mm; }
   .muted { color: #4b5563; }
   .small { font-size: 8.5pt; }
   h1 { font-size: 17pt; margin: 0 0 2mm; color: #0f4c5c; text-align: right; }
@@ -29,6 +30,7 @@
 <body>
 <div class="header">
   <div>
+    {% if logo_src %}<img class="logo" src="{{ logo_src }}" alt="">{% endif %}
     <p class="hotel-name">{{ doc.hotel.name }}</p>
     {% for line in doc.hotel.address %}<div class="muted small">{{ line }}</div>{% endfor %}
   </div>

@@ -17,7 +17,7 @@ from app.core.db import owner_sessionmaker
 from tests.conftest import ADMIN_PASSWORD, Api, error_code
 from tests.test_tenancy import other_organisation
 
-SCHEMA = "0011"  # current migration head
+SCHEMA = "0012"  # current migration head
 
 
 def iso(dt: datetime) -> str:

@@ -45,7 +45,6 @@ class Settings(BaseSettings):
     channel_worker_interval_seconds: float = 5.0
 
     enable_docs: bool = True
-    media_dir: Path = Path("var/media")
     # Shared with the backup service (deploy/docker-compose.yml): its status
     # files are read from here and backup/restore requests written here.
     # Unset: the Backups screen says the service is not connected.

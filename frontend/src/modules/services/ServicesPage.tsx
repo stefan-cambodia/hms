@@ -5,6 +5,7 @@ import {
   Button,
   Card,
   Checkbox,
+  Divider,
   Drawer,
   Group,
   NumberInput,
@@ -27,6 +28,7 @@ import { useCrud, useHotelQuery } from '@/api/hooks';
 import type { Facility, Hotel, Service } from '@/api/types';
 import { useAuth, useHotel } from '@/auth/AuthProvider';
 import { LocalizedTextInput } from '@/components/LocalizedTextInput';
+import { MediaGallery } from '@/components/MediaGallery';
 import { ActiveBadge, confirmDelete, EmptyState, PageHeader, SubmitButton } from '@/components/ui';
 import { applyFieldErrors, notifyError, notifySuccess } from '@/lib/errors';
 import { formatMoney } from '@/lib/format';
@@ -190,6 +192,7 @@ function FacilitiesTab() {
 }
 
 function FacilityDrawer({ draft, crud, onClose }: { draft: FacilityDraft; crud: ReturnType<typeof useCrud<Facility>>; onClose: () => void }) {
+  const { can } = useAuth();
   const { t } = useTranslation();
   const hotel = useHotel();
   const languages = useLanguages();
@@ -282,6 +285,14 @@ function FacilityDrawer({ draft, crud, onClose }: { draft: FacilityDraft; crud: 
           </Group>
         </Stack>
       </form>
+      <Divider my="lg" />
+      {draft.id ? (
+        <MediaGallery ownerType="facility" ownerId={draft.id} canEdit={can('config.facilities.manage')} limit={20} />
+      ) : (
+        <Text size="sm" c="dimmed">
+          {t('media.save_first')}
+        </Text>
+      )}
     </Drawer>
   );
 }

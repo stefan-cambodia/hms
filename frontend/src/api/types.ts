@@ -1440,3 +1440,25 @@ export interface DayClosureRow extends DayClosureInfo {
   payments_net: string | null;
   currency: string;
 }
+
+// --- Photos and logos --------------------------------------------------------------
+
+export type MediaOwnerType = 'hotel' | 'room_type' | 'facility' | 'maintenance_request';
+
+export interface MediaFile {
+  id: string;
+  owner_type: MediaOwnerType;
+  owner_id: string;
+  kind: 'logo' | 'photo';
+  filename: string;
+  content_type: string;
+  size: number;
+  width: number;
+  height: number;
+  sort_order: number;
+  uploaded_by: string | null;
+  uploaded_by_name: string | null;
+  created_at: string;
+  url: string;
+  thumbnail_url: string;
+}

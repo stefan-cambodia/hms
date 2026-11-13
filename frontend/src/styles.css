@@ -67,3 +67,8 @@ body {
   height: auto;
   padding-block: 2px;
 }
+
+/* Photo tiles: keep the move/delete buttons visible on light photos. */
+.hms-media-actions .mantine-ActionIcon-root {
+  box-shadow: 0 1px 3px rgb(0 0 0 / 30%);
+}

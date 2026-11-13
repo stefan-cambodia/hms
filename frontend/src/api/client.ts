@@ -49,7 +49,9 @@ type Method = 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
 
 async function request<T>(method: Method, path: string, body?: unknown, signal?: AbortSignal, extra?: Record<string, string>): Promise<T> {
   const headers: Record<string, string> = { Accept: 'application/json', ...extra };
-  if (body !== undefined) headers['Content-Type'] = 'application/json';
+  // Files go as multipart: the browser sets the Content-Type with its boundary.
+  const isForm = body instanceof FormData;
+  if (body !== undefined && !isForm) headers['Content-Type'] = 'application/json';
   if (method !== 'GET' && csrfToken) headers['X-CSRF-Token'] = csrfToken;
 
   let response: Response;
@@ -57,7 +59,7 @@ async function request<T>(method: Method, path: string, body?: unknown, signal?:
     response = await fetch(API_BASE + path, {
       method,
       headers,
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body: body === undefined ? undefined : isForm ? body : JSON.stringify(body),
       credentials: 'same-origin',
       signal,
     });
@@ -91,6 +93,7 @@ export const api = {
   patch: <T>(path: string, body: unknown) => request<T>('PATCH', path, body),
   put: <T>(path: string, body: unknown) => request<T>('PUT', path, body),
   delete: <T = void>(path: string) => request<T>('DELETE', path),
+  upload: <T>(path: string, form: FormData) => request<T>('POST', path, form),
 };
 
 /** Build a query string, skipping empty values. */

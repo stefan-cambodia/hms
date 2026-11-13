@@ -56,7 +56,7 @@ Last updated: 2026-11-13. Test counts: backend 163 passed + 1 opt-in live test s
 | Facilities: multilingual, opening hours, availability, pricing, conditions | ✅ | |
 | Sellable services (independent of room categories) | ✅ | |
 | Tax rates (percent / fixed per night / per person-night, inclusive/exclusive) | ✅ | Applied by the pricing engine in phase 4 |
-| Photos and logo upload (media module) | ⬜ | Model designed; upload and re-encoding not built |
+| Photos and logo upload (media module) | ✅ | Logo (application header, invoices, receipts, folios, restaurant bills, rental contracts, day reports; issued invoices keep their logo) and photos of room categories and facilities (order, viewer, delete). Type checked from the content, re-encoded without EXIF/GPS, stored in PostgreSQL so backups include them. `test_media.py`, E2E `media.spec.ts` |
 | Additional currencies and exchange rates | ✅ | Phase 5: Configuration → Currencies |
 | Multi-property: create additional hotels (super admin), hotel switcher | ✅ | |
 
@@ -147,7 +147,7 @@ Last updated: 2026-11-13. Test counts: backend 163 passed + 1 opt-in live test s
 | Out of service through room blocks (refused if a guest occupies the room), change dates, back in service keeping past nights | ✅ | |
 | Completion releases the room from tonight and sends housekeeping (touch-up task) | ✅ | E2E |
 | Room board: open repairs and today's task per room (front desk and housekeeping) | ✅ | |
-| Photos on maintenance requests | ⬜ | Needs the file upload module |
+| Photos on maintenance requests | ✅ | Attached when reporting the problem (tablet camera or gallery) or later; reporters remove their own photos, maintenance managers any; shown only with `maintenance.view`. `test_media.py`, E2E `media.spec.ts` |
 | Recurring / preventive maintenance schedules, spare parts | ⬜ | |
 | Lost & found, minibar counts by housekeeping | ⬜ | Minibar can be charged from the folio |
 

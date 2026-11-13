@@ -17,7 +17,7 @@ COPY app ./app
 COPY migrations ./migrations
 COPY alembic.ini ./
 COPY docker-entrypoint.sh /usr/local/bin/hms-entrypoint
-RUN chmod +x /usr/local/bin/hms-entrypoint && mkdir -p /app/var/media /app/var/cache && chown -R hms /app/var
+RUN chmod +x /usr/local/bin/hms-entrypoint && mkdir -p /app/var/cache && chown -R hms /app/var
 USER hms
 EXPOSE 8000
 ENTRYPOINT ["hms-entrypoint"]

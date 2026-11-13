@@ -28,7 +28,8 @@ organizations ─┬─< hotels ─┬─< buildings ─< floors
                │           │               └─< rooms ─┬─< room_amenities
                │           │                          ├─< room_allocations (ledger, EXCLUDE)
                │           │                          └─< room_blocks
-               │           ├─< facilities ─< facility media
+               │           ├─< facilities
+               │           ├─< media_files (logo; photos of room types, facilities, maintenance requests)
                │           ├─< services
                │           ├─< tax_rates, currencies, exchange_rates
                │           ├─< rate_plans ─< daily_rates (room_type × date)
@@ -52,7 +53,7 @@ organizations ─┬─< hotels ─┬─< buildings ─< floors
                │          ├─< user_sessions
                │          └─< login_events
                └─< roles
-jobs, audit_logs, backup_runs, media_files  (cross-cutting)
+jobs, audit_logs, backup_runs  (cross-cutting)
 ```
 
 ## 2.2 Tables
@@ -62,7 +63,7 @@ jobs, audit_logs, backup_runs, media_files  (cross-cutting)
 | Table | Key columns | Constraints and notes |
 |-------|-------------|-------------------|
 | `organizations` | id, name | Tenant root. |
-| `hotels` | id, organization_id, code, name, legal_name, description (LocalizedText), address_line1/2, city, region, postal_code, country_code, latitude, longitude, phone, email, website, social_links jsonb, timezone, default_language, supported_languages text[], currency_code, check_in_time, check_out_time, logo_file_id, cover_file_id, tax_id, billing_info jsonb, policies jsonb (cancellation / payment / house text, LocalizedText), is_active, version | `UNIQUE(organization_id, code)`. |
+| `hotels` | id, organization_id, code, name, legal_name, description (LocalizedText), address_line1/2, city, region, postal_code, country_code, latitude, longitude, phone, email, website, social_links jsonb, timezone, default_language, supported_languages text[], currency_code, check_in_time, check_out_time, tax_id, billing_info jsonb, policies jsonb (cancellation / payment / house text, LocalizedText), is_active, version | `UNIQUE(organization_id, code)`. |
 | `buildings` | id, hotel_id, code, name, sort_order, is_active | `UNIQUE(hotel_id, code)` |
 | `floors` | id, hotel_id, building_id, level int, name, sort_order | `UNIQUE(building_id, level)` |
 | `amenities` | id, hotel_id, code, name LocalizedText, icon, scope (`room` \| `hotel`), sort_order, is_active | `UNIQUE(hotel_id, code)`; defaults seeded, unlimited custom ones. |
@@ -71,7 +72,7 @@ jobs, audit_logs, backup_runs, media_files  (cross-cutting)
 | `room_type_amenities`, `room_amenities` | (parent_id, amenity_id) | composite PK |
 | `facilities` | id, hotel_id, code, name, description (LocalizedText), category, opening_hours jsonb, is_available, pricing_mode, price, conditions LocalizedText, notes, sort_order, is_active | Pool, spa, restaurant… |
 | `services` | id, hotel_id, code, name, description, facility_id NULL, price, pricing_unit (`per_item` \| `per_night` \| `per_person` \| `per_person_night` \| `per_stay`), tax_group, is_active | Sellable extras, independent of room categories. |
-| `media_files` | id, hotel_id, owner_type, owner_id, kind, filename, content_type, size, sha256, storage_key, sort_order | Files are stored on disk under a random key; the type is checked by its magic bytes, not the file extension. |
+| `media_files` | id, hotel_id, kind (`logo` \| `photo`), room_type_id / facility_id / maintenance_request_id, filename, content_type, size, width, height, sha256, data bytea, thumbnail bytea, sort_order, uploaded_by, created_at, archived_at | Migration 0012. The bytes are in the database (`STORAGE EXTERNAL`, never loaded unless asked for), so backups and restores include them and row-level security isolates them. A photo has exactly one owner through a real foreign key (`CHECK num_nonnulls(...) = 1`, `ON DELETE CASCADE`); a logo has none. One current logo per hotel (partial unique index); a replaced or removed logo is archived, not deleted, because issued invoices reference it. Uploads are checked by their first bytes and re-encoded (see 04-security.md). |
 
 ### Taxes and currency
 

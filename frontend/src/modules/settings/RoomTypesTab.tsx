@@ -4,6 +4,7 @@ import {
   Badge,
   Button,
   ColorInput,
+  Divider,
   Drawer,
   Group,
   Menu,
@@ -25,6 +26,7 @@ import type { Amenity, BedItem, Hotel, RoomType } from '@/api/types';
 import { useAuth, useHotel } from '@/auth/AuthProvider';
 import { BedConfigurationInput, useBedSummary } from '@/components/BedConfigurationInput';
 import { LocalizedTextInput } from '@/components/LocalizedTextInput';
+import { MediaGallery } from '@/components/MediaGallery';
 import { ActiveBadge, confirmDelete, EmptyState, SubmitButton } from '@/components/ui';
 import i18n from '@/i18n';
 import { applyFieldErrors, notifyError, notifySuccess } from '@/lib/errors';
@@ -241,6 +243,7 @@ export default function RoomTypesTab() {
 function RoomTypeDrawer({ draft, languages, crud, onClose }: { draft: Draft; languages: string[]; crud: ReturnType<typeof useCrud<RoomType>>; onClose: () => void }) {
   const { t, i18n: inst } = useTranslation();
   const hotel = useHotel();
+  const { can } = useAuth();
   const amenities = useHotelQuery<Amenity[]>('amenity', '/amenities');
   const form = useForm<Draft>({ initialValues: draft });
   const v = form.getValues();
@@ -305,6 +308,14 @@ function RoomTypeDrawer({ draft, languages, crud, onClose }: { draft: Draft; lan
           </Group>
         </Stack>
       </form>
+      <Divider my="lg" />
+      {draft.id ? (
+        <MediaGallery ownerType="room_type" ownerId={draft.id} canEdit={can('config.rooms.manage')} limit={20} />
+      ) : (
+        <Text size="sm" c="dimmed">
+          {t('media.save_first')}
+        </Text>
+      )}
     </Drawer>
   );
 }

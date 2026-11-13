@@ -10,7 +10,7 @@ and pricing rules, front desk, folios, payments and invoices, housekeeping,
 maintenance, restaurant & bar, vehicle rental, the SiteMinder channel manager,
 reports, the desktop application, and the final security and quality phase
 (row-level security, backups screen, load test). What is still missing or only
-partly verified (for example photo upload, 2FA recovery codes, SiteMinder
+partly verified (for example 2FA recovery codes, guest merge, SiteMinder
 certification with a live hotel, real tablets) is listed in
 [docs/CHECKLIST.md](docs/CHECKLIST.md), the exact, tested state of every
 feature.

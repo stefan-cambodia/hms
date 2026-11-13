@@ -9,6 +9,7 @@ import { useHotelMutation, useHotelQuery } from '@/api/hooks';
 import type { Hotel } from '@/api/types';
 import { PageLoader } from '@/app/AppLayout';
 import { useAuth } from '@/auth/AuthProvider';
+import { LogoCard } from '@/components/HotelLogo';
 import { LocalizedTextInput } from '@/components/LocalizedTextInput';
 import { SectionTitle, SubmitButton } from '@/components/ui';
 import { LANGUAGES } from '@/i18n';
@@ -111,130 +112,133 @@ export default function HotelProfileTab() {
   });
 
   return (
-    <form onSubmit={submit}>
-      {stale && (
-        <Alert color="yellow" mb="lg" title={t('common.stale_title')}>
-          <Group justify="space-between" gap="sm">
-            <Text size="sm">{t('common.stale_body')}</Text>
-            <Button size="xs" variant="white" color="yellow" onClick={() => query.data && load(query.data)}>
-              {t('common.reload')}
-            </Button>
-          </Group>
-        </Alert>
-      )}
-      <fieldset disabled={!canEdit} style={{ border: 0, padding: 0, margin: 0 }}>
-        <Stack gap="lg">
-          <Card>
-            <SectionTitle>{t('settings.profile.identity')}</SectionTitle>
-            <Grid>
-              <Grid.Col span={{ base: 12, md: 6 }}>
-                <TextInput label={t('settings.profile.name')} required {...form.getInputProps('name')} />
-              </Grid.Col>
-              <Grid.Col span={{ base: 12, md: 6 }}>
-                <TextInput label={t('settings.profile.legal_name')} {...form.getInputProps('legal_name')} value={v.legal_name ?? ''} />
-              </Grid.Col>
-              <Grid.Col span={12}>
-                <LocalizedTextInput label={t('settings.profile.description')} multiline languages={langs} value={v.description} onChange={(d) => form.setFieldValue('description', d)} />
-              </Grid.Col>
-            </Grid>
-          </Card>
+    <Stack gap="lg">
+      <LogoCard canEdit={canEdit} />
+      <form onSubmit={submit}>
+        {stale && (
+          <Alert color="yellow" mb="lg" title={t('common.stale_title')}>
+            <Group justify="space-between" gap="sm">
+              <Text size="sm">{t('common.stale_body')}</Text>
+              <Button size="xs" variant="white" color="yellow" onClick={() => query.data && load(query.data)}>
+                {t('common.reload')}
+              </Button>
+            </Group>
+          </Alert>
+        )}
+        <fieldset disabled={!canEdit} style={{ border: 0, padding: 0, margin: 0 }}>
+          <Stack gap="lg">
+            <Card>
+              <SectionTitle>{t('settings.profile.identity')}</SectionTitle>
+              <Grid>
+                <Grid.Col span={{ base: 12, md: 6 }}>
+                  <TextInput label={t('settings.profile.name')} required {...form.getInputProps('name')} />
+                </Grid.Col>
+                <Grid.Col span={{ base: 12, md: 6 }}>
+                  <TextInput label={t('settings.profile.legal_name')} {...form.getInputProps('legal_name')} value={v.legal_name ?? ''} />
+                </Grid.Col>
+                <Grid.Col span={12}>
+                  <LocalizedTextInput label={t('settings.profile.description')} multiline languages={langs} value={v.description} onChange={(d) => form.setFieldValue('description', d)} />
+                </Grid.Col>
+              </Grid>
+            </Card>
 
-          <Card>
-            <SectionTitle>{t('settings.profile.location_contact')}</SectionTitle>
-            <SimpleGrid cols={{ base: 1, md: 2 }}>
-              <TextInput label={t('settings.profile.address_line1')} {...form.getInputProps('address_line1')} value={v.address_line1 ?? ''} />
-              <TextInput label={t('settings.profile.address_line2')} {...form.getInputProps('address_line2')} value={v.address_line2 ?? ''} />
-              <TextInput label={t('settings.profile.city')} {...form.getInputProps('city')} value={v.city ?? ''} />
-              <TextInput label={t('settings.profile.region')} {...form.getInputProps('region')} value={v.region ?? ''} />
-              <TextInput label={t('settings.profile.postal_code')} {...form.getInputProps('postal_code')} value={v.postal_code ?? ''} />
-              <Select label={t('settings.profile.country')} data={countries} searchable clearable {...form.getInputProps('country_code')} />
-              <TextInput label={t('settings.profile.latitude')} inputMode="decimal" {...form.getInputProps('latitude')} value={v.latitude ?? ''} />
-              <TextInput label={t('settings.profile.longitude')} inputMode="decimal" {...form.getInputProps('longitude')} value={v.longitude ?? ''} />
-              <TextInput label={t('settings.profile.phone')} type="tel" {...form.getInputProps('phone')} value={v.phone ?? ''} />
-              <TextInput label={t('settings.profile.email')} type="email" {...form.getInputProps('email')} value={v.email ?? ''} />
-              <TextInput label={t('settings.profile.website')} placeholder="https://" {...form.getInputProps('website')} value={v.website ?? ''} />
-            </SimpleGrid>
-            <Text size="sm" fw={600} mt="lg" mb="xs">
-              {t('settings.profile.social_links')}
-            </Text>
-            <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }}>
-              {SOCIAL.map((key) => (
-                <TextInput
-                  key={key}
-                  label={t(`settings.social.${key}`)}
-                  value={v.social_links?.[key] ?? ''}
-                  onChange={(e) => form.setFieldValue('social_links', { ...v.social_links, [key]: e.currentTarget.value })}
-                  error={form.errors.social_links}
+            <Card>
+              <SectionTitle>{t('settings.profile.location_contact')}</SectionTitle>
+              <SimpleGrid cols={{ base: 1, md: 2 }}>
+                <TextInput label={t('settings.profile.address_line1')} {...form.getInputProps('address_line1')} value={v.address_line1 ?? ''} />
+                <TextInput label={t('settings.profile.address_line2')} {...form.getInputProps('address_line2')} value={v.address_line2 ?? ''} />
+                <TextInput label={t('settings.profile.city')} {...form.getInputProps('city')} value={v.city ?? ''} />
+                <TextInput label={t('settings.profile.region')} {...form.getInputProps('region')} value={v.region ?? ''} />
+                <TextInput label={t('settings.profile.postal_code')} {...form.getInputProps('postal_code')} value={v.postal_code ?? ''} />
+                <Select label={t('settings.profile.country')} data={countries} searchable clearable {...form.getInputProps('country_code')} />
+                <TextInput label={t('settings.profile.latitude')} inputMode="decimal" {...form.getInputProps('latitude')} value={v.latitude ?? ''} />
+                <TextInput label={t('settings.profile.longitude')} inputMode="decimal" {...form.getInputProps('longitude')} value={v.longitude ?? ''} />
+                <TextInput label={t('settings.profile.phone')} type="tel" {...form.getInputProps('phone')} value={v.phone ?? ''} />
+                <TextInput label={t('settings.profile.email')} type="email" {...form.getInputProps('email')} value={v.email ?? ''} />
+                <TextInput label={t('settings.profile.website')} placeholder="https://" {...form.getInputProps('website')} value={v.website ?? ''} />
+              </SimpleGrid>
+              <Text size="sm" fw={600} mt="lg" mb="xs">
+                {t('settings.profile.social_links')}
+              </Text>
+              <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }}>
+                {SOCIAL.map((key) => (
+                  <TextInput
+                    key={key}
+                    label={t(`settings.social.${key}`)}
+                    value={v.social_links?.[key] ?? ''}
+                    onChange={(e) => form.setFieldValue('social_links', { ...v.social_links, [key]: e.currentTarget.value })}
+                    error={form.errors.social_links}
+                  />
+                ))}
+              </SimpleGrid>
+            </Card>
+
+            <Card>
+              <SectionTitle description={t('settings.profile.operations_hint')}>{t('settings.profile.operations')}</SectionTitle>
+              <SimpleGrid cols={{ base: 1, md: 2 }}>
+                <Select label={t('settings.profile.timezone')} data={zones} searchable required allowDeselect={false} {...form.getInputProps('timezone')} />
+                <Select label={t('settings.profile.currency')} data={currencies} searchable required allowDeselect={false} {...form.getInputProps('currency_code')} />
+                <TimeInput label={t('settings.profile.check_in_time')} required {...form.getInputProps('check_in_time')} />
+                <TimeInput label={t('settings.profile.check_out_time')} required {...form.getInputProps('check_out_time')} />
+                <MultiSelect
+                  label={t('settings.profile.supported_languages')}
+                  data={LANGUAGES.map((l) => ({ value: l.code, label: l.label }))}
+                  {...form.getInputProps('supported_languages')}
                 />
-              ))}
-            </SimpleGrid>
-          </Card>
+                <Select
+                  label={t('settings.profile.default_language')}
+                  data={LANGUAGES.filter((l) => langs.includes(l.code)).map((l) => ({ value: l.code, label: l.label }))}
+                  allowDeselect={false}
+                  {...form.getInputProps('default_language')}
+                />
+              </SimpleGrid>
+            </Card>
 
-          <Card>
-            <SectionTitle description={t('settings.profile.operations_hint')}>{t('settings.profile.operations')}</SectionTitle>
-            <SimpleGrid cols={{ base: 1, md: 2 }}>
-              <Select label={t('settings.profile.timezone')} data={zones} searchable required allowDeselect={false} {...form.getInputProps('timezone')} />
-              <Select label={t('settings.profile.currency')} data={currencies} searchable required allowDeselect={false} {...form.getInputProps('currency_code')} />
-              <TimeInput label={t('settings.profile.check_in_time')} required {...form.getInputProps('check_in_time')} />
-              <TimeInput label={t('settings.profile.check_out_time')} required {...form.getInputProps('check_out_time')} />
-              <MultiSelect
-                label={t('settings.profile.supported_languages')}
-                data={LANGUAGES.map((l) => ({ value: l.code, label: l.label }))}
-                {...form.getInputProps('supported_languages')}
-              />
-              <Select
-                label={t('settings.profile.default_language')}
-                data={LANGUAGES.filter((l) => langs.includes(l.code)).map((l) => ({ value: l.code, label: l.label }))}
-                allowDeselect={false}
-                {...form.getInputProps('default_language')}
-              />
-            </SimpleGrid>
-          </Card>
+            <Card>
+              <SectionTitle>{t('settings.profile.policies')}</SectionTitle>
+              <Stack>
+                {(['cancellation', 'payment', 'house_rules'] as const).map((key) => (
+                  <LocalizedTextInput
+                    key={key}
+                    label={t(`settings.profile.policy_${key}`)}
+                    multiline
+                    languages={langs}
+                    value={v.policies[key] ?? {}}
+                    onChange={(text) => form.setFieldValue('policies', { ...v.policies, [key]: text })}
+                  />
+                ))}
+              </Stack>
+            </Card>
 
-          <Card>
-            <SectionTitle>{t('settings.profile.policies')}</SectionTitle>
-            <Stack>
-              {(['cancellation', 'payment', 'house_rules'] as const).map((key) => (
+            <Card>
+              <SectionTitle description={t('settings.profile.billing_hint')}>{t('settings.profile.billing')}</SectionTitle>
+              <SimpleGrid cols={{ base: 1, md: 2 }}>
+                <TextInput label={t('settings.profile.tax_id')} {...form.getInputProps('tax_id')} value={v.tax_id ?? ''} />
+                <TextInput label={t('settings.profile.legal_address')} {...form.getInputProps('billing_info.legal_address')} value={v.billing_info.legal_address ?? ''} />
+                <TextInput label={t('settings.profile.invoice_prefix')} placeholder="INV-" {...form.getInputProps('billing_info.invoice_prefix')} value={v.billing_info.invoice_prefix ?? ''} />
+                <TextInput label={t('settings.profile.receipt_prefix')} placeholder="RCP-" {...form.getInputProps('billing_info.receipt_prefix')} value={v.billing_info.receipt_prefix ?? ''} />
+              </SimpleGrid>
+              <Stack mt="md">
+                <TextInput label={t('settings.profile.bank_details')} {...form.getInputProps('billing_info.bank_details')} value={v.billing_info.bank_details ?? ''} />
                 <LocalizedTextInput
-                  key={key}
-                  label={t(`settings.profile.policy_${key}`)}
+                  label={t('settings.profile.invoice_footer')}
                   multiline
                   languages={langs}
-                  value={v.policies[key] ?? {}}
-                  onChange={(text) => form.setFieldValue('policies', { ...v.policies, [key]: text })}
+                  value={v.billing_info.invoice_footer ?? {}}
+                  onChange={(text) => form.setFieldValue('billing_info', { ...v.billing_info, invoice_footer: text })}
                 />
-              ))}
-            </Stack>
-          </Card>
-
-          <Card>
-            <SectionTitle description={t('settings.profile.billing_hint')}>{t('settings.profile.billing')}</SectionTitle>
-            <SimpleGrid cols={{ base: 1, md: 2 }}>
-              <TextInput label={t('settings.profile.tax_id')} {...form.getInputProps('tax_id')} value={v.tax_id ?? ''} />
-              <TextInput label={t('settings.profile.legal_address')} {...form.getInputProps('billing_info.legal_address')} value={v.billing_info.legal_address ?? ''} />
-              <TextInput label={t('settings.profile.invoice_prefix')} placeholder="INV-" {...form.getInputProps('billing_info.invoice_prefix')} value={v.billing_info.invoice_prefix ?? ''} />
-              <TextInput label={t('settings.profile.receipt_prefix')} placeholder="RCP-" {...form.getInputProps('billing_info.receipt_prefix')} value={v.billing_info.receipt_prefix ?? ''} />
-            </SimpleGrid>
-            <Stack mt="md">
-              <TextInput label={t('settings.profile.bank_details')} {...form.getInputProps('billing_info.bank_details')} value={v.billing_info.bank_details ?? ''} />
-              <LocalizedTextInput
-                label={t('settings.profile.invoice_footer')}
-                multiline
-                languages={langs}
-                value={v.billing_info.invoice_footer ?? {}}
-                onChange={(text) => form.setFieldValue('billing_info', { ...v.billing_info, invoice_footer: text })}
-              />
-            </Stack>
-          </Card>
-        </Stack>
-      </fieldset>
-      {canEdit && (
-        <Group justify="flex-end" mt="lg" pos="sticky" bottom={16}>
-          <SubmitButton size="md" loading={save.isPending} disabled={!form.isDirty()}>
-            {t('common.save_changes')}
-          </SubmitButton>
-        </Group>
-      )}
-    </form>
+              </Stack>
+            </Card>
+          </Stack>
+        </fieldset>
+        {canEdit && (
+          <Group justify="flex-end" mt="lg" pos="sticky" bottom={16}>
+            <SubmitButton size="md" loading={save.isPending} disabled={!form.isDirty()}>
+              {t('common.save_changes')}
+            </SubmitButton>
+          </Group>
+        )}
+      </form>
+    </Stack>
   );
 }

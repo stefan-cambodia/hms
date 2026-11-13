@@ -4,6 +4,7 @@ fonts and number formats as the billing documents)."""
 from __future__ import annotations
 
 import asyncio
+import uuid
 from datetime import date, datetime
 from decimal import Decimal
 from pathlib import Path
@@ -11,9 +12,10 @@ from typing import Any
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from markupsafe import Markup
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.billing.documents import Tr, _hotel_block, _page_css
-from app.modules.billing.pdf import DEFAULT_FONTS, FONTS, _render_sync
+from app.modules.billing.pdf import DEFAULT_FONTS, FONTS, _render_sync, logo_src
 from app.modules.hotels.models import Hotel
 from app.modules.nightaudit.models import DayClosure
 
@@ -32,7 +34,12 @@ def _pct(tr: Tr, value: Any) -> str:
 
 
 def document(
-    hotel: Hotel, closure: DayClosure, report: dict[str, Any], closed_by: str | None, lang: str
+    hotel: Hotel,
+    closure: DayClosure,
+    report: dict[str, Any],
+    closed_by: str | None,
+    lang: str,
+    logo_id: uuid.UUID | None = None,
 ) -> dict:
     tr = Tr(lang, hotel.default_language)
     cur = report["currency"]
@@ -144,7 +151,7 @@ def document(
     return {
         "language": lang,
         "title": tr("day_report.title"),
-        "hotel": _hotel_block(hotel, tr),
+        "hotel": {**_hotel_block(hotel, tr), "logo_id": str(logo_id) if logo_id else None},
         "meta": [
             (
                 tr("day_report.business_date"),
@@ -170,15 +177,19 @@ def document(
     }
 
 
-def render_html(doc: dict[str, Any]) -> str:
+def render_html(doc: dict[str, Any], logo: tuple[bytes, str] | None = None) -> str:
     page_css = str(doc.get("page_css", '""')).replace("<", "\\3C ")
     return _env.get_template("day_report.html").render(
         doc=doc,
+        logo_src=logo_src(logo),
         page_css=Markup(page_css),  # noqa: S704 - built from our own translation files, '<' escaped
         fonts=Markup(FONTS.get(doc["language"], DEFAULT_FONTS)),  # noqa: S704 - constant
         line_height="1.6" if doc["language"] == "km" else "1.4",
     )
 
 
-async def render_pdf(doc: dict[str, Any]) -> bytes:
-    return await asyncio.to_thread(_render_sync, render_html(doc))
+async def render_pdf(db: AsyncSession, doc: dict[str, Any]) -> bytes:
+    from app.modules.media.service import document_logo
+
+    logo = await document_logo(db, doc)
+    return await asyncio.to_thread(_render_sync, render_html(doc, logo))

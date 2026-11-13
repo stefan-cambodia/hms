@@ -57,7 +57,6 @@ services:
       HMS_LOGIN_RATE_PER_MINUTE: ${HMS_LOGIN_RATE_PER_MINUTE:-20}
       HMS_BACKUP_CONTROL_DIR: /app/var/backup-control
     volumes:
-      - media:/app/var/media
       # Status written by the backup service; the API only adds requests.
       - backup_control:/app/var/backup-control
     healthcheck:
@@ -111,7 +110,6 @@ services:
 
 volumes:
   pgdata:
-  media:
   backup_control:
   caddy_data:
   caddy_config:

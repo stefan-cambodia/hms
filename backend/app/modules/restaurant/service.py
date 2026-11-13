@@ -1220,7 +1220,7 @@ async def bill_pdf(
         "title": tr("title.restaurant_receipt" if order.status == "closed" else "title.bill"),
         "number": order.number,
         "issue_date": tr.date(order.business_date),
-        "hotel": documents._hotel_block(hotel, tr),
+        "hotel": await documents.hotel_block(db, hotel, tr),
         "bill_to_label": tr("outlet"),
         "bill_to": [tr.text(outlet.name)],
         "meta": meta,
@@ -1263,4 +1263,4 @@ async def bill_pdf(
         "notes": ([tr("unpaid_bill_note")] if order.status != "closed" else []) + [tr("thanks")],
         "is_void": order.status == "cancelled",
     }
-    return await pdf.render_pdf(doc), order.number
+    return await pdf.render_pdf(db, doc), order.number
