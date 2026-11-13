@@ -19,7 +19,8 @@ test('end of day: open items, figures, closing and the day report', async ({ pag
   const closeButton = page.getByRole('button', { name: 'Close the day' }).first();
   // On a server where today's closure is already done, the next day to close
   // is today, which is not over yet: the page says so.
-  if (info.project.name === 'desktop' && (await closeButton.isEnabled())) {
+  // No button at all once that day is closed (e.g. a second run on the same database).
+  if (info.project.name === 'desktop' && (await closeButton.count()) > 0 && (await closeButton.isEnabled())) {
     await closeButton.click();
     const dialog = page.getByRole('dialog');
     const confirm = dialog.getByRole('button', { name: 'Close the day' });

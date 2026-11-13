@@ -77,7 +77,7 @@ test('check-in, extras, payment in riel, early check-out with settlement, invoic
   await dialog.getByLabel('Qty').fill('2');
   await dialog.getByLabel('Unit price').fill('8');
   await dialog.getByRole('button', { name: 'Post charge' }).click();
-  await expect(page.getByText('Charge posted')).toBeVisible();
+  await expect(page.getByText('Charge posted', { exact: true })).toBeVisible();
   await expect(folio.locator('[data-charge="service"]')).toContainText('$16.00');
 
   await folio.getByRole('button', { name: 'Take payment' }).click();

@@ -47,6 +47,9 @@ test('rent a scooter: book, hand over with licence, take back, pay cash, contrac
   test.skip(info.project.name !== 'desktop', 'workflow checked once; tablets check the screens');
   const s = await apiLogin(page);
   await ensureFleet(page, s);
+  // Scooters still out on an earlier rental (e.g. an interrupted run) cannot be handed over.
+  const out = (await (await page.request.get(`/api/v1/hotels/${s.hotel.id}/vehicle-rentals?status=out`)).json()) as { vehicle_code: string }[];
+  const away = new Set(out.map((r) => r.vehicle_code));
   const renter = `Rider${Date.now() % 100000}`;
 
   await openApp(page, '/vehicles/today');
@@ -57,7 +60,11 @@ test('rent a scooter: book, hand over with licence, take back, pay cash, contrac
   await drawer.getByLabel('Last name').fill(renter);
   await drawer.getByRole('textbox', { name: 'Vehicle' }).click();
   // A scooter that is free for the period (others may be out from earlier runs).
-  const option = page.getByRole('option', { name: /^SC-0\d · Scooter/ }).and(page.locator(':not([data-combobox-disabled])')).first();
+  const here = ['SC-01', 'SC-02', 'SC-03'].filter((code) => !away.has(code));
+  const option = page
+    .getByRole('option', { name: new RegExp(`^(${here.join('|')}) · Scooter`) })
+    .and(page.locator(':not([data-combobox-disabled])'))
+    .first();
   await option.click();
   await expect(drawer.getByTestId('rental-quote')).toContainText('24 h');
   await drawer.getByRole('button', { name: 'Book' }).click();

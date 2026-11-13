@@ -143,9 +143,19 @@ test('tablet: long-press and drag a booking to another room', async ({ page }, i
   const headers = { 'X-CSRF-Token': me.csrf_token };
   const rooms = await (await page.request.get(`/api/v1/hotels/${hotelId}/rooms`)).json();
   const room = (n: string) => rooms.find((r: { number: string }) => r.number === n);
-  const start = new Date(Date.now() + (400 + (Math.floor(Date.now() / 1000) % 200)) * 86_400_000).toISOString().slice(0, 10);
-  const day2 = new Date(Date.parse(start) + 2 * 86_400_000).toISOString().slice(0, 10);
-  const day3 = new Date(Date.parse(start) + 3 * 86_400_000).toISOString().slice(0, 10);
+  // A week far ahead where rooms 106 and 107 are both free (earlier runs leave
+  // their moved bookings behind on a shared database).
+  const iso = (ms: number) => new Date(ms).toISOString().slice(0, 10);
+  let start = '';
+  let day2 = '';
+  let day3 = '';
+  for (let week = 0; week < 30 && !start; week++) {
+    const first = Date.now() + (400 + (Math.floor(Date.now() / 1000) % 200) + week * 7) * 86_400_000;
+    const [d2, d3] = [iso(first + 2 * 86_400_000), iso(first + 3 * 86_400_000)];
+    const free = (await (await page.request.get(`/api/v1/hotels/${hotelId}/available-rooms?start=${d2}&end=${d3}`)).json()) as { number: string }[];
+    if (['106', '107'].every((n) => free.some((r) => r.number === n))) [start, day2, day3] = [iso(first), d2, d3];
+  }
+  expect(start, 'a week where rooms 106 and 107 are free').not.toBe('');
   const name = `Touch${Date.now() % 100000}`;
   const created = await page.request.post(`/api/v1/hotels/${hotelId}/reservations`, {
     headers,
