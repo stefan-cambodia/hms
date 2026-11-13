@@ -50,7 +50,19 @@ def _staff_email(value: str) -> str:
     try:
         result = validate_email(value, check_deliverability=False, globally_deliverable=False)
     except EmailNotValidError as exc:
-        raise ValueError("invalid email address") from exc
+        # email-validator refuses ".local" (an mDNS special-use name) in every
+        # mode, yet many hotel networks use it (e.g. Windows domains "hotel.local").
+        # Check the syntax with a neutral internal suffix, keep the real domain.
+        local, _, domain = value.strip().rpartition("@")
+        if not (local and domain.lower().endswith(".local") and len(domain) > 6):
+            raise ValueError("invalid email address") from exc
+        try:
+            probe = validate_email(
+                f"{local}@{domain[:-6]}.lan", check_deliverability=False, globally_deliverable=False
+            )
+        except EmailNotValidError as exc2:
+            raise ValueError("invalid email address") from exc2
+        return f"{probe.local_part}@{probe.domain[:-4]}.local"
     return result.normalized
 
 

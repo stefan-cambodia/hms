@@ -1,4 +1,4 @@
-// node --test tests/  (no dependency: Node's built-in test runner)
+// node --test tests/*.test.mjs  (no dependency: Node's built-in test runner)
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 

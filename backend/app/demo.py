@@ -32,7 +32,8 @@ async def seed_demo(email: str, password: str, today: date | None = None) -> str
     """Fill the admin's first hotel. Returns a one-line summary."""
     today = today or date.today()
     transport = httpx.ASGITransport(app=create_app())
-    async with httpx.AsyncClient(transport=transport, base_url="http://localhost") as client:
+    # https: the session cookie is Secure in production (no network is involved).
+    async with httpx.AsyncClient(transport=transport, base_url="https://localhost") as client:
         r = await client.post("/api/v1/auth/login", json={"email": email, "password": password})
         if r.status_code != 200:
             raise SeedError(f"login failed: {r.status_code} {r.text}")

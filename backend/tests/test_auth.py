@@ -177,6 +177,19 @@ async def test_staff_accounts_may_use_internal_domains(admin: Api):
     async with new_client() as client:
         r = await Api(client).login("reception@hotel.lan", "Str0ng-Passw0rd")
         assert r.status_code == 200
+    # ".local" (Windows and mDNS networks) is accepted too, normalised.
+    r = await admin.post(
+        admin.h("/users"),
+        {"email": "Night.Audit@Hotel.LOCAL", "full_name": "Night", "password": "Str0ng-Passw0rd"},
+    )
+    assert r.status_code == 201, r.text
+    assert r.json()["email"] == "Night.Audit@hotel.local"
+    for bad in ("@hotel.local", "a b@hotel.local", "x@.local"):
+        r = await admin.post(
+            admin.h("/users"), {"email": bad, "full_name": "X", "password": "Str0ng-Passw0rd"}
+        )
+        assert r.status_code == 422, bad
+    async with new_client() as client:
         # Login never rejects an identifier on syntax; it is simply not found.
         r = await Api(client).login("not-an-email", "whatever")
         assert r.status_code == 401 and error_code(r) == "INVALID_CREDENTIALS"

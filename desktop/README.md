@@ -58,7 +58,7 @@ Locally:
 ```bash
 cd desktop
 cargo test -p hms-desktop-core    # logic tests, any OS
-node --test tests/                # connection screen
+node --test tests/*.test.mjs      # connection screen
 npm ci && npx tauri build         # needs WebKitGTK 4.1 on Linux, WebView2 on Windows
 ```
 
