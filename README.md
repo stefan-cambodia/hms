@@ -40,6 +40,7 @@ More in the [tour of the screens](docs/guides/screens.md).
   [security](docs/architecture/04-security.md) ·
   [roadmap](docs/architecture/05-roadmap.md)
 - [Tour of the screens](docs/guides/screens.md) (screenshots)
+- User guide for hotel staff, illustrated: [Français](docs/guides/user-guide.fr.md) · [English](docs/guides/user-guide.en.md) · [ខ្មែរ](docs/guides/user-guide.km.md)
 - [Installation & operations guide](docs/guides/installation.md): server, devices, backups, restore
 - [Reports: definitions of every figure](docs/guides/reports.md)
 - [Security audit](docs/security/audit-2026-11.md) · [phase 10 QA report](docs/qa/phase10-report.md)

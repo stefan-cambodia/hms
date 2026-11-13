@@ -49,3 +49,10 @@ taken from a dedicated demo database, never from a hotel's data:
    plus one screen each in Khmer, Chinese, French and Russian; the desktop
    application's connection screen (its page served locally, the calls to
    the application stubbed).
+
+6. **User guide** (`docs/guides/user-guide.fr.md`, `.en.md`, `.km.md`): the
+   same twelve screens in French, English and Khmer, into `docs/images/guide/`:
+
+   ```bash
+   node tools/screenshots/guide.mjs
+   ```
