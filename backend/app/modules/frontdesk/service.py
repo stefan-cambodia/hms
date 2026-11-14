@@ -269,7 +269,13 @@ async def check_out(
     if fully_out and balance != ZERO:
         if not allow_open_balance:
             code = "BALANCE_DUE" if balance > ZERO else "CREDIT_BALANCE"
-            raise Conflict(code, params={"balance": str(abs(balance)), "currency": res.currency})
+            params = {"balance": str(abs(balance)), "currency": res.currency}
+            if res.company_account_id and balance > ZERO:
+                # Billed to a company: what can go to its account, what the guest owes.
+                company = (await folio.statement(db, res, "company")).totals.balance
+                params["company_balance"] = str(max(company, ZERO))
+                params["guest_balance"] = str(max(balance - max(company, ZERO), ZERO))
+            raise Conflict(code, params=params)
         if balance > ZERO and not ctx.has(P.FOLIO_ADJUST):
             raise Forbidden("PERMISSION_DENIED", params={"permission": P.FOLIO_ADJUST})
     if fully_out:

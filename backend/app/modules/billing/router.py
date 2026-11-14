@@ -19,6 +19,7 @@ from app.modules.billing.schemas import (
     InvoiceListItem,
     InvoiceOut,
     IssueInvoiceIn,
+    MoveChargeIn,
     PaymentIn,
     PaymentOut,
     PaymentReport,
@@ -104,6 +105,12 @@ async def void_charge(res_id: uuid.UUID, charge_id: uuid.UUID, body: VoidIn, ctx
     return await service.folio_out(db, await service.void_charge(db, ctx, res_id, charge_id, body.reason))
 
 
+@router.post("/reservations/{res_id}/charges/{charge_id}/folio", response_model=FolioOut)
+async def move_charge(res_id: uuid.UUID, charge_id: uuid.UUID, body: MoveChargeIn, ctx: FolioPost, db: DB):
+    """Split folio: move a charge to the company's or the guest's part."""
+    return await service.folio_out(db, await service.move_charge(db, ctx, res_id, charge_id, body.folio))
+
+
 @router.post(
     "/reservations/{res_id}/payments", response_model=PaymentOut, status_code=status.HTTP_201_CREATED
 )
@@ -120,8 +127,15 @@ async def void_payment(res_id: uuid.UUID, payment_id: uuid.UUID, body: VoidIn, c
 
 
 @router.get("/reservations/{res_id}/folio.pdf")
-async def folio_pdf(res_id: uuid.UUID, ctx: FolioView, db: DB, language: Language = None):
-    return _pdf(*await service.statement_pdf(db, ctx.hotel_id, res_id, language))
+async def folio_pdf(
+    res_id: uuid.UUID,
+    ctx: FolioView,
+    db: DB,
+    language: Language = None,
+    folio: Annotated[Literal["guest", "company"] | None, Query()] = None,
+):
+    """The folio (pro-forma); `folio`: one part of a split folio."""
+    return _pdf(*await service.statement_pdf(db, ctx.hotel_id, res_id, language, folio))
 
 
 @router.get("/reservations/{res_id}/payments/{payment_id}/receipt.pdf")

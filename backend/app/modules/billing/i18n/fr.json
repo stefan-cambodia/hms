@@ -203,5 +203,9 @@
     "credit": "Paiements non affectés (avoir)",
     "total_due": "Total dû",
     "please_pay": "Merci d’indiquer les numéros de facture avec votre paiement."
+  },
+  "split_note": {
+    "company": "Facturation partagée : ce document couvre l’hébergement et ses taxes, facturés à {company}. Les autres prestations du client sont facturées séparément.",
+    "guest": "Facturation partagée : l’hébergement est facturé à {company}. Ce document couvre les autres prestations du client."
   }
 }

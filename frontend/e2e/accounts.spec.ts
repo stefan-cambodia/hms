@@ -97,6 +97,64 @@ test('direct billing: transfer to the company at departure, the company pays, st
   expect(pdf.headers()['content-type']).toBe('application/pdf');
 });
 
+test('split bill: the company pays the room, the guest the extras', async ({ page }, info) => {
+  test.skip(info.project.name !== 'desktop', 'workflow checked once; tablets check the screens');
+  const s = await apiLogin(page);
+  const suffix = `${Date.now() % 100000}`;
+  const company = `Mekong Tours ${suffix}`;
+  await call(s, 'POST', '/company-accounts', { code: `MEKONG${suffix}`, name: company, city: 'Phnom Penh', country_code: 'KH' });
+  const room = await freeRoom(s, 1);
+  const res = await call<{ id: string; version: number }>(s, 'POST', '/reservations', {
+    arrival: hotelDay(s.hotel.timezone),
+    departure: hotelDay(s.hotel.timezone, 1),
+    guest: { first_name: 'Split', last_name: `Guest${suffix}` },
+    rooms: [{ room_type_id: room.room_type_id, room_id: room.id, adults: 1 }],
+    override_restrictions: true,
+  });
+  await call(s, 'POST', `/reservations/${res.id}/charges`, { description: 'Minibar', unit_price: '6.00' });
+
+  // Billed to the company, which pays the room only.
+  await openApp(page, `/reservations/${res.id}`);
+  await page.getByRole('button', { name: 'Edit details' }).click();
+  const form = page.getByRole('dialog');
+  await form.getByRole('textbox', { name: 'Direct billing' }).click();
+  await page.getByRole('option', { name: new RegExp(company) }).click();
+  await form.getByText('The room only').click();
+  await form.getByRole('button', { name: 'Save' }).click();
+  await expect(page.getByTestId('billed-to')).toContainText(`Room billed to ${company}`);
+
+  // Two parts: the nights for the company, the minibar for the guest.
+  const folio = page.getByTestId('folio');
+  await expect(folio.getByTestId('folio-parts')).toBeVisible();
+  const minibar = folio.locator('tr', { hasText: 'Minibar' });
+  await expect(minibar.locator('[data-part="guest"]')).toBeVisible();
+  await minibar.getByRole('button', { name: `Move to ${company}’s bill` }).click();
+  await expect(minibar.locator('[data-part="company"]')).toBeVisible();
+  await minibar.getByRole('button', { name: 'Move to the guest’s bill' }).click();
+  await expect(minibar.locator('[data-part="guest"]')).toBeVisible();
+
+  // The guest pays their part, the company's part goes to its account.
+  await folio.getByRole('button', { name: 'Take payment' }).click();
+  const pay = page.getByRole('dialog');
+  await expect(pay.getByTestId('payment-part')).toBeVisible();
+  await pay.getByRole('button', { name: 'Record payment' }).click();
+  await expect(folio.getByTestId('part-guest-balance')).toContainText('$0.00');
+  await folio.getByTestId('transfer-to-company').click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Transfer' }).click();
+  await expect(folio.getByTestId('part-company-balance')).toContainText('$0.00');
+  await expect(folio.getByTestId('folio-balance')).toContainText('$0.00');
+
+  // The guest's own invoice (the company's was made out with the transfer).
+  await folio.getByRole('button', { name: 'Issue invoice' }).click();
+  const invoice = page.getByRole('dialog');
+  await expect(invoice.getByTestId('invoice-part')).toBeVisible();
+  await invoice.getByRole('button', { name: 'Issue invoice' }).click();
+  await expect(folio.locator('[data-invoice]')).toHaveCount(2);
+  await expect(folio.locator('[data-invoice] [data-part="company"]')).toBeVisible();
+  await expect(folio.locator('[data-invoice] [data-part="guest"]')).toBeVisible();
+  await page.screenshot({ path: `${SHOTS}/${info.project.name}-split-folio.png`, fullPage: true });
+});
+
 test('company accounts screen on every device', async ({ page }, info) => {
   await apiLogin(page);
   await openApp(page, '/accounts');

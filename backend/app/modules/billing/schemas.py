@@ -84,6 +84,15 @@ class VoidIn(InputModel):
     reason: Reason
 
 
+Part = Literal["guest", "company"]
+
+
+class MoveChargeIn(InputModel):
+    """Split folio: the part that pays the charge."""
+
+    folio: Part
+
+
 class ChargeOut(OutputModel):
     id: uuid.UUID
     reservation_room_id: uuid.UUID | None
@@ -104,6 +113,8 @@ class ChargeOut(OutputModel):
     voided_by_name: str | None = None
     created_by_name: str | None = None
     created_at: datetime
+    # Split folio: the part it is on ('guest' / 'company'); None otherwise.
+    folio: str | None = None
 
 
 # --- payments ---------------------------------------------------------------------
@@ -120,6 +131,8 @@ class PaymentIn(InputModel):
     card_brand: Literal["visa", "mastercard", "amex", "unionpay", "jcb", "discover", "other"] | None = None
     card_last4: Annotated[str, StringConstraints(pattern=r"^[0-9]{4}$")] | None = None
     notes: Annotated[SafeText, StringConstraints(max_length=500)] | None = None
+    # Split folio: the part it pays (default the guest's); ignored otherwise.
+    folio: Part | None = None
 
     @model_validator(mode="after")
     def _card_fields(self) -> PaymentIn:
@@ -147,6 +160,7 @@ class PaymentOut(OutputModel):
     void_reason: str | None
     voided_at: datetime | None
     voided_by_name: str | None = None
+    folio: str
 
 
 class PaymentListItem(PaymentOut):
@@ -189,6 +203,8 @@ class BillToIn(InputModel):
 class IssueInvoiceIn(InputModel):
     language: LanguageCode | None = None
     bill_to: BillToIn | None = None
+    # Split folio: the part invoiced (required then); ignored otherwise.
+    folio: Part | None = None
 
 
 class InvoiceOut(OutputModel):
@@ -208,6 +224,7 @@ class InvoiceOut(OutputModel):
     void_reason: str | None
     voided_at: datetime | None
     created_at: datetime
+    folio: str
 
 
 class InvoiceListItem(InvoiceOut):
@@ -249,6 +266,9 @@ class FolioOut(OutputModel):
     taxes: list[dict[str, Any]]
     totals: FolioTotals
     invoices: list[InvoiceOut]
-    # True when the active invoice no longer matches the folio (charges or
+    # True when an active invoice no longer matches the folio (charges or
     # payments changed after it was issued).
     invoice_outdated: bool
+    # Split folio (the company pays the room, the guest the extras): the
+    # totals of each part; None when the folio is not split.
+    parts: dict[str, FolioTotals] | None = None

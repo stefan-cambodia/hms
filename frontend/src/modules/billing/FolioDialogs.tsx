@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { api, ApiError } from '@/api/client';
 import { useHotelMutation, useHotelQuery } from '@/api/hooks';
 import { hotelKey } from '@/api/realtime';
-import type { ChargeKind, FeeType, Folio, Invoice, Payment, PaymentKind, PaymentMethod, Reservation, Service } from '@/api/types';
+import type { ChargeKind, FeeType, Folio, FolioPart, FolioTotals, Invoice, Payment, PaymentKind, PaymentMethod, Reservation, Service } from '@/api/types';
 import { useAuth, useHotel } from '@/auth/AuthProvider';
 import { SubmitButton } from '@/components/ui';
 import { daysBetween } from '@/lib/dates';
@@ -27,12 +27,17 @@ export function PaymentModal({
   reservation: r,
   initialKind = 'payment',
   initialAmount,
+  parts,
+  initialPart = 'guest',
   onClose,
   onDone,
 }: {
   reservation: Res;
   initialKind?: PaymentKind;
   initialAmount?: string;
+  /** Split folio: the parts' totals; the payment goes to one of them. */
+  parts?: Record<FolioPart, FolioTotals> | null;
+  initialPart?: FolioPart;
   onClose: () => void;
   onDone?: (p: Payment) => void;
 }) {
@@ -42,6 +47,7 @@ export function PaymentModal({
   const hotel = useHotel();
   const currencies = usePaymentCurrencies();
   const [kind, setKind] = useState<PaymentKind>(initialKind);
+  const [part, setPart] = useState<FolioPart>(initialPart);
   const [method, setMethod] = useState<PaymentMethod>('cash');
   const [currency, setCurrency] = useState(r.currency);
   const [amount, setAmount] = useState<number | string>(initialAmount ? Number(initialAmount) : '');
@@ -82,6 +88,7 @@ export function PaymentModal({
       notes: notes.trim() || undefined,
       card_brand: method === 'card' ? brand || undefined : undefined,
       card_last4: method === 'card' ? last4.trim() || undefined : undefined,
+      folio: parts ? part : undefined,
     };
     try {
       const p = await save.mutateAsync(body);
@@ -109,8 +116,22 @@ export function PaymentModal({
         <Stack>
           {error && <Alert color="red">{error}</Alert>}
           <SegmentedControl value={kind} onChange={(v) => setKind(v as PaymentKind)} data={kinds.map((k) => ({ value: k, label: t(`billing.payment_kinds.${k}`) }))} />
+          {parts && (
+            <SegmentedControl
+              value={part}
+              data-testid="payment-part"
+              onChange={(v) => {
+                const next = v as FolioPart;
+                setPart(next);
+                // Prefilled with the part's balance: follow the part chosen.
+                const due = Number(parts[next].balance);
+                if (currency === r.currency) setAmount(kind === 'refund' ? (due < 0 ? -due : '') : due > 0 ? due : '');
+              }}
+              data={(['guest', 'company'] as const).map((p) => ({ value: p, label: t(`billing.parts.${p}`) }))}
+            />
+          )}
           <Text size="sm" c="dimmed">
-            {t('billing.current_balance')}: <b className="hms-num">{formatMoney(r.balance, r.currency, i18n.language)}</b>
+            {t('billing.current_balance')}: <b className="hms-num">{formatMoney(parts ? parts[part].balance : r.balance, r.currency, i18n.language)}</b>
           </Text>
           <SimpleGrid cols={{ base: 1, sm: 2 }}>
             <Select
@@ -368,8 +389,22 @@ export function ReasonModal({
 
 // --- invoice ----------------------------------------------------------------------
 
-export function InvoiceModal({ reservation, onClose, onDone }: { reservation: Reservation; onClose: () => void; onDone?: (inv: Invoice) => void }) {
+export function InvoiceModal({
+  reservation,
+  parts,
+  companyAccount,
+  onClose,
+  onDone,
+}: {
+  reservation: Reservation;
+  /** Split folio: the parts that can still be invoiced (one invoice each). */
+  parts?: FolioPart[];
+  companyAccount?: string;
+  onClose: () => void;
+  onDone?: (inv: Invoice) => void;
+}) {
   const { t } = useTranslation();
+  const [part, setPart] = useState<FolioPart | undefined>(parts?.[0]);
   const b = reservation.booker;
   // 'auto': the server uses the guest's preferred language, else the hotel's.
   const [language, setLanguage] = useState<string>('auto');
@@ -382,8 +417,9 @@ export function InvoiceModal({ reservation, onClose, onDone }: { reservation: Re
   const [error, setError] = useState<string | null>(null);
   const issue = useHotelMutation<Record<string, unknown>, Invoice>((h, body) => api.post<Invoice>(h(`/reservations/${reservation.id}/invoices`), body), ['invoice', 'folio', 'reservation']);
   const submit = () => {
-    const body: Record<string, unknown> = { language: language === 'auto' ? undefined : language };
-    if (company)
+    const body: Record<string, unknown> = { language: language === 'auto' ? undefined : language, folio: part };
+    // The company's part is always made out to the company account.
+    if (company && part !== 'company')
       body.bill_to = {
         name: name.trim(),
         company: companyName.trim() || undefined,
@@ -413,6 +449,14 @@ export function InvoiceModal({ reservation, onClose, onDone }: { reservation: Re
           <Text size="sm" c="dimmed">
             {t('billing.invoice_hint')}
           </Text>
+          {parts && parts.length > 0 && (
+            <SegmentedControl
+              value={part}
+              onChange={(v) => setPart(v as FolioPart)}
+              data-testid="invoice-part"
+              data={(['guest', 'company'] as const).map((p) => ({ value: p, label: t(`billing.parts.${p}`), disabled: !parts.includes(p) }))}
+            />
+          )}
           <Select
             label={t('billing.document_language')}
             allowDeselect={false}
@@ -420,15 +464,21 @@ export function InvoiceModal({ reservation, onClose, onDone }: { reservation: Re
             value={language}
             onChange={(v) => v && setLanguage(v)}
           />
-          <SegmentedControl
-            value={company ? 'company' : 'guest'}
-            onChange={(v) => setCompany(v === 'company')}
-            data={[
-              { value: 'guest', label: t('billing.bill_guest') },
-              { value: 'company', label: t('billing.bill_company') },
-            ]}
-          />
-          {company && (
+          {part === 'company' ? (
+            <Alert color="indigo" variant="light" p="xs">
+              <Text size="sm">{t('billing.made_out_to', { name: companyAccount ?? '' })}</Text>
+            </Alert>
+          ) : (
+            <SegmentedControl
+              value={company ? 'company' : 'guest'}
+              onChange={(v) => setCompany(v === 'company')}
+              data={[
+                { value: 'guest', label: t('billing.bill_guest') },
+                { value: 'company', label: t('billing.bill_company') },
+              ]}
+            />
+          )}
+          {company && part !== 'company' && (
             <>
               <TextInput label={t('billing.bill_name')} required value={name} onChange={(e) => setName(e.currentTarget.value)} maxLength={200} />
               <TextInput label={t('billing.company')} value={companyName} onChange={(e) => setCompanyName(e.currentTarget.value)} maxLength={200} />
@@ -441,7 +491,7 @@ export function InvoiceModal({ reservation, onClose, onDone }: { reservation: Re
             <Button variant="default" onClick={onClose}>
               {t('common.cancel')}
             </Button>
-            <SubmitButton loading={issue.isPending} disabled={company && !name.trim()}>
+            <SubmitButton loading={issue.isPending} disabled={company && part !== 'company' && !name.trim()}>
               {t('billing.issue')}
             </SubmitButton>
           </Group>

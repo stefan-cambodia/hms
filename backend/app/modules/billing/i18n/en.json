@@ -202,5 +202,9 @@
     "credit": "Unapplied payments (credit)",
     "total_due": "Total due",
     "please_pay": "Please quote the invoice numbers with your payment."
+  },
+  "split_note": {
+    "company": "Split bill: this document covers the room and its taxes, billed to {company}. The guest's other charges are billed separately.",
+    "guest": "Split bill: the room is billed to {company}. This document covers the guest's other charges."
   }
 }

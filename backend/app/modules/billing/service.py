@@ -25,7 +25,7 @@ from app.core.money import ZERO, round_money
 from app.core.permissions import P
 from app.modules.auth.models import User
 from app.modules.billing import folio
-from app.modules.billing.models import Currency, FolioCharge, Invoice, Payment
+from app.modules.billing.models import FOLIOS, Currency, FolioCharge, Invoice, Payment
 from app.modules.billing.schemas import (
     ChargeIn,
     ChargeOut,
@@ -48,7 +48,7 @@ from app.modules.reservations.history import event, publish
 from app.modules.reservations.models import Reservation, ReservationRoom
 
 register_constraint("uq_currencies_hotel_id_code", "CURRENCY_EXISTS", field="code")
-register_constraint("uq_invoices_one_issued_per_reservation", "INVOICE_ALREADY_ISSUED")
+register_constraint("uq_invoices_one_issued_per_folio", "INVOICE_ALREADY_ISSUED")
 register_constraint("financial_row_immutable", "FINANCIAL_RECORD_IMMUTABLE")
 register_constraint("fk_folio_charges_hotel_id_services", "SERVICE_IN_USE")
 
@@ -173,9 +173,14 @@ async def folio_out(db: AsyncSession, res: Reservation) -> FolioOut:
         | {p.received_by for p in st.payments}
         | {p.voided_by for p in st.payments},
     )
+    split = folio.is_split(res)
     charges = [
         ChargeOut.model_validate(c).model_copy(
-            update={"created_by_name": names.get(c.created_by), "voided_by_name": names.get(c.voided_by)}
+            update={
+                "created_by_name": names.get(c.created_by),
+                "voided_by_name": names.get(c.voided_by),
+                "folio": folio.charge_folio(c) if split else None,
+            }
         )
         for c in st.charges
     ]
@@ -185,7 +190,9 @@ async def folio_out(db: AsyncSession, res: Reservation) -> FolioOut:
         )
         for p in st.payments
     ]
-    active = next((i for i in st.invoices if i.status == "issued"), None)
+    parts = (
+        {part: folio.folio_totals(res, st.charges, st.payments, part) for part in FOLIOS} if split else None
+    )
     return FolioOut(
         reservation_id=res.id,
         version=res.version,
@@ -194,31 +201,40 @@ async def folio_out(db: AsyncSession, res: Reservation) -> FolioOut:
         charges=charges,
         payments=payments,
         taxes=res.tax_breakdown,
-        totals=FolioTotals(
-            accommodation=res.accommodation_total,
-            charges=res.charges_total,
-            tax_total=res.tax_total,
-            grand_total=res.grand_total,
-            paid_total=res.paid_total,
-            balance=st.balance,
-            transferred=sum((p.amount_base for p in st.payments if _live_transfer(p)), ZERO),
-        ),
+        totals=_totals_out(st.totals, res.currency),
         invoices=[invoice_out(i) for i in st.invoices],
-        # The transfer to a company is made right after its invoice was issued
-        # (the invoice shows what the company owes): that is not a change.
-        invoice_outdated=bool(
-            active
-            and (
-                active.total != res.grand_total
-                or active.paid_total
-                != res.paid_total
-                - sum(
-                    (p.amount_base for p in st.payments if _live_transfer(p) and p.invoice_id == active.id),
-                    ZERO,
-                )
-            )
-        ),
+        invoice_outdated=any(invoice_outdated(i, st, parts) for i in st.invoices if i.status == "issued"),
+        parts={k: _totals_out(v, res.currency) for k, v in parts.items()} if parts else None,
     )
+
+
+def _totals_out(t: folio.Totals, currency: str) -> FolioTotals:
+    def m(v: Decimal) -> Decimal:
+        return round_money(v, currency)
+
+    return FolioTotals(
+        accommodation=m(t.accommodation),
+        charges=m(t.charges),
+        tax_total=m(t.tax_total),
+        grand_total=m(t.grand_total),
+        paid_total=m(t.paid_total),
+        balance=m(t.balance),
+        transferred=m(t.transferred),
+    )
+
+
+def invoice_outdated(inv: Invoice, st: folio.Statement, parts: dict[str, folio.Totals] | None) -> bool:
+    """An issued invoice no longer matches its folio (or its part of a split
+    folio). The transfer to a company is made right after its invoice was
+    issued (the invoice shows what the company owes): that is not a change."""
+    if inv.folio == "all":
+        totals = st.totals
+    elif parts is None:
+        return True  # issued for a part, the folio is no longer split
+    else:
+        totals = parts[inv.folio]
+    linked = sum((p.amount_base for p in st.payments if _live_transfer(p) and p.invoice_id == inv.id), ZERO)
+    return inv.total != totals.grand_total or inv.paid_total != totals.paid_total - linked
 
 
 # --- charges -----------------------------------------------------------------------
@@ -370,6 +386,36 @@ async def void_charge(
     return await load_reservation(db, ctx.hotel_id, res_id)
 
 
+async def move_charge(
+    db: AsyncSession, ctx: HotelContext, res_id: uuid.UUID, charge_id: uuid.UUID, part: str
+) -> Reservation:
+    """Split folio: move a charge to the other part (who pays it)."""
+    res = await load_reservation(db, ctx.hotel_id, res_id, for_update=True)
+    if not folio.is_split(res):
+        raise Conflict("FOLIO_NOT_SPLIT")
+    charge = (
+        await db.scalars(
+            select(FolioCharge)
+            .where(FolioCharge.id == charge_id, FolioCharge.reservation_id == res.id)
+            .with_for_update()
+        )
+    ).one_or_none()
+    if charge is None:
+        raise NotFound("CHARGE_NOT_FOUND")
+    if charge.is_void:
+        raise Conflict("ALREADY_VOID")
+    before = folio.charge_folio(charge)
+    if before == part:
+        return res
+    charge.folio = part
+    _touch(res)
+    await db.flush()
+    event(db, ctx, res, "charge_moved", charge_id=charge.id, amount=charge.amount, folio=[before, part])
+    await publish(db, ctx, res, "updated", {"charge_folio": [before, part]})
+    await db.commit()
+    return await load_reservation(db, ctx.hotel_id, res_id)
+
+
 async def post_outlet_charge(
     db: AsyncSession,
     ctx: HotelContext,
@@ -450,12 +496,14 @@ async def record_payment(
     amount_base = round_money(data.amount / rate, res.currency)
     if amount_base <= ZERO:
         raise ValidationFailed("AMOUNT_TOO_SMALL", fields=[field_error("amount", "AMOUNT_TOO_SMALL")])
+    part = (data.folio or "guest") if folio.is_split(res) else "guest"
     if data.kind == "refund":
-        # Only what the guest paid can be refunded, not a transfer to a company.
-        transferred = sum(
-            (p.amount_base for p in await folio.payments_of(db, res.id) if _live_transfer(p)), ZERO
-        )
-        refundable = res.paid_total - transferred
+        # Only money received can be refunded (not a transfer to a company),
+        # and on a split folio only what was paid on that part.
+        live = await folio.payments_of(db, res.id)
+        if folio.is_split(res):
+            live = [p for p in live if p.folio == part]
+        refundable = sum((folio.signed_base(p) for p in live if not _live_transfer(p)), ZERO)
         if amount_base > refundable:
             raise Conflict("REFUND_EXCEEDS_PAID", params={"max": str(max(refundable, ZERO))})
     prefix = (hotel.billing_info or {}).get("receipt_prefix") or "RC-"
@@ -477,6 +525,7 @@ async def record_payment(
         received_at=datetime.now(UTC),
         received_by=ctx.actor.user_id,
         is_void=False,
+        folio=part,
     )
     db.add(payment)
     await db.flush()
@@ -637,7 +686,7 @@ async def issue_invoice(
 ) -> Invoice:
     res = await load_reservation(db, ctx.hotel_id, res_id, for_update=True)
     bill_to = data.bill_to.model_dump(exclude_none=True) if data.bill_to else None
-    inv = await issue_invoice_tx(db, ctx, res, data.language, bill_to)
+    inv = await issue_invoice_tx(db, ctx, res, data.language, bill_to, data.folio)
     await db.commit()
     return inv
 
@@ -648,27 +697,42 @@ async def issue_invoice_tx(
     res: Reservation,
     language: str | None,
     bill_to: dict[str, Any] | None,
+    part: str | None = None,
 ) -> Invoice:
     """Issue the reservation's invoice in the caller's transaction (no commit);
-    the reservation is locked by the caller. `bill_to` None: the booker."""
+    the reservation is locked by the caller. `bill_to` None: the booker (the
+    company for the company's part of a split folio). `part`: the part of a
+    split folio invoiced (required then, ignored otherwise)."""
     from app.modules.billing import documents
 
+    if folio.is_split(res):
+        if part is None:
+            raise ValidationFailed("FOLIO_REQUIRED", fields=[field_error("folio", "FOLIO_REQUIRED")])
+        clashing: tuple[str, ...] = ("all", part)
+    else:
+        part, clashing = None, ("all", *FOLIOS)
     existing = await db.scalar(
-        select(func.count()).where(Invoice.reservation_id == res.id, Invoice.status == "issued")
+        select(Invoice.number).where(
+            Invoice.reservation_id == res.id, Invoice.status == "issued", Invoice.folio.in_(clashing)
+        )
     )
     if existing:
-        raise Conflict("INVOICE_ALREADY_ISSUED")
-    if res.grand_total <= ZERO:
+        raise Conflict("INVOICE_ALREADY_ISSUED", params={"number": existing})
+    st = await folio.statement(db, res, part)
+    if st.totals.grand_total <= ZERO:
         raise Conflict("NOTHING_TO_INVOICE")
     hotel = await _hotel(db, ctx.hotel_id)
     guest = await db.get(Guest, res.booker_guest_id)
     assert guest is not None
     language = documents.pick_language(language, guest, hotel)
+    if bill_to is None and part == "company":
+        from app.modules.accounts.service import company_bill_to, get_account
+
+        bill_to = company_bill_to(await get_account(db, ctx.hotel_id, res.company_account_id))
     bill_to = bill_to or documents.guest_bill_to(guest)
     prefix = (hotel.billing_info or {}).get("invoice_prefix") or "INV-"
     number = f"{prefix}{await sequences.next_value(db, ctx.hotel_id, 'invoice'):06d}"
     issue_date = hotel_today(hotel)
-    st = await folio.statement(db, res)
     document = await documents.build(
         db, "invoice", language, hotel, st, bill_to=bill_to, number=number, issue_date=issue_date
     )
@@ -683,11 +747,12 @@ async def issue_invoice_tx(
         currency=res.currency,
         bill_to=bill_to,
         document=document,
-        subtotal=res.accommodation_total + res.charges_total,
-        tax_total=res.tax_total,
-        total=res.grand_total,
-        paid_total=res.paid_total,
+        subtotal=st.totals.subtotal,
+        tax_total=st.totals.tax_total,
+        total=st.totals.grand_total,
+        paid_total=st.totals.paid_total,
         created_by=ctx.actor.user_id,
+        folio=part or "all",
     )
     db.add(inv)
     await db.flush()
@@ -728,6 +793,14 @@ async def void_invoice(db: AsyncSession, ctx: HotelContext, invoice_id: uuid.UUI
     )
     if inv.status == "void":
         raise Conflict("ALREADY_VOID")
+    transfer = await db.scalar(
+        select(Payment.number).where(
+            Payment.invoice_id == inv.id, Payment.method == "city_ledger", Payment.is_void.is_(False)
+        )
+    )
+    if transfer:
+        # The company owes this invoice: void the transfer first.
+        raise Conflict("INVOICE_TRANSFERRED", params={"number": inv.number, "transfer": transfer})
     res = await load_reservation(db, ctx.hotel_id, inv.reservation_id)
     inv.status = "void"
     inv.void_reason = reason
@@ -810,7 +883,7 @@ async def invoice_pdf(db: AsyncSession, hotel_id: uuid.UUID, invoice_id: uuid.UU
 
 
 async def statement_pdf(
-    db: AsyncSession, hotel_id: uuid.UUID, res_id: uuid.UUID, language: str | None
+    db: AsyncSession, hotel_id: uuid.UUID, res_id: uuid.UUID, language: str | None, part: str | None = None
 ) -> tuple[bytes, str]:
     from app.modules.billing import documents, pdf
 
@@ -823,11 +896,12 @@ async def statement_pdf(
         "statement",
         documents.pick_language(language, guest, hotel),
         hotel,
-        await folio.statement(db, res),
+        await folio.statement(db, res, part),
         bill_to=documents.guest_bill_to(guest),
         issue_date=hotel_today(hotel),
     )
-    return await pdf.render_pdf(db, doc), f"folio-{res.code}"
+    suffix = f"-{part}" if part and folio.is_split(res) else ""
+    return await pdf.render_pdf(db, doc), f"folio-{res.code}{suffix}"
 
 
 async def receipt_pdf(
@@ -849,7 +923,7 @@ async def receipt_pdf(
         "receipt",
         documents.pick_language(language, guest, hotel),
         hotel,
-        await folio.statement(db, res),
+        await folio.statement(db, res, payment.folio),
         bill_to=documents.guest_bill_to(guest),
         number=payment.number,
         issue_date=payment.received_at.astimezone(hotel.zone).date(),

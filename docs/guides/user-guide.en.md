@@ -78,7 +78,7 @@ The **Front desk** screen lists the day's arrivals, guests in house, departures 
 2. If a balance remains, take it or leave it open. An early departure releases the remaining nights.
 3. **Issue invoice** produces the PDF invoice, numbered without gaps. An issued invoice cannot be changed: it is voided and issued again.
 
-**Direct billing to a company** (travel agency, business): on the reservation, **Edit details**, then choose the company under **Direct billing**. At departure, **Transfer to …** (on the folio or in the check-out window) issues the invoice to the company and settles the guest's folio; the company pays later. Extras the guest pays personally are taken before the transfer.
+**Direct billing to a company** (travel agency, business): on the reservation, **Edit details**, then choose the company under **Direct billing**. At departure, **Transfer to …** (on the folio or in the check-out window) issues the invoice to the company and settles the guest's folio; the company pays later. If the company pays the room only, choose **The room only** under **The company pays**: the folio is split in two (company and guest), each with its own balance and invoice; only the company's part is transferred, the guest pays their extras.
 
 ![Front desk: today's arrivals](../images/guide/en-front-desk.png)
 

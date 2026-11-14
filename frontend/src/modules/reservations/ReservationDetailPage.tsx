@@ -12,6 +12,7 @@ import {
   Grid,
   Group,
   Modal,
+  SegmentedControl,
   Select,
   SimpleGrid,
   Stack,
@@ -50,7 +51,7 @@ import { useTranslation } from 'react-i18next';
 import { api } from '@/api/client';
 import { useHotelMutation, useHotelQuery } from '@/api/hooks';
 import { ApiError } from '@/api/client';
-import type { AvailableRoom, FeePreview, Offer, Reservation, ReservationEvent, ReservationRoom, ReservationSource } from '@/api/types';
+import type { AvailableRoom, CompanyPays, FeePreview, Offer, Reservation, ReservationEvent, ReservationRoom, ReservationSource } from '@/api/types';
 import { PageLoader } from '@/app/AppLayout';
 import { useAuth, useHotel } from '@/auth/AuthProvider';
 import { EmptyState, SubmitButton } from '@/components/ui';
@@ -233,7 +234,7 @@ export default function ReservationDetailPage() {
               )}
               {billedTo && (
                 <Badge mt="sm" variant="light" color="indigo" leftSection={<IconBuildingBank size={12} />} data-testid="billed-to">
-                  {t('accounts.billed_to', { name: billedTo.name })}
+                  {t(r.company_pays === 'room' ? 'accounts.billed_to_room' : 'accounts.billed_to', { name: billedTo.name })}
                 </Badge>
               )}
             </Card>
@@ -702,6 +703,7 @@ function EditDetailsModal({ reservation: r, onClose }: { reservation: Reservatio
   const { can } = useAuth();
   const companies = useCompanyAccounts();
   const [company, setCompany] = useState<string | null>(r.company_account_id);
+  const [pays, setPays] = useState<CompanyPays>(r.company_pays);
   const save = useHotelMutation<Record<string, unknown>, Reservation>((h, body) => api.patch<Reservation>(h(`/reservations/${r.id}`), body), INVALIDATES);
   return (
     <Modal opened onClose={onClose} title={t('reservations.actions.edit')} size="lg">
@@ -715,7 +717,7 @@ function EditDetailsModal({ reservation: r, onClose }: { reservation: Reservatio
               external_ref: externalRef.trim() || null,
               special_requests: requests.trim() || null,
               internal_notes: notes.trim() || null,
-              ...(can('accounts.view') ? { company_account_id: company } : {}),
+              ...(can('accounts.view') ? { company_account_id: company, company_pays: company ? pays : 'all' } : {}),
             })
             .then(() => {
               notifySuccess(t('common.saved'));
@@ -746,6 +748,25 @@ function EditDetailsModal({ reservation: r, onClose }: { reservation: Reservatio
               onChange={setCompany}
             />
           )}
+          {can('accounts.view') && company && (
+            <Stack gap={4}>
+              <Text size="sm" fw={500}>
+                {t('accounts.company_pays')}
+              </Text>
+              <SegmentedControl
+                value={pays}
+                onChange={(v) => setPays(v as CompanyPays)}
+                data={[
+                  { value: 'all', label: t('accounts.pays_all') },
+                  { value: 'room', label: t('accounts.pays_room') },
+                ]}
+                data-testid="company-pays"
+              />
+              <Text size="xs" c="dimmed">
+                {t(pays === 'room' ? 'accounts.pays_room_hint' : 'accounts.pays_all_hint')}
+              </Text>
+            </Stack>
+          )}
           <Textarea label={t('reservations.special_requests')} autosize minRows={2} value={requests} onChange={(e) => setRequests(e.currentTarget.value)} />
           <Textarea label={t('reservations.internal_notes')} autosize minRows={2} value={notes} onChange={(e) => setNotes(e.currentTarget.value)} />
           <Group justify="flex-end">
@@ -773,6 +794,7 @@ const EVENT_ICONS: Record<string, typeof IconCheck> = {
   room_moved: IconArrowsExchange,
   charge_posted: IconReceipt,
   charge_voided: IconReceipt,
+  charge_moved: IconReceipt,
   payment_recorded: IconCash,
   payment_voided: IconCash,
   invoice_issued: IconFileInvoice,
@@ -818,6 +840,11 @@ function HistoryTimeline({ events, currency }: { events: ReservationEvent[]; cur
       }
       case 'charge_voided':
         return t('reservations.events.charge_voided', { amount: money(d.amount), reason: d.reason });
+      case 'charge_moved': {
+        // Split folio: who pays the charge changed ([from, to]).
+        const to = Array.isArray(d.folio) ? d.folio[1] : 'guest';
+        return t('reservations.events.charge_moved', { amount: money(d.amount), part: t(`billing.parts.${to}`) });
+      }
       case 'payment_recorded':
         return t('reservations.events.payment_recorded', {
           number: d.number,

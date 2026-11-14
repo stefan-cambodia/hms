@@ -24,7 +24,7 @@ from app.modules.accounts.schemas import AccountIn, AccountPaymentIn, AccountUpd
 from app.modules.auth.models import User
 from app.modules.billing import folio
 from app.modules.billing import service as billing
-from app.modules.billing.models import Invoice, Payment
+from app.modules.billing.models import FOLIOS, Invoice, Payment
 from app.modules.hotels.models import Hotel
 from app.modules.nightaudit import lock
 from app.modules.reservations.history import event, publish
@@ -329,15 +329,18 @@ def company_bill_to(acc: CompanyAccount) -> dict[str, Any]:
 async def transfer(
     db: AsyncSession, ctx: HotelContext, res_id: uuid.UUID, data: TransferIn
 ) -> tuple[Reservation, Payment]:
-    """Settle the folio's balance by transferring it to the reservation's company
-    account: the invoice is made out to the company (issued now if needed)."""
+    """Settle the folio's balance (the company's part of a split folio) by
+    transferring it to the reservation's company account: the invoice is made
+    out to the company (issued now if needed)."""
     res = await billing.load_reservation(db, ctx.hotel_id, res_id, for_update=True)
     if res.company_account_id is None:
         raise Conflict("NO_COMPANY_ACCOUNT", "The reservation is not authorised for direct billing")
     acc = await get_account(db, ctx.hotel_id, res.company_account_id, lock_row=True)
     if not acc.is_active:
         raise Conflict("ACCOUNT_INACTIVE")
-    amount = res.grand_total - res.paid_total
+    part = "company" if folio.is_split(res) else None
+    st = await folio.statement(db, res, part)
+    amount = st.totals.balance
     if amount <= ZERO:
         raise Conflict("NOTHING_TO_TRANSFER")
     hotel = await _hotel(db, ctx.hotel_id)
@@ -348,15 +351,25 @@ async def transfer(
             params={"limit": str(acc.credit_limit), "balance": str(owed), "amount": str(amount)},
         )
     inv = (
-        await db.scalars(select(Invoice).where(Invoice.reservation_id == res.id, Invoice.status == "issued"))
-    ).one_or_none()
+        await db.scalars(
+            select(Invoice).where(
+                Invoice.reservation_id == res.id,
+                Invoice.status == "issued",
+                Invoice.folio.in_(("all", part) if part else ("all", *FOLIOS)),
+            )
+        )
+    ).first()
     if inv is None:
         inv = await billing.issue_invoice_tx(
-            db, ctx, res, data.language or acc.language, company_bill_to(acc)
+            db, ctx, res, data.language or acc.language, company_bill_to(acc), part
         )
-    elif inv.bill_to.get("company_account_id") != str(acc.id):
+    elif inv.bill_to.get("company_account_id") != str(acc.id) or inv.folio != (part or "all"):
         # The company pays against an invoice made out to it: void this one first.
         raise Conflict("INVOICE_NOT_TO_COMPANY", params={"number": inv.number})
+    elif billing.invoice_outdated(inv, st, {part: st.totals} if part else None):
+        # Charges changed since it was issued: the company would owe more
+        # (or less) than its invoice says.
+        raise Conflict("INVOICE_OUTDATED", params={"number": inv.number})
     today = billing.hotel_today(hotel)
     payment = Payment(
         id=uuid.uuid4(),
@@ -375,6 +388,7 @@ async def transfer(
         received_at=datetime.now(UTC),
         received_by=ctx.actor.user_id,
         is_void=False,
+        folio="company",
     )
     db.add(payment)
     await db.flush()

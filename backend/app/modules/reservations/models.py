@@ -84,6 +84,8 @@ class Reservation(UUIDPk, Timestamps, Versioned, Base):
     created_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
     # Authorised for direct billing: the balance may be transferred to this company.
     company_account_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    # What that company pays: 'all', or 'room' (split folio: the guest pays the extras).
+    company_pays: Mapped[str] = mapped_column(String(10), server_default="all")
 
     rooms: Mapped[list[ReservationRoom]] = relationship(
         back_populates="reservation",
@@ -104,6 +106,7 @@ class Reservation(UUIDPk, Timestamps, Versioned, Base):
         UniqueConstraint("hotel_id", "code"),
         UniqueConstraint("hotel_id", "id"),
         CheckConstraint("departure > arrival", name="dates"),
+        CheckConstraint("company_pays IN ('all','room')", name="company_pays"),
         CheckConstraint(
             "status IN ('pending','confirmed','checked_in','checked_out','cancelled','no_show')",
             name="status",

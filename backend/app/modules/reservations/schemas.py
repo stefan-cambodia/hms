@@ -70,6 +70,8 @@ class ReservationUpdate(UpdateModel):
     internal_notes: Notes | None = None
     # Direct billing: the balance may be transferred to this company account.
     company_account_id: uuid.UUID | None = None
+    # What the company pays: everything, or the room only (split folio).
+    company_pays: Literal["all", "room"] | None = None
 
 
 class AssignRoomIn(UpdateModel):
@@ -201,6 +203,7 @@ class ReservationOut(OutputModel):
     cancelled_at: datetime | None
     cancellation_reason: str | None
     company_account_id: uuid.UUID | None
+    company_pays: str
     booker: BookerOut
     rooms: list[ReservationRoomOut]
     version: int

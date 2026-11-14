@@ -186,6 +186,7 @@ async def reservation_out(db: AsyncSession, res: Reservation) -> ReservationOut:
                 "cancelled_at",
                 "cancellation_reason",
                 "company_account_id",
+                "company_pays",
                 "version",
                 "created_at",
                 "updated_at",
@@ -438,12 +439,15 @@ async def update_details(
     res = await get_reservation(db, ctx.hotel_id, res_id)
     crud.check_version(res, data.version)
     changes = data.model_dump(exclude_unset=True, exclude={"version"})
-    if "source" in changes and changes["source"] is None:
-        raise ValidationFailed(fields=[field_error("source", "REQUIRED")])
+    for required in ("source", "company_pays"):
+        if required in changes and changes[required] is None:
+            raise ValidationFailed(fields=[field_error(required, "REQUIRED")])
     if changes.get("company_account_id") is not None:
         from app.modules.accounts.service import check_assignable
 
         await check_assignable(db, ctx.hotel_id, changes["company_account_id"])
+    if any(k in changes and changes[k] != getattr(res, k) for k in ("company_account_id", "company_pays")):
+        await _ensure_not_transferred(db, res)
     before = {k: getattr(res, k) for k in changes}
     for k, v in changes.items():
         setattr(res, k, v)
@@ -454,6 +458,19 @@ async def update_details(
         await _publish(db, ctx, res, "updated", delta)
         await db.commit()
     return await reload(db, res)
+
+
+async def _ensure_not_transferred(db: AsyncSession, res: Reservation) -> None:
+    """Who pays what cannot change once a balance went to the company."""
+    from app.modules.billing.models import Payment
+
+    number = await db.scalar(
+        select(Payment.number).where(
+            Payment.reservation_id == res.id, Payment.method == "city_ledger", Payment.is_void.is_(False)
+        )
+    )
+    if number:
+        raise Conflict("TRANSFERRED_TO_COMPANY", params={"number": number})
 
 
 def _find_room(res: Reservation, rr_id: uuid.UUID) -> ReservationRoom:

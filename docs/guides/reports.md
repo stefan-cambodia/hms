@@ -47,7 +47,9 @@ given in the column title.
 company account, the folio is settled but no money is received: the transfer
 is left out of the payments received and of the end-of-day cash-up (shown
 there on its own line, with the invoices). The company's payment counts as
-money received on the day it arrives, under *Company accounts*.
+money received on the day it arrives, under *Company accounts*. With a split
+bill only the company's part is transferred; the guest's payments count as
+usual.
 
 **Rooms taken out of service.** A room counts on the nights it was part of the
 hotel: from the night it was created, until the night it was deactivated, and

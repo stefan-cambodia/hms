@@ -40,6 +40,8 @@ FEE_TYPES = ("cancellation", "no_show", "early_departure", "late_checkout", "dam
 PAYMENT_KINDS = ("payment", "deposit", "refund")
 # city_ledger: the balance transferred to a company account (not money received).
 PAYMENT_METHODS = ("cash", "card", "bank_transfer", "online", "other", "city_ledger")
+# Split folios (the company pays the room, the guest the extras): who pays.
+FOLIOS = ("guest", "company")
 CARD_BRANDS = ("visa", "mastercard", "amex", "unionpay", "jcb", "discover", "other")
 
 
@@ -91,6 +93,8 @@ class FolioCharge(UUIDPk, Timestamps, Base):
     voided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     voided_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
     created_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    # Split folio: moved to this folio by hand (None: the default for its kind).
+    folio: Mapped[str | None] = mapped_column(String(10))
 
     __table_args__ = (
         ForeignKeyConstraint(
@@ -111,6 +115,7 @@ class FolioCharge(UUIDPk, Timestamps, Base):
         CheckConstraint("quantity > 0", name="quantity_positive"),
         CheckConstraint("kind = 'adjustment' OR (unit_price >= 0 AND amount >= 0)", name="amount_sign"),
         CheckConstraint("NOT is_void OR void_reason IS NOT NULL", name="void_reason"),
+        CheckConstraint("folio IS NULL OR folio IN ('guest','company')", name="folio"),
         Index("ix_folio_charges_reservation", "reservation_id"),
     )
 
@@ -146,6 +151,8 @@ class Payment(UUIDPk, Timestamps, Base):
     company_account_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
     invoice_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("invoices.id", ondelete="RESTRICT"))
     due_date: Mapped[date | None] = mapped_column(Date)
+    # The folio it pays when the folio is split (transfers: the company's).
+    folio: Mapped[str] = mapped_column(String(10), server_default="guest")
 
     __table_args__ = (
         ForeignKeyConstraint(
@@ -168,6 +175,9 @@ class Payment(UUIDPk, Timestamps, Base):
             "(method <> 'city_ledger' OR "
             "(kind = 'payment' AND invoice_id IS NOT NULL AND due_date IS NOT NULL))",
             name="city_ledger",
+        ),
+        CheckConstraint(
+            "folio IN ('guest','company') AND (method <> 'city_ledger' OR folio = 'company')", name="folio"
         ),
         CheckConstraint("amount > 0 AND amount_base > 0 AND exchange_rate > 0", name="amount_positive"),
         CheckConstraint("card_last4 IS NULL OR card_last4 ~ '^[0-9]{4}$'", name="card_last4"),
@@ -205,6 +215,8 @@ class Invoice(UUIDPk, Timestamps, Base):
     voided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     voided_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
     created_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    # 'all' (one folio), or the 'guest' / 'company' part of a split folio.
+    folio: Mapped[str] = mapped_column(String(10), server_default="all")
 
     __table_args__ = (
         ForeignKeyConstraint(
@@ -215,9 +227,11 @@ class Invoice(UUIDPk, Timestamps, Base):
         UniqueConstraint("hotel_id", "number"),
         CheckConstraint("status IN ('issued','void')", name="status"),
         CheckConstraint("status <> 'void' OR void_reason IS NOT NULL", name="void_reason"),
+        CheckConstraint("folio IN ('all','guest','company')", name="folio"),
         Index(
-            "uq_invoices_one_issued_per_reservation",
+            "uq_invoices_one_issued_per_folio",
             "reservation_id",
+            "folio",
             unique=True,
             postgresql_where=text("status = 'issued'"),
         ),

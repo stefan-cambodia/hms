@@ -27,6 +27,7 @@ from app.modules.billing.models import Payment
 from app.modules.guests.models import Guest
 from app.modules.hotels.models import Hotel
 from app.modules.pricing.models import RatePlan
+from app.modules.reservations.models import Reservation
 from app.modules.rooms.models import Room, RoomType
 
 BABEL_LOCALES = {"en": "en", "fr": "fr", "zh-CN": "zh_Hans_CN", "ru": "ru", "km": "km_KH"}
@@ -188,6 +189,7 @@ async def build(
     tr = Tr(lang, hotel.default_language)
     res = st.reservation
     cur = res.currency
+    tot = st.totals
     types, rooms, plans = await _lookups(db, st)
     guest = await db.get(Guest, res.booker_guest_id)
 
@@ -253,9 +255,9 @@ async def build(
         doc["receipt"] = rows
         doc["is_void"] = payment.is_void
         doc["totals"] = [
-            [tr("total"), tr.money(res.grand_total, cur), False],
-            [tr("paid"), tr.money(res.paid_total, cur), False],
-            _balance_row(res.grand_total - res.paid_total, cur, tr),
+            [tr("total"), tr.money(tot.grand_total, cur), False],
+            [tr("paid"), tr.money(tot.paid_total, cur), False],
+            _balance_row(tot.balance, cur, tr),
         ]
         if payment.notes:
             doc["notes"].append(payment.notes)
@@ -310,9 +312,8 @@ async def build(
             }
         )
 
-    subtotal = res.accommodation_total + res.charges_total
-    totals = [[tr("subtotal"), tr.money(subtotal, cur), False]]
-    for t in res.tax_breakdown:
+    totals = [[tr("subtotal"), tr.money(tot.subtotal, cur), False]]
+    for t in tot.taxes:
         name = tr.text(t.get("name")) or t["code"]
         if t.get("kind") == "percent":
             name += f" {tr.number(Decimal(t['rate']))}%"
@@ -321,9 +322,9 @@ async def build(
             totals.append([tr("tax_included", name=name), amount, False])
         else:
             totals.append([name, amount, False])
-    totals.append([tr("total"), tr.money(res.grand_total, cur), True])
-    totals.append([tr("paid"), tr.money(res.paid_total, cur), False])
-    totals.append(_balance_row(res.grand_total - res.paid_total, cur, tr))
+    totals.append([tr("total"), tr.money(tot.grand_total, cur), True])
+    totals.append([tr("paid"), tr.money(tot.paid_total, cur), False])
+    totals.append(_balance_row(tot.balance, cur, tr))
     doc["totals"] = totals
     doc["payments"] = [
         {
@@ -335,10 +336,21 @@ async def build(
         for p in st.payments
         if not p.is_void
     ]
+    if st.part is not None:
+        # Split folio: say what this document covers and who pays the rest.
+        company = await _company_name(db, res)
+        doc["notes"].append(tr(f"split_note.{st.part}", company=company))
     if kind == "statement":
         doc["notes"].append(tr("statement_note"))
     doc["notes"].append(tr("thanks"))
     return doc
+
+
+async def _company_name(db: AsyncSession, res: Reservation) -> str:
+    from app.modules.accounts.models import CompanyAccount
+
+    acc = await db.get(CompanyAccount, res.company_account_id) if res.company_account_id else None
+    return (acc.legal_name or acc.name) if acc else ""
 
 
 def _page_css(template: str) -> str:

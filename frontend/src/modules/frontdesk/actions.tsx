@@ -112,11 +112,16 @@ export function useStayActions() {
         const due = err.code === 'BALANCE_DUE';
         const amount = formatMoney(p.balance, p.currency, i18n.language);
         const options = [];
-        // Billed to a company: its balance goes to the company's account.
-        const company = due && can('payments.record') ? companies.byId((await fetchReservation(resId)).company_account_id) : undefined;
-        if (company)
+        // Billed to a company: its balance (its part of a split folio) goes to
+        // the company's account; the guest pays the rest.
+        const current = due ? await fetchReservation(resId) : undefined;
+        const company = current && can('payments.record') ? companies.byId(current.company_account_id) : undefined;
+        const toCompany = company ? (p.company_balance ?? p.balance) : '0';
+        // Paying everything instead of a transfer stays possible unless the folio is split.
+        const guestOwes = company && current?.company_pays === 'room' ? (p.guest_balance ?? '0') : p.balance;
+        if (company && Number(toCompany) > 0)
           options.push({
-            label: t('accounts.transfer_to', { name: company.name }),
+            label: t('accounts.transfer_amount_to', { amount: formatMoney(toCompany, p.currency, i18n.language), name: company.name }),
             onClick: async () => {
               try {
                 await api.post(`${base}/${resId}/transfer-to-account`, {});
@@ -127,12 +132,12 @@ export function useStayActions() {
               }
             },
           });
-        if (due ? can('payments.record') : can('payments.refund'))
+        if ((due ? can('payments.record') : can('payments.refund')) && Number(guestOwes) > 0)
           options.push({
-            label: due ? t('frontdesk.take_payment_amount', { amount }) : t('frontdesk.refund_amount', { amount }),
+            label: due ? t('frontdesk.take_payment_amount', { amount: formatMoney(guestOwes, p.currency, i18n.language) }) : t('frontdesk.refund_amount', { amount }),
             onClick: async () => {
               const reservation = await fetchReservation(resId);
-              setPayment({ reservation, kind: due ? 'payment' : 'refund', amount: p.balance, then: () => void retryFresh() });
+              setPayment({ reservation, kind: due ? 'payment' : 'refund', amount: guestOwes, then: () => void retryFresh() });
             },
           });
         if (!due || can('folio.adjust'))

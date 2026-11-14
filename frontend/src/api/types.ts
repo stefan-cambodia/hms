@@ -382,6 +382,8 @@ export interface Reservation {
   cancelled_at: string | null;
   cancellation_reason: string | null;
   company_account_id: UUID | null;
+  /** What that company pays: everything, or the room only (split folio: the guest pays the extras). */
+  company_pays: CompanyPays;
   booker: { id: UUID; first_name: string; last_name: string; email: string | null; phone: string | null; nationality: string | null; vip_level: number };
   rooms: ReservationRoom[];
   version: number;
@@ -594,6 +596,10 @@ export interface Currency {
   updated_at: string;
 }
 
+export type CompanyPays = 'all' | 'room';
+/** The two parts of a split folio. */
+export type FolioPart = 'guest' | 'company';
+
 export interface FolioCharge {
   id: UUID;
   reservation_room_id: UUID | null;
@@ -613,6 +619,8 @@ export interface FolioCharge {
   voided_by_name: string | null;
   created_by_name: string | null;
   created_at: string;
+  /** Split folio: the part it is on; null when the folio is not split. */
+  folio: FolioPart | null;
 }
 
 export interface Payment {
@@ -634,6 +642,7 @@ export interface Payment {
   void_reason: string | null;
   voided_at: string | null;
   voided_by_name: string | null;
+  folio: FolioPart;
 }
 
 export interface PaymentListItem extends Payment {
@@ -668,6 +677,8 @@ export interface Invoice {
   void_reason: string | null;
   voided_at: string | null;
   created_at: string;
+  /** 'all', or the part of a split folio it covers. */
+  folio: 'all' | FolioPart;
 }
 
 export interface InvoiceListItem extends Invoice {
@@ -695,9 +706,21 @@ export interface Folio {
   payments: Payment[];
   taxes: TaxLine[];
   /** transferred: settled by a transfer to a company account (part of paid_total, not refundable). */
-  totals: { accommodation: string; charges: string; tax_total: string; grand_total: string; paid_total: string; balance: string; transferred: string };
+  totals: FolioTotals;
   invoices: Invoice[];
   invoice_outdated: boolean;
+  /** Split folio: each part's totals (they add up to `totals`); null otherwise. */
+  parts: Record<FolioPart, FolioTotals> | null;
+}
+
+export interface FolioTotals {
+  accommodation: string;
+  charges: string;
+  tax_total: string;
+  grand_total: string;
+  paid_total: string;
+  balance: string;
+  transferred: string;
 }
 
 export interface FeePreview {

@@ -16,7 +16,7 @@ export const FEE_TYPES: FeeType[] = ['late_checkout', 'early_departure', 'damage
 export function useDocumentUrl() {
   const hotel = useHotel();
   return (path: string, language?: string | null) =>
-    `${API_BASE}/hotels/${hotel.id}${path}${language ? `?language=${encodeURIComponent(language)}` : ''}`;
+    `${API_BASE}/hotels/${hotel.id}${path}${language ? `${path.includes('?') ? '&' : '?'}language=${encodeURIComponent(language)}` : ''}`;
 }
 
 export function languageOptions() {

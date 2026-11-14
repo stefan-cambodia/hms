@@ -1,12 +1,12 @@
 import { useState, type ReactNode } from 'react';
-import { ActionIcon, Alert, Badge, Button, Card, Divider, Group, Menu, Stack, Table, Text, Title, Tooltip } from '@mantine/core';
+import { ActionIcon, Alert, Badge, Button, Card, Divider, Group, Menu, Paper, SimpleGrid, Stack, Table, Text, Title, Tooltip } from '@mantine/core';
 import { modals } from '@mantine/modals';
-import { IconBuildingBank, IconCash, IconDotsVertical, IconFileInvoice, IconPlus, IconPrinter, IconReceipt, IconTrash } from '@tabler/icons-react';
+import { IconArrowsExchange, IconBuildingBank, IconCash, IconDotsVertical, IconFileInvoice, IconPlus, IconPrinter, IconReceipt, IconTrash } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 
 import { api } from '@/api/client';
 import { useHotelMutation, useHotelQuery } from '@/api/hooks';
-import type { Folio, Invoice, Reservation } from '@/api/types';
+import type { Folio, FolioPart, FolioTotals, Invoice, Reservation } from '@/api/types';
 import { useAuth, useHotel } from '@/auth/AuthProvider';
 import { LANGUAGES } from '@/i18n';
 import { notifyError, notifySuccess } from '@/lib/errors';
@@ -19,7 +19,7 @@ import { chargeTitle, useDocumentUrl } from './shared';
 
 type Dialog =
   | { kind: 'charge' }
-  | { kind: 'payment'; refund?: boolean }
+  | { kind: 'payment'; refund?: boolean; part?: FolioPart }
   | { kind: 'invoice' }
   | { kind: 'void_charge'; id: string }
   | { kind: 'void_payment'; id: string }
@@ -77,10 +77,25 @@ export function FolioSection({ reservation: r }: { reservation: Reservation }) {
     (h, { id, reason }) => api.post<Invoice>(h(`/invoices/${id}/void`), { reason }),
     ['folio', 'invoice', 'reservation'],
   );
+  const moveCharge = useHotelMutation<{ id: string; folio: FolioPart }, Folio>(
+    (h, { id, folio }) => api.post<Folio>(h(`/reservations/${r.id}/charges/${id}/folio`), { folio }),
+    ['folio', 'reservation', 'front_desk'],
+  );
   const f = folio.data;
   const money = (v: string | number) => formatMoney(v, r.currency, i18n.language);
-  const active = f?.invoices.find((x) => x.status === 'issued');
+  const issued = f?.invoices.filter((x) => x.status === 'issued') ?? [];
+  const active = issued[0];
   const company = useCompanyAccounts().byId(r.company_account_id);
+  // Split folio: the company pays the room, the guest the extras.
+  const parts = f?.parts ?? null;
+  const companyDue = parts ? parts.company.balance : r.balance;
+  const guestDue = parts ? parts.guest.balance : r.balance;
+  // Parts that can still be invoiced (one issued invoice each, none for everything).
+  const invoiceable: FolioPart[] = parts
+    ? (['guest', 'company'] as const).filter((p) => Number(parts[p].grand_total) > 0 && !issued.some((x) => x.folio === p || x.folio === 'all'))
+    : [];
+  const canInvoice = parts ? invoiceable.length > 0 : !active && Number(r.grand_total) > 0;
+  const partLabel = (p: FolioPart) => (p === 'company' && company ? company.name : t(`billing.parts.${p}`));
   const transfer = useHotelMutation<void, Folio>(
     (h) => api.post<Folio>(h(`/reservations/${r.id}/transfer-to-account`), {}),
     ['folio', 'reservation', 'payment', 'front_desk', 'invoice', 'company_account'],
@@ -89,7 +104,7 @@ export function FolioSection({ reservation: r }: { reservation: Reservation }) {
     company &&
     modals.openConfirmModal({
       title: t('accounts.transfer_to', { name: company.name }),
-      children: <Text size="sm">{t('accounts.transfer_confirm', { amount: money(r.balance), name: company.name, days: company.payment_terms_days })}</Text>,
+      children: <Text size="sm">{t('accounts.transfer_confirm', { amount: money(companyDue), name: company.name, days: company.payment_terms_days })}</Text>,
       labels: { confirm: t('accounts.transfer'), cancel: t('common.cancel') },
       onConfirm: () => void transfer.mutateAsync().then(() => notifySuccess(t('accounts.transferred', { name: company.name })), notifyError),
     });
@@ -109,12 +124,12 @@ export function FolioSection({ reservation: r }: { reservation: Reservation }) {
               {t('billing.take_payment')}
             </Button>
           )}
-          {company && can('payments.record') && Number(r.balance) > 0 && (
+          {company && can('payments.record') && Number(companyDue) > 0 && (
             <Button size="xs" variant="light" color="indigo" leftSection={<IconBuildingBank size={14} />} onClick={transferToCompany} data-testid="transfer-to-company">
               {t('accounts.transfer_to', { name: company.name })}
             </Button>
           )}
-          {can('invoices.issue') && !active && Number(r.grand_total) > 0 && (
+          {can('invoices.issue') && canInvoice && (
             <Button size="xs" variant="default" leftSection={<IconFileInvoice size={14} />} onClick={() => setDialog({ kind: 'invoice' })}>
               {t('billing.issue_invoice')}
             </Button>
@@ -125,7 +140,7 @@ export function FolioSection({ reservation: r }: { reservation: Reservation }) {
 
       {f?.invoice_outdated && (
         <Alert color="orange" mb="sm" p="xs">
-          <Text size="sm">{t('billing.invoice_outdated', { number: active?.number })}</Text>
+          <Text size="sm">{t('billing.invoice_outdated', { number: issued.map((x) => x.number).join(', ') })}</Text>
         </Alert>
       )}
 
@@ -137,14 +152,17 @@ export function FolioSection({ reservation: r }: { reservation: Reservation }) {
               <Table.Th ta="right">{t('billing.quantity')}</Table.Th>
               <Table.Th ta="right">{t('billing.unit_price')}</Table.Th>
               <Table.Th ta="right">{t('billing.amount')}</Table.Th>
-              <Table.Th w={40} />
+              <Table.Th w={parts ? 72 : 40} />
             </Table.Tr>
           </Table.Thead>
           <Table.Tbody>
             {f?.accommodation.map((run) => (
               <Table.Tr key={`${run.reservation_room_id}-${run.start}`}>
                 <Table.Td>
-                  <Text size="sm">{inv.typeName(run.room_type_id)}</Text>
+                  <Group gap={6} wrap="nowrap">
+                    <Text size="sm">{inv.typeName(run.room_type_id)}</Text>
+                    {parts && <PartBadge part="company" label={partLabel('company')} />}
+                  </Group>
                   <Text size="xs" c="dimmed">
                     {run.room_id ? t('billing.room_number', { number: inv.roomNumber(run.room_id) }) : t('reservations.unassigned')} · {formatDate(run.start, i18n.language)} →{' '}
                     {formatDate(run.end, i18n.language)}
@@ -165,9 +183,12 @@ export function FolioSection({ reservation: r }: { reservation: Reservation }) {
             {f?.charges.map((c) => (
               <Table.Tr key={c.id} style={c.is_void ? { opacity: 0.55 } : undefined} data-charge={c.kind}>
                 <Table.Td>
-                  <Text size="sm" td={c.is_void ? 'line-through' : undefined}>
-                    {chargeTitle(c, t, i18n.language, hotel.default_language)}
-                  </Text>
+                  <Group gap={6} wrap="nowrap">
+                    <Text size="sm" td={c.is_void ? 'line-through' : undefined}>
+                      {chargeTitle(c, t, i18n.language, hotel.default_language)}
+                    </Text>
+                    {c.folio && <PartBadge part={c.folio} label={partLabel(c.folio)} />}
+                  </Group>
                   <Text size="xs" c="dimmed">
                     {formatDate(c.service_date, i18n.language)}
                     {c.kind !== 'service' || pickLocalized(c.name, i18n.language, hotel.default_language) ? (c.description ? ` · ${c.description}` : '') : ''}
@@ -185,13 +206,28 @@ export function FolioSection({ reservation: r }: { reservation: Reservation }) {
                   {money(c.amount)}
                 </Table.Td>
                 <Table.Td>
-                  {!c.is_void && can('folio.adjust') && (
-                    <Tooltip label={t('billing.void')}>
-                      <ActionIcon variant="subtle" color="red" aria-label={t('billing.void')} onClick={() => setDialog({ kind: 'void_charge', id: c.id })}>
-                        <IconTrash size={15} />
-                      </ActionIcon>
-                    </Tooltip>
-                  )}
+                  <Group gap={0} wrap="nowrap" justify="flex-end">
+                    {c.folio && !c.is_void && can('folio.post') && (
+                      <Tooltip label={t(c.folio === 'guest' ? 'billing.move_to_company' : 'billing.move_to_guest', { name: partLabel('company') })}>
+                        <ActionIcon
+                          variant="subtle"
+                          color="indigo"
+                          aria-label={t(c.folio === 'guest' ? 'billing.move_to_company' : 'billing.move_to_guest', { name: partLabel('company') })}
+                          loading={moveCharge.isPending && moveCharge.variables?.id === c.id}
+                          onClick={() => void moveCharge.mutateAsync({ id: c.id, folio: c.folio === 'guest' ? 'company' : 'guest' }).catch(notifyError)}
+                        >
+                          <IconArrowsExchange size={15} />
+                        </ActionIcon>
+                      </Tooltip>
+                    )}
+                    {!c.is_void && can('folio.adjust') && (
+                      <Tooltip label={t('billing.void')}>
+                        <ActionIcon variant="subtle" color="red" aria-label={t('billing.void')} onClick={() => setDialog({ kind: 'void_charge', id: c.id })}>
+                          <IconTrash size={15} />
+                        </ActionIcon>
+                      </Tooltip>
+                    )}
+                  </Group>
                 </Table.Td>
               </Table.Tr>
             ))}
@@ -223,6 +259,14 @@ export function FolioSection({ reservation: r }: { reservation: Reservation }) {
         </Stack>
       )}
 
+      {parts && (
+        <SimpleGrid cols={{ base: 1, sm: 2 }} mt="md" data-testid="folio-parts">
+          {(['company', 'guest'] as const).map((p) => (
+            <PartCard key={p} part={p} label={partLabel(p)} totals={parts[p]} money={money} pdf={`/reservations/${r.id}/folio.pdf?folio=${p}`} />
+          ))}
+        </SimpleGrid>
+      )}
+
       <Title order={4} mt="lg" mb="xs">
         {t('billing.payments')}
       </Title>
@@ -240,6 +284,7 @@ export function FolioSection({ reservation: r }: { reservation: Reservation }) {
                     <Text size="sm" fw={500}>
                       {p.number} · {t(`billing.payment_kinds.${p.kind}`)} · {t(`billing.methods.${p.method}`)}
                       {p.card_last4 ? ` ···· ${p.card_last4}` : ''}
+                      {parts && <PartBadge part={p.folio} label={partLabel(p.folio)} ml={6} />}
                     </Text>
                     <Text size="xs" c="dimmed">
                       {formatDateTime(p.received_at, i18n.language, hotel.timezone)} · {p.received_by_name ?? '—'}
@@ -307,6 +352,7 @@ export function FolioSection({ reservation: r }: { reservation: Reservation }) {
                         {t('billing.void_status')}
                       </Badge>
                     )}
+                    {x.folio !== 'all' && <PartBadge part={x.folio} label={partLabel(x.folio)} />}
                   </Group>
                   <Text size="xs" c="dimmed">
                     {formatDate(x.issue_date, i18n.language)} · {x.bill_to.company || x.bill_to.name} · {money(x.total)}
@@ -332,11 +378,15 @@ export function FolioSection({ reservation: r }: { reservation: Reservation }) {
         <PaymentModal
           reservation={r}
           initialKind={dialog.refund ? 'refund' : 'payment'}
-          initialAmount={!dialog.refund && Number(r.balance) > 0 ? r.balance : dialog.refund && Number(r.balance) < 0 ? String(-Number(r.balance)) : undefined}
+          initialAmount={!dialog.refund && Number(guestDue) > 0 ? guestDue : dialog.refund && Number(guestDue) < 0 ? String(-Number(guestDue)) : undefined}
+          parts={parts}
+          initialPart={dialog.part ?? 'guest'}
           onClose={() => setDialog(null)}
         />
       )}
-      {dialog?.kind === 'invoice' && <InvoiceModal reservation={r} onClose={() => setDialog(null)} />}
+      {dialog?.kind === 'invoice' && (
+        <InvoiceModal reservation={r} parts={parts ? invoiceable : undefined} companyAccount={company?.legal_name || company?.name} onClose={() => setDialog(null)} />
+      )}
       {dialog?.kind === 'void_charge' && (
         <ReasonModal
           title={t('billing.void_charge')}
@@ -368,6 +418,41 @@ export function FolioSection({ reservation: r }: { reservation: Reservation }) {
         />
       )}
     </Card>
+  );
+}
+
+function PartBadge({ part, label, ml }: { part: FolioPart; label: string; ml?: number }) {
+  return (
+    <Badge size="xs" variant="light" color={part === 'company' ? 'indigo' : 'gray'} ml={ml} style={{ verticalAlign: 'middle' }} data-part={part}>
+      {label}
+    </Badge>
+  );
+}
+
+/** One part of a split folio: what it comes to, what was paid on it, what is left. */
+function PartCard({ part, label, totals, money, pdf }: { part: FolioPart; label: string; totals: FolioTotals; money: (v: string | number) => string; pdf: string }) {
+  const { t } = useTranslation();
+  const balance = Number(totals.balance);
+  return (
+    <Paper withBorder p="sm" radius="md" data-testid={`part-${part}`}>
+      <Group justify="space-between" mb={6} wrap="nowrap">
+        <Text size="sm" fw={600} truncate>
+          {label}
+        </Text>
+        <PdfMenu path={pdf} label={t('billing.print_part')} />
+      </Group>
+      <Stack gap={2}>
+        <TotalRow label={t('reservations.total')} value={money(totals.grand_total)} />
+        <TotalRow dimmed label={t('reservations.paid')} value={money(totals.paid_total)} />
+        <TotalRow
+          strong
+          label={balance < 0 ? t('billing.credit') : t('reservations.balance')}
+          value={money(Math.abs(balance))}
+          color={balance > 0 ? 'red.7' : balance < 0 ? 'orange.7' : 'teal.7'}
+          testId={`part-${part}-balance`}
+        />
+      </Stack>
+    </Paper>
   );
 }
 

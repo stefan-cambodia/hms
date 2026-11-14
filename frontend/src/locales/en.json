@@ -1023,7 +1023,12 @@
     "TRANSFER_HAS_PAYMENTS": "The company has already paid part of this transfer: void its payment first.",
     "NOT_AN_OPEN_ITEM": "This invoice is not open on this account.",
     "ALLOCATION_EXCEEDS_OPEN": "More than the amount still open on this invoice.",
-    "ALLOCATIONS_EXCEED_PAYMENT": "The amounts applied exceed the payment."
+    "ALLOCATIONS_EXCEED_PAYMENT": "The amounts applied exceed the payment.",
+    "FOLIO_REQUIRED": "Choose which part of the split bill to invoice.",
+    "FOLIO_NOT_SPLIT": "This bill is not split.",
+    "TRANSFERRED_TO_COMPANY": "The balance was already transferred to the company ({{number}}): void the transfer first.",
+    "INVOICE_OUTDATED": "Invoice {{number}} no longer matches the company’s bill: void it, then transfer again.",
+    "INVOICE_TRANSFERRED": "Invoice {{number}} is owed by the company (transfer {{transfer}}): void the transfer first."
   },
   "reservations": {
     "description": "Every booking, whatever its source. Click a reservation to manage it.",
@@ -1134,7 +1139,8 @@
       "payment_recorded": "{{kind}} {{number}} ({{method}}): {{amount}}",
       "payment_voided": "Payment {{number}} voided — {{reason}}",
       "invoice_issued": "Invoice {{number}} issued ({{amount}})",
-      "invoice_voided": "Invoice {{number}} voided — {{reason}}"
+      "invoice_voided": "Invoice {{number}} voided — {{reason}}",
+      "charge_moved": "Charge of {{amount}} moved to the bill of: {{part}}"
     },
     "form": {
       "dates": "Arrival – departure",
@@ -1669,7 +1675,15 @@
     "bill_to": "Billed to",
     "invoice_search": "Number, reservation, name or company",
     "no_invoices": "No invoices",
-    "no_invoices_hint": "Invoices are issued from a reservation's folio."
+    "no_invoices_hint": "Invoices are issued from a reservation's folio.",
+    "parts": {
+      "guest": "Guest",
+      "company": "Company"
+    },
+    "move_to_company": "Move to {{name}}’s bill",
+    "move_to_guest": "Move to the guest’s bill",
+    "print_part": "Folio (PDF)",
+    "made_out_to": "Made out to {{name}} (company account)."
   },
   "housekeeping": {
     "description": "Today's cleaning tasks: plan and assign them, follow progress room by room, inspect finished rooms.",
@@ -2686,6 +2700,13 @@
       "days_31_60": "31–60 days late",
       "days_61_90": "61–90 days late",
       "days_over_90": "Over 90 days late"
-    }
+    },
+    "company_pays": "The company pays",
+    "pays_all": "Everything",
+    "pays_room": "The room only",
+    "pays_all_hint": "One bill: the whole balance goes to the company’s account.",
+    "pays_room_hint": "Split bill: the company pays the nights, their taxes and room fees; the guest pays the other charges.",
+    "billed_to_room": "Room billed to {{name}}",
+    "transfer_amount_to": "Transfer {{amount}} to {{name}}"
   }
 }

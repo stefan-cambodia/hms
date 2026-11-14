@@ -1030,7 +1030,12 @@
     "TRANSFER_HAS_PAYMENTS": "La société a déjà réglé une partie de ce transfert : annulez d’abord son paiement.",
     "NOT_AN_OPEN_ITEM": "Cette facture n’est pas ouverte sur ce compte.",
     "ALLOCATION_EXCEEDS_OPEN": "Plus que le montant restant dû sur cette facture.",
-    "ALLOCATIONS_EXCEED_PAYMENT": "Les montants affectés dépassent le paiement."
+    "ALLOCATIONS_EXCEED_PAYMENT": "Les montants affectés dépassent le paiement.",
+    "FOLIO_REQUIRED": "Choisissez la partie de la facturation partagée à facturer.",
+    "FOLIO_NOT_SPLIT": "Cette facturation n’est pas partagée.",
+    "TRANSFERRED_TO_COMPANY": "Le solde a déjà été transféré à la société ({{number}}) : annulez d’abord le transfert.",
+    "INVOICE_OUTDATED": "La facture {{number}} ne correspond plus à la part de la société : annulez-la, puis transférez à nouveau.",
+    "INVOICE_TRANSFERRED": "La facture {{number}} est due par la société (transfert {{transfer}}) : annulez d’abord le transfert."
   },
   "reservations": {
     "description": "Toutes les réservations, quelle que soit leur origine. Cliquez sur une réservation pour la gérer.",
@@ -1145,7 +1150,8 @@
       "payment_recorded": "{{kind}} {{number}} ({{method}}) : {{amount}}",
       "payment_voided": "Paiement {{number}} annulé — {{reason}}",
       "invoice_issued": "Facture {{number}} émise ({{amount}})",
-      "invoice_voided": "Facture {{number}} annulée — {{reason}}"
+      "invoice_voided": "Facture {{number}} annulée — {{reason}}",
+      "charge_moved": "Prestation de {{amount}} passée sur la facture : {{part}}"
     },
     "form": {
       "dates": "Arrivée – départ",
@@ -1693,7 +1699,15 @@
     "bill_to": "Facturé à",
     "invoice_search": "Numéro, réservation, nom ou société",
     "no_invoices": "Aucune facture",
-    "no_invoices_hint": "Les factures sont émises depuis le compte client d’une réservation."
+    "no_invoices_hint": "Les factures sont émises depuis le compte client d’une réservation.",
+    "parts": {
+      "guest": "Client",
+      "company": "Société"
+    },
+    "move_to_company": "Passer sur la facture de {{name}}",
+    "move_to_guest": "Passer sur la facture du client",
+    "print_part": "Relevé (PDF)",
+    "made_out_to": "Établie au nom de {{name}} (compte société)."
   },
   "housekeeping": {
     "description": "Les tâches de ménage du jour : planifiez-les et attribuez-les, suivez l’avancement chambre par chambre, contrôlez les chambres terminées.",
@@ -2722,6 +2736,13 @@
       "days_31_60": "31 à 60 j de retard",
       "days_61_90": "61 à 90 j de retard",
       "days_over_90": "Plus de 90 j de retard"
-    }
+    },
+    "company_pays": "La société paie",
+    "pays_all": "Tout",
+    "pays_room": "L’hébergement seul",
+    "pays_all_hint": "Une seule facture : tout le solde va sur le compte de la société.",
+    "pays_room_hint": "Facturation partagée : la société paie les nuits, leurs taxes et les frais liés à la chambre ; le client paie les autres prestations.",
+    "billed_to_room": "Hébergement facturé à {{name}}",
+    "transfer_amount_to": "Transférer {{amount}} à {{name}}"
   }
 }

@@ -1016,7 +1016,12 @@
     "TRANSFER_HAS_PAYMENTS": "该公司已支付此笔转账的一部分：请先作废其付款。",
     "NOT_AN_OPEN_ITEM": "此发票在该账户上不是未付状态。",
     "ALLOCATION_EXCEEDS_OPEN": "超过该发票的未付金额。",
-    "ALLOCATIONS_EXCEED_PAYMENT": "核销金额超过付款金额。"
+    "ALLOCATIONS_EXCEED_PAYMENT": "核销金额超过付款金额。",
+    "FOLIO_REQUIRED": "请选择要开票的分账部分。",
+    "FOLIO_NOT_SPLIT": "此账单未分账。",
+    "TRANSFERRED_TO_COMPANY": "余额已转给公司（{{number}}）：请先作废该转账。",
+    "INVOICE_OUTDATED": "发票 {{number}} 与公司账单不再一致：请作废后重新转账。",
+    "INVOICE_TRANSFERRED": "发票 {{number}} 由公司承担（转账 {{transfer}}）：请先作废该转账。"
   },
   "reservations": {
     "description": "所有来源的全部预订。点击预订即可进行管理。",
@@ -1123,7 +1128,8 @@
       "payment_recorded": "{{kind}} {{number}}（{{method}}）：{{amount}}",
       "payment_voided": "收款 {{number}} 已作废：{{reason}}",
       "invoice_issued": "已开具发票 {{number}}（{{amount}}）",
-      "invoice_voided": "发票 {{number}} 已作废：{{reason}}"
+      "invoice_voided": "发票 {{number}} 已作废：{{reason}}",
+      "charge_moved": "{{amount}} 的消费已移至账单：{{part}}"
     },
     "form": {
       "dates": "到店 – 离店",
@@ -1643,7 +1649,15 @@
     "bill_to": "付款方",
     "invoice_search": "编号、预订号、姓名或公司",
     "no_invoices": "暂无发票",
-    "no_invoices_hint": "发票需从预订的客人账单中开具。"
+    "no_invoices_hint": "发票需从预订的客人账单中开具。",
+    "parts": {
+      "guest": "客人",
+      "company": "公司"
+    },
+    "move_to_company": "移至 {{name}} 的账单",
+    "move_to_guest": "移至客人账单",
+    "print_part": "账单 (PDF)",
+    "made_out_to": "开给 {{name}}（公司账户）。"
   },
   "housekeeping": {
     "description": "今日清扫任务：制定计划并分配任务，逐房跟进进度，对清扫完毕的房间进行查房。",
@@ -2637,6 +2651,13 @@
       "days_31_60": "逾期 31–60 天",
       "days_61_90": "逾期 61–90 天",
       "days_over_90": "逾期 90 天以上"
-    }
+    },
+    "company_pays": "公司支付",
+    "pays_all": "全部",
+    "pays_room": "仅房费",
+    "pays_all_hint": "一张账单：全部余额转入公司账户。",
+    "pays_room_hint": "分开结账：公司支付房晚、相关税费及房间费用；客人支付其他消费。",
+    "billed_to_room": "房费由 {{name}} 支付",
+    "transfer_amount_to": "将 {{amount}} 转给 {{name}}"
   }
 }

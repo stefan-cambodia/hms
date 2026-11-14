@@ -155,6 +155,13 @@ transferred to the company's account with the invoice made out to it. The
 account shows the open invoices with their due dates, the aging, the payments
 received (applied to the oldest invoices first) and prints a statement.
 
+When the company pays the room only (*Edit details → The company pays: The room
+only*), the guest folio is split: every line carries the name of who pays it
+(the nights for the company, the extras for the guest), a charge moves to the
+other bill with one click, and each part shows its own total, payments and
+balance, with its own folio PDF and invoice. At check-out the desk transfers
+the company's part and takes the guest's.
+
 ## Photos and logo
 
 *Configuration → Hotel profile* holds the logo. It appears in the header and

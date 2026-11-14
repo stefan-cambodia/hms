@@ -78,7 +78,7 @@ L'écran **Réception** liste pour la journée les arrivées, les clients prése
 2. S'il reste un solde, encaissez-le ou laissez-le ouvert. Un départ anticipé libère les nuits restantes.
 3. **Émettre une facture** produit la facture PDF, numérotée sans trou. Une facture émise ne se modifie pas : elle s'annule puis se réémet.
 
-**Facturation directe à une société** (agence de voyage, entreprise) : sur la réservation, **Modifier les détails**, puis choisissez la société dans **Facturation directe**. Au départ, **Transférer à …** (sur le compte client ou dans la fenêtre de départ) émet la facture au nom de la société et solde le compte du client ; la société paiera plus tard. Les extras que le client règle lui-même s'encaissent avant le transfert.
+**Facturation directe à une société** (agence de voyage, entreprise) : sur la réservation, **Modifier les détails**, puis choisissez la société dans **Facturation directe**. Au départ, **Transférer à …** (sur le compte client ou dans la fenêtre de départ) émet la facture au nom de la société et solde le compte du client ; la société paiera plus tard. Si la société ne paie que la chambre, choisissez **L’hébergement seul** sous **La société paie** : le compte client se partage en deux (société et client), chacun avec son solde et sa facture ; seule la part de la société est transférée, le client règle ses extras.
 
 ![Réception : arrivées du jour](../images/guide/fr-front-desk.png)
 
